@@ -41,7 +41,7 @@ export function SiteFooter() {
             alt="Coddle Learn"
             width={160}
             height={38}
-            className="h-8 w-auto"
+            className="h-8 w-auto -ml-2"
           />
           <p className="mt-4 max-w-xs text-sm leading-relaxed text-ink-muted">
             {APP_TAGLINE} Open-source learning infrastructure for developers.
@@ -66,7 +66,7 @@ export function SiteFooter() {
         ))}
       </div>
       <div className="mx-auto mt-12 max-w-6xl border-t border-border pt-6 text-xs text-ink-muted">
-        © {new Date().getFullYear()} Coddle Learn · Part of the Coddle family
+        © {new Date().getFullYear()} Coddle Learn · Part of the Coddle Ecosystem
       </div>
     </footer>
   );

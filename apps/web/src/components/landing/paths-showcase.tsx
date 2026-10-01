@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 
 const paths = [
@@ -33,6 +33,50 @@ const paths = [
 export function PathsShowcase() {
   const reduceMotion = useReducedMotion();
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef<{
+    pointerId: number;
+    startX: number;
+    scrollLeft: number;
+  } | null>(null);
+
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+
+    const onWheel = (event: WheelEvent) => {
+      if (el.scrollWidth <= el.clientWidth) return;
+      if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
+      event.preventDefault();
+      el.scrollLeft += event.deltaY;
+    };
+
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, []);
+
+  function onPointerDown(event: React.PointerEvent<HTMLDivElement>) {
+    if (event.pointerType === "touch") return;
+    const el = scrollerRef.current;
+    if (!el || el.scrollWidth <= el.clientWidth) return;
+    el.setPointerCapture(event.pointerId);
+    dragRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      scrollLeft: el.scrollLeft,
+    };
+  }
+
+  function onPointerMove(event: React.PointerEvent<HTMLDivElement>) {
+    const drag = dragRef.current;
+    const el = scrollerRef.current;
+    if (!drag || !el || drag.pointerId !== event.pointerId) return;
+    el.scrollLeft = drag.scrollLeft - (event.clientX - drag.startX);
+  }
+
+  function endDrag(event: React.PointerEvent<HTMLDivElement>) {
+    if (dragRef.current?.pointerId !== event.pointerId) return;
+    dragRef.current = null;
+  }
 
   return (
     <section id="paths" className="overflow-hidden bg-brand-navy py-20 text-white sm:py-28">
@@ -62,8 +106,13 @@ export function PathsShowcase() {
 
       <div
         ref={scrollerRef}
-        className="mt-4 flex cursor-grab gap-4 overflow-x-auto px-5 pb-4 active:cursor-grabbing sm:px-[max(1.25rem,calc((100vw-72rem)/2+2rem))] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+        className="mt-4 cursor-grab touch-pan-y overflow-x-auto pb-4 select-none active:cursor-grabbing [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
+        <div className="flex w-max gap-4 px-5 sm:px-[max(1.25rem,calc((100vw-72rem)/2+2rem))]">
         {paths.map((path, index) => (
           <article
             key={path.name}
@@ -89,6 +138,7 @@ export function PathsShowcase() {
             </ol>
           </article>
         ))}
+        </div>
       </div>
     </section>
   );

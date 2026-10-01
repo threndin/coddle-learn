@@ -3,30 +3,81 @@
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 
-const leftItems = [
-  { label: "HTML", x: "8%", y: "22%", delay: 0 },
-  { label: "React", x: "14%", y: "48%", delay: 0.4 },
-  { label: "Git", x: "6%", y: "72%", delay: 0.8 },
-  { label: "CSS", x: "18%", y: "34%", delay: 1.1 },
-];
+const labels = [
+  "TypeScript",
+  "git commit",
+  "Python",
+  "docker build",
+  "Go",
+  "vite ready",
+  "Rust",
+  "pnpm dev",
+  "JavaScript",
+  "postgres ok",
+  "Kotlin",
+  "eslint clean",
+  "SQL",
+  "redis ping",
+  "Java",
+  "tsc --noEmit",
+  "Swift",
+  "npm test",
+  "Ruby",
+  "kubectl apply",
+  "C#",
+  "PHP",
+  "Dart",
+  "Elixir",
+  "HTML",
+  "CSS",
+  "Bash",
+  "cargo build",
+  "next dev",
+  "prisma migrate",
+  "pip install",
+  "bun install",
+  "gh pr create",
+  "make test",
+  "webpack ok",
+  "terraform plan",
+  "helm upgrade",
+  "deno run",
+  "Lua",
+  "Scala",
+] as const;
 
-const rightItems = [
-  { label: "TypeScript", x: "78%", y: "26%", delay: 0.2 },
-  { label: "Node", x: "84%", y: "52%", delay: 0.6 },
-  { label: "Next.js", x: "76%", y: "70%", delay: 1.0 },
-  { label: "Go", x: "88%", y: "38%", delay: 1.3 },
-];
+const columns = 16;
+
+const chips = labels.map((label, index) => {
+  const column = index % columns;
+  const row = Math.floor(index / columns);
+  const jitter = ((index * 29) % 9) - 4;
+  return {
+    label,
+    left: Math.min(
+      90,
+      Math.max(0, (column / (columns - 1)) * 88 + (row % 2 === 0 ? 0 : 2.4) + jitter * 0.25),
+    ),
+    y: -row * 20 - ((index * 5) % 8),
+    r: ((index * 17) % 31) - 15,
+    drift: ((index * 13) % 140) - 70,
+    spin: ((index * 19) % 70) - 35,
+    start: -1700 - ((index * 11) % 9) * 90,
+    duration: 8.4 + ((index * 7) % 32) / 10,
+    delay: ((index * 5) % 19) / 10,
+  };
+});
 
 export function Hero() {
   const reduceMotion = useReducedMotion();
 
   return (
-    <section className="relative isolate min-h-[100svh] overflow-hidden bg-brand text-white">
+    <section className="relative isolate min-h-[95svh] overflow-hidden bg-brand text-white">
       <div
-        className="pointer-events-none absolute bottom-[-18%] left-1/2 h-[340px] w-[min(680px,88vw)] -translate-x-1/2 sm:h-[420px] sm:w-[760px]"
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-[58%]"
         style={{
           background:
-            "radial-gradient(ellipse at center, var(--brand-deep) 0%, transparent 68%)",
+            "radial-gradient(ellipse 42% 90% at 50% 100%, #001a44 0%, #003080 46%, transparent 74%)",
         }}
         aria-hidden
       />
@@ -41,66 +92,38 @@ export function Hero() {
       />
 
       <div className="pointer-events-none absolute inset-0 hidden md:block" aria-hidden>
-        {[...leftItems, ...rightItems].map((item) => (
+        {chips.map((chip, index) => (
           <motion.span
-            key={item.label}
-            className="absolute rounded-full border border-white/15 bg-white/5 px-3 py-1.5 font-mono text-[11px] font-semibold text-white/55 backdrop-blur-sm"
-            style={{ left: item.x, top: item.y }}
-            initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+            key={chip.label}
+            className="absolute bottom-3 whitespace-nowrap rounded-full border border-white/80 bg-white px-3 py-1.5 font-mono text-[11px] font-semibold text-brand shadow-[0_10px_24px_rgb(0_26_68/0.18)]"
+            style={{ left: `${chip.left}%` }}
+            initial={{ x: chip.drift, y: chip.start, rotate: chip.r + chip.spin }}
             animate={
               reduceMotion
-                ? { opacity: 0.7 }
+                ? { x: 0, y: chip.y, rotate: chip.r }
                 : {
-                    opacity: [0.45, 0.85, 0.45],
-                    y: [0, -10, 0],
+                    y: [chip.start, chip.y + 12, chip.y],
+                    x: [chip.drift, 0, 0],
+                    rotate: [chip.r + chip.spin, chip.r, chip.r],
                   }
             }
             transition={
               reduceMotion
                 ? undefined
                 : {
-                    opacity: {
-                      duration: 4.5,
-                      repeat: Infinity,
-                      delay: item.delay,
-                      ease: "easeInOut",
-                    },
-                    y: {
-                      duration: 5 + item.delay,
-                      repeat: Infinity,
-                      delay: item.delay,
-                      ease: "easeInOut",
-                    },
+                    duration: chip.duration,
+                    times: [0, 0.86, 1],
+                    ease: "linear",
+                    delay: chip.delay,
                   }
             }
           >
-            {item.label}
+            {chip.label}
           </motion.span>
         ))}
-
-        <motion.span
-          className="absolute left-[12%] top-[58%] h-3 w-3 rounded-full bg-white/35 blur-[1px]"
-          animate={reduceMotion ? undefined : { y: [0, -14, 0], opacity: [0.4, 0.9, 0.4] }}
-          transition={{ duration: 4.2, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.span
-          className="absolute right-[16%] top-[44%] h-2 w-2 rounded-full bg-white/50"
-          animate={reduceMotion ? undefined : { y: [0, 12, 0], opacity: [0.35, 0.85, 0.35] }}
-          transition={{ duration: 3.6, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-        />
-        <motion.span
-          className="absolute left-[22%] top-[18%] h-1.5 w-1.5 rounded-full bg-white/50"
-          animate={reduceMotion ? undefined : { scale: [1, 1.6, 1], opacity: [0.3, 0.8, 0.3] }}
-          transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-        />
-        <motion.span
-          className="absolute right-[10%] top-[78%] h-2.5 w-2.5 rounded-full bg-white/30 blur-[2px]"
-          animate={reduceMotion ? undefined : { y: [0, -16, 0] }}
-          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}
-        />
       </div>
 
-      <div className="relative mx-auto flex min-h-[100svh] max-w-4xl flex-col items-center justify-center px-5 py-28 text-center sm:px-8 sm:py-32">
+      <div className="relative z-10 mx-auto flex min-h-[95svh] max-w-4xl flex-col items-center justify-center px-5 py-28 text-center sm:px-8 sm:py-32">
         <motion.div
           initial={reduceMotion ? false : { opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}

@@ -4,7 +4,7 @@
 
 | Path | Purpose |
 |---|---|
-| `apps/web` | Next.js 15 marketing app and future product UI |
+| `apps/web` | Next.js 16 marketing app and future product UI |
 | `apps/api` | Express 5 + TypeScript REST API |
 | `packages/shared` | Shared types and constants |
 | `docs/` | Product and engineering documentation |
