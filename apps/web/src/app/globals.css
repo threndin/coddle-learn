@@ -1,0 +1,131 @@
+@import "tailwindcss";
+
+:root {
+  /* Primary — Coddle brand blue */
+  --brand: #004CC8;
+  --brand-deep: #003A9E;
+  --brand-light: #5B9BFF;
+  --brand-soft: #e8f0ff;
+  --brand-glow: rgb(0 76 200 / 0.22);
+  /* Dark companion (hero / dark sections) */
+  --brand-navy: #061833;
+  --ink: #111827;
+  --ink-muted: #64748b;
+  --surface: #ffffff;
+  --surface-subtle: #f8fafc;
+  --border: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --gradient-primary: linear-gradient(135deg, #004CC8 0%, #003A9E 100%);
+}
+
+@theme inline {
+  --color-brand: var(--brand);
+  --color-brand-deep: var(--brand-deep);
+  --color-brand-light: var(--brand-light);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-navy: var(--brand-navy);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-surface: var(--surface);
+  --color-surface-subtle: var(--surface-subtle);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --font-sans: var(--font-figtree);
+  --font-display: var(--font-figtree);
+  --font-mono: var(--font-geist-mono);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+.grid-bg {
+  background-color: var(--surface);
+  background-image: radial-gradient(
+    rgb(15 23 42 / 0.07) 1px,
+    transparent 1px
+  );
+  background-size: 22px 22px;
+}
+
+.brand-glow {
+  background: radial-gradient(
+    ellipse 60% 50% at 50% 20%,
+    var(--brand-glow),
+    transparent 70%
+  );
+}
+
+.gradient-primary {
+  background-image: var(--gradient-primary);
+}
+
+.text-gradient-primary {
+  background-image: var(--gradient-primary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 36s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+@keyframes pulse-node {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(0 76 200 / 0.45);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgb(0 76 200 / 0);
+  }
+}
+
+.pulse-node {
+  animation: pulse-node 2.4s ease-out infinite;
+}
+
+@keyframes draw-line {
+  from {
+    stroke-dashoffset: 100;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.draw-line {
+  stroke-dasharray: 100;
+  animation: draw-line 1.2s ease forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee,
+  .pulse-node,
+  .draw-line {
+    animation: none;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+}

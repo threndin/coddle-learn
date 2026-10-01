@@ -1,0 +1,11 @@
+export type ApiHealth = {
+  status: "ok" | "degraded";
+  service: "coddle-learn-api";
+  timestamp: string;
+};
+
+export const APP_NAME = "Coddle Learn";
+export const APP_TAGLINE = "Learn, Build, Share, Grow.";
+
+/** Public repository URL. Empty until the remote exists. */
+export const GITHUB_URL = "";

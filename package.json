@@ -1,0 +1,19 @@
+{
+  "name": "coddle-learn",
+  "private": true,
+  "packageManager": "pnpm@10.17.1",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "clean": "turbo run clean && rm -rf node_modules"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.4",
+    "typescript": "^5.8.3"
+  }
+}
