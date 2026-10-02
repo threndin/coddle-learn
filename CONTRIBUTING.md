@@ -19,7 +19,7 @@ pnpm dev
 
 | Service | URL |
 |---|---|
-| Web | http://localhost:3000 |
+| Web | http://localhost:3002 |
 | API | http://localhost:4000 |
 | Health | http://localhost:4000/health |
 
@@ -50,7 +50,7 @@ pnpm --filter @coddle/api dev
 
 ## What to work on
 
-Pick a small slice of the build plan in [`AGENTS.md`](./AGENTS.md). Day 1 (monorepo, health API, landing page) is done. Authentication, the ORM, and migrations come next.
+Pick a small slice of the build plan in [`AGENTS.md`](./AGENTS.md). Day 1–3 foundation is in place: landing page, Prisma `User`, and Coddle account SSO. Profiles and core learning models come next.
 
 Open an issue before a large change. One concern per pull request.
 
