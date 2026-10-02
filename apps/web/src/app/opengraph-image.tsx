@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import { APP_NAME, APP_TAGLINE } from "@coddle/shared";
 
-export const alt = `${APP_NAME} — Your path to becoming a better developer.`;
+export const alt = `${APP_NAME} · Your path to becoming a better developer.`;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -17,7 +17,7 @@ async function readIcon() {
 
   for (const path of candidates) {
     try {
-      return await readFile(path);
+      return await readFile(/* turbopackIgnore: true */ path);
     } catch {
       continue;
     }
