@@ -55,8 +55,8 @@ export function PlatformBoard() {
             Platform
           </p>
           <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-ink sm:text-5xl">
-            Not another course site.{" "}
-            <span className="text-gradient-primary">Learning infrastructure.</span>
+            Learn, build, and{" "}
+            <span className="text-gradient-primary">prove it in one place.</span>
           </h2>
         </div>
 

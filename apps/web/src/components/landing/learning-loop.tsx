@@ -72,11 +72,11 @@ export function LearningLoop() {
             How it works
           </p>
           <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-ink sm:text-5xl">
-            One loop. Every piece connected.
+            One path from start to proof.
           </h2>
           <p className="mt-4 text-lg text-ink-muted">
-            Click a stage — the panel updates. That&apos;s the product: discovery
-            through growth without tab chaos.
+            Each stage picks up where the last one ends, so you always know
+            what to learn, build, and show next.
           </p>
         </div>
 

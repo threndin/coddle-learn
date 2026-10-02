@@ -36,7 +36,9 @@ export function PathsShowcase() {
   const dragRef = useRef<{
     pointerId: number;
     startX: number;
+    startY: number;
     scrollLeft: number;
+    axis: "x" | "y" | null;
   } | null>(null);
 
   useEffect(() => {
@@ -55,22 +57,40 @@ export function PathsShowcase() {
   }, []);
 
   function onPointerDown(event: React.PointerEvent<HTMLDivElement>) {
-    if (event.pointerType === "touch") return;
     const el = scrollerRef.current;
     if (!el || el.scrollWidth <= el.clientWidth) return;
-    el.setPointerCapture(event.pointerId);
     dragRef.current = {
       pointerId: event.pointerId,
       startX: event.clientX,
+      startY: event.clientY,
       scrollLeft: el.scrollLeft,
+      axis: event.pointerType === "touch" ? null : "x",
     };
+    if (event.pointerType !== "touch") {
+      el.setPointerCapture(event.pointerId);
+    }
   }
 
   function onPointerMove(event: React.PointerEvent<HTMLDivElement>) {
     const drag = dragRef.current;
     const el = scrollerRef.current;
     if (!drag || !el || drag.pointerId !== event.pointerId) return;
-    el.scrollLeft = drag.scrollLeft - (event.clientX - drag.startX);
+
+    const dx = event.clientX - drag.startX;
+    const dy = event.clientY - drag.startY;
+
+    if (drag.axis === null) {
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+      drag.axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
+      if (drag.axis === "y") {
+        dragRef.current = null;
+        return;
+      }
+      el.setPointerCapture(event.pointerId);
+    }
+
+    if (drag.axis !== "x") return;
+    el.scrollLeft = drag.scrollLeft - dx;
   }
 
   function endDrag(event: React.PointerEvent<HTMLDivElement>) {
@@ -90,12 +110,12 @@ export function PathsShowcase() {
             Ecosystem
           </p>
           <h2 className="mt-3 max-w-xl font-display text-3xl font-extrabold tracking-tight sm:text-5xl">
-            Paths you can{" "}
-            <span className="text-brand-light">drag through</span>
+            Find your path.{" "}
+            <span className="text-brand-light">Follow it through.</span>
           </h2>
           <p className="mt-4 max-w-lg text-lg text-slate-400">
-            Inspired by living ecosystem boards — scroll sideways and explore
-            what Coddle Learn will teach.
+            Each roadmap is a sequence of skills, from the first concept to a
+            project you can show.
           </p>
         </motion.div>
       </div>

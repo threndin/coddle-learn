@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@coddle/shared": "workspace:*",
+    "@vercel/analytics": "^2.0.1",
     "framer-motion": "^12.12.0",
     "next": "16.3.8",
     "react": "^19.0.0",
