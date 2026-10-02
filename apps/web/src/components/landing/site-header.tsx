@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { HeaderAuth } from "@/components/landing/header-auth";
 
 const nav = [
   { href: "#loop", label: "How it works" },
@@ -35,12 +36,7 @@ export function SiteHeader() {
           ))}
         </nav>
 
-        <Link
-          href="#loop"
-          className="rounded-xl border border-white/25 px-4 py-2 text-sm font-semibold text-white transition hover:border-white/50 hover:bg-white/5"
-        >
-          Start learning
-        </Link>
+        <HeaderAuth />
       </div>
     </header>
   );

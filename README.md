@@ -32,21 +32,22 @@ coddle-learn/
 
 ```bash
 pnpm install
+cp apps/api/.env.example apps/api/.env
+cp apps/web/.env.example apps/web/.env
+docker compose up -d
+pnpm --filter @coddle/api exec prisma migrate deploy
+pnpm --filter @coddle/api exec prisma generate
 pnpm dev
 ```
 
 | Service | URL |
 |---|---|
-| Web | http://localhost:3000 |
+| Web | http://localhost:3002 |
 | API | http://localhost:4000 |
 | Health | http://localhost:4000/health |
+| Login | http://localhost:3002/login |
 
-```bash
-# Postgres (optional for Day 1)
-docker compose up -d
-cp apps/api/.env.example apps/api/.env
-```
-
+Sign-in uses a **Coddle account**. Run the Coddle app (see `docs/architecture.md`) and set `CODDLE_APP_URL` / `CODDLE_API_URL` in `apps/api/.env`.
 ## Scripts
 
 | Command | Description |

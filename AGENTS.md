@@ -8,7 +8,7 @@ An open-source interactive developer learning platform in the Coddle product fam
 
 | | |
 |---|---|
-| **Status** | In development (Day 1) |
+| **Status** | In development (auth + DB foundation) |
 | **Type** | Open-source interactive developer learning platform |
 | **Repository** | `coddle-learn` |
 | **Audience** | Developers, aspiring developers, educators, mentors, and professional contributors |
@@ -181,9 +181,13 @@ Initial entities:
 
 ### Authentication
 
-Sign up, login, logout, password reset, email verification, Google/GitHub OAuth, profile management.
+Users sign in with their **Coddle account**. Learn does not create a separate password or email/password signup.
 
-**Future:** passkeys, GitHub identity verification.
+Flow: redirect to Coddle login → `/sso/learn` bridge → Learn verifies the Coddle session against the Coddle API → upserts a local user (`coddle_user_id`) → issues a Learn session cookie. Profile fields (name, email, avatar) sync on each sign-in.
+
+Logout clears the Learn session only. Google/GitHub and password reset stay on Coddle.
+
+**Future:** passkeys, GitHub identity verification for contributor trust.
 
 ### User Profile
 
@@ -322,9 +326,9 @@ Validate the core learning loop first.
 | Day | Focus |
 |---|---|
 | 1 | Foundation: monorepo, Next.js, Express/TS API, PostgreSQL, Docker, env config + landing page |
-| 2 | Architecture: API structure, DB connection, frontend structure, conventions, errors |
-| 3 | Auth: registration, login, logout, password hashing, email verification foundation |
-| 4 | Profiles: profile, avatar, bio, skills, public profile |
+| 2 | Architecture: API structure, Prisma/DB, frontend structure, conventions, errors |
+| 3 | Auth: Coddle account SSO + auth sync, Learn session, login/dashboard |
+| 4 | Profiles: Learn profile extensions on top of synced Coddle identity |
 | 5 | Core models: users, skills, courses, roadmaps, resources, lessons, projects |
 | 6 | Admin foundation: admin auth, dashboard, user management |
 | 7 | Course creation: courses, modules, lessons |
