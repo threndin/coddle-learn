@@ -66,7 +66,7 @@ export function SiteFooter() {
         ))}
       </div>
       <div className="mx-auto mt-12 max-w-6xl border-t border-border pt-6 text-xs text-ink-muted">
-        © {new Date().getFullYear()} Coddle Learn · Part of the Coddle Ecosystem
+        © {new Date().getFullYear()} Coddle Learn · Powered by a <Link href="https://coddle.dev" target="_blank" className="text-brand font-bold hover:text-brand-deep">Coddle.</Link>
       </div>
     </footer>
   );
