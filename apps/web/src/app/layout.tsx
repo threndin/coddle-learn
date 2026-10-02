@@ -15,14 +15,31 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const description =
+  "Open-source interactive learning for developers. Roadmaps, projects, credentials, and community — connected in one place.";
+
 export const metadata: Metadata = {
+  metadataBase: new URL("https://learn.coddle.dev"),
   title: `${APP_NAME} — ${APP_TAGLINE}`,
-  description:
-    "Open-source interactive learning for developers. Roadmaps, projects, credentials, and community — connected in one place.",
+  description,
+  icons: {
+    icon: [
+      { url: "/icon.png", type: "image/png" },
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/icons/icon-maskable-512.png", sizes: "512x512", type: "image/png" }],
+  },
   openGraph: {
-    title: APP_NAME,
-    description: APP_TAGLINE,
+    title: `${APP_NAME} — ${APP_TAGLINE}`,
+    description,
+    siteName: APP_NAME,
     type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${APP_NAME} — ${APP_TAGLINE}`,
+    description,
   },
 };
 
