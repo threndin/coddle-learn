@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  /* Primary — Coddle brand blue */
+  /* Primary: Coddle brand blue */
   --brand: #004CC8;
   --brand-deep: #003A9E;
   --brand-light: #5B9BFF;

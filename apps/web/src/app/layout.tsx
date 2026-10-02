@@ -16,11 +16,11 @@ const geistMono = Geist_Mono({
 });
 
 const description =
-  "Open-source interactive learning for developers. Roadmaps, projects, credentials, and community — connected in one place.";
+  "Open-source interactive learning for developers. Roadmaps, projects, credentials, and community, connected in one place.";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://learn.coddle.dev"),
-  title: `${APP_NAME} — ${APP_TAGLINE}`,
+  title: `${APP_NAME} · ${APP_TAGLINE}`,
   description,
   icons: {
     icon: [
@@ -31,14 +31,14 @@ export const metadata: Metadata = {
     apple: [{ url: "/icons/icon-maskable-512.png", sizes: "512x512", type: "image/png" }],
   },
   openGraph: {
-    title: `${APP_NAME} — ${APP_TAGLINE}`,
+    title: `${APP_NAME} · ${APP_TAGLINE}`,
     description,
     siteName: APP_NAME,
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: `${APP_NAME} — ${APP_TAGLINE}`,
+    title: `${APP_NAME} · ${APP_TAGLINE}`,
     description,
   },
 };
