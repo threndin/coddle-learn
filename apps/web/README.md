@@ -9,6 +9,6 @@ pnpm install
 pnpm --filter @coddle/web dev
 ```
 
-Open http://localhost:3000.
+Open http://localhost:3002.
 
 Setup for the whole monorepo is in the root [README](../../README.md). How to contribute is in [CONTRIBUTING](../../CONTRIBUTING.md).
