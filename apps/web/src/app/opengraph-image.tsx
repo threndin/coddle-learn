@@ -17,7 +17,7 @@ async function readIcon() {
 
   for (const path of candidates) {
     try {
-      return await readFile(path);
+      return await readFile(/* turbopackIgnore: true */ path);
     } catch {
       continue;
     }
