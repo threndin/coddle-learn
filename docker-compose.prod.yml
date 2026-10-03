@@ -2,8 +2,9 @@
 # Local Postgres-only setup remains in docker-compose.yml.
 #
 # Data safety: Postgres uses the named volume `coddle_pg_data`.
-# `docker compose -f docker-compose.prod.yml down` keeps data.
-# Never use `down -v` on production unless you intend to wipe the database.
+# On the VPS use legacy `docker-compose` (hyphen), e.g.:
+#   docker-compose -f docker-compose.prod.yml down
+# That keeps data. Never use `down -v` on production unless you intend to wipe the DB.
 
 services:
   postgres:

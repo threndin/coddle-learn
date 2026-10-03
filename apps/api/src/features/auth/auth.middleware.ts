@@ -1,10 +1,9 @@
 import { timingSafeEqual } from "node:crypto";
 import type { NextFunction, Request, Response } from "express";
-import { COOKIE } from "../config.js";
-import { readCsrfCookie } from "../lib/cookies.js";
-import { AppError, isAppError } from "../lib/errors.js";
-import { verifySession, type SessionClaims } from "../lib/jwt.js";
-import { findUserById, toPublicUser } from "../services/users.js";
+import { COOKIE } from "../../config.js";
+import { AppError, isAppError } from "../../shared/errors.js";
+import { readCsrfCookie } from "./cookies.js";
+import { verifySession, type SessionClaims } from "./session.js";
 
 export type AuthedRequest = Request & {
   session?: SessionClaims;
@@ -53,41 +52,4 @@ export function requireCsrf(req: Request, _res: Response, next: NextFunction) {
     return;
   }
   next();
-}
-
-export async function getCurrentUser(req: AuthedRequest) {
-  if (!req.session) {
-    throw new AppError(401, "unauthenticated", "Sign in required");
-  }
-  const user = await findUserById(req.session.sub);
-  if (!user) {
-    throw new AppError(401, "user_missing", "Account no longer exists. Sign in again.");
-  }
-  return toPublicUser(user);
-}
-
-export function errorHandler(
-  error: unknown,
-  _req: Request,
-  res: Response,
-  _next: NextFunction,
-) {
-  if (isAppError(error)) {
-    res.status(error.status).json({
-      error: {
-        code: error.code,
-        message: error.message,
-        details: error.details ?? undefined,
-      },
-    });
-    return;
-  }
-
-  console.error(error);
-  res.status(500).json({
-    error: {
-      code: "internal_error",
-      message: "Something went wrong",
-    },
-  });
 }

@@ -36,7 +36,8 @@ jobs:
             cd /var/www/coddle-learn
             git fetch origin main
             git reset --hard origin/main
-            docker compose -f docker-compose.prod.yml build --no-cache
-            docker compose -f docker-compose.prod.yml up -d
-            docker compose -f docker-compose.prod.yml ps
+            # VPS uses legacy docker-compose (hyphen); do not switch to `docker compose`.
+            docker-compose -f docker-compose.prod.yml build --no-cache
+            docker-compose -f docker-compose.prod.yml up -d
+            docker-compose -f docker-compose.prod.yml ps
             curl -fsS http://localhost:6700/health

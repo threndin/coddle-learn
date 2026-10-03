@@ -9,6 +9,32 @@
 | `packages/shared` | Shared types and constants |
 | `docs/` | Product and engineering documentation |
 
+## API layout
+
+The Learn API is organized by feature under `apps/api/src`. Each feature uses the same layering:
+
+`routes → controller → service → repository`
+
+| Path | Purpose |
+|---|---|
+| `index.ts` | Process boot (`listen`) |
+| `app.ts` | Express app, middleware, feature router mounts |
+| `config.ts` | Environment config |
+| `shared/` | Prisma client, errors, HTTP helpers |
+| `features/health/` | `/` and `/health` |
+| `features/auth/` | Coddle SSO, sessions, CSRF, `/auth/*` |
+| `features/users/` | User repository + public user mapping |
+| `features/onboarding/` | `POST /onboarding` |
+
+| Layer | Responsibility |
+|---|---|
+| `*.routes.ts` | Path + middleware wiring |
+| `*.controller.ts` | HTTP request/response mapping |
+| `*.service.ts` | Business rules and orchestration |
+| `*.repository.ts` | Prisma / database access |
+
+HTTP paths stay `/health`, `/auth/*`, and `/onboarding`. New domains should add a folder under `features/` with these layers, then mount the router in `app.ts`.
+
 ## Tooling
 
 - **pnpm workspaces** — dependency linking between apps and packages
@@ -78,8 +104,10 @@ Locally, Learn web defaults to port `3002` so Coddle can stay on `3000`. Point `
 ## Current scope
 
 - Monorepo scaffolding and landing page
+- Feature-based API (`health`, `auth`, `users`, `onboarding`)
 - Health-check API
-- Prisma User model + migrations
+- Prisma User / Skill / Session models + migrations
 - Coddle SSO start/finish/exchange, `/auth/me`, logout
-- Learn `/login` and `/dashboard`
+- Onboarding persistence (`POST /onboarding`)
+- Learn `/login`, `/onboarding`, and `/dashboard`
 - Coddle `/sso/learn` bridge page
