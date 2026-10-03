@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 import type { CookieOptions, Response } from "express";
-import { config, COOKIE } from "../config.js";
+import { config, COOKIE } from "../../config.js";
 
 const base: CookieOptions = {
   httpOnly: true,

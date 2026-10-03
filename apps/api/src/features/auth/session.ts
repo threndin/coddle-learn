@@ -1,8 +1,16 @@
 import { randomUUID } from "node:crypto";
 import { SignJWT, jwtVerify } from "jose";
-import { config } from "../config.js";
-import { prisma } from "../db.js";
-import { AppError } from "./errors.js";
+import { config } from "../../config.js";
+import { AppError } from "../../shared/errors.js";
+import {
+  createOAuthStateRow,
+  createSessionRow,
+  deleteSessionByJti,
+  deleteSessionsByUserId,
+  findOAuthStateByJti,
+  findSessionByJti,
+  markOAuthStateConsumed,
+} from "./session.repository.js";
 
 const encoder = new TextEncoder();
 
@@ -21,9 +29,7 @@ export async function createOAuthState(): Promise<string> {
   const jti = randomUUID();
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-  await prisma.oAuthState.create({
-    data: { jti, expiresAt },
-  });
+  await createOAuthStateRow(jti, expiresAt);
 
   return new SignJWT({ purpose: "coddle_sso", jti })
     .setProtectedHeader({ alg: "HS256" })
@@ -46,15 +52,12 @@ export async function consumeOAuthState(state: string): Promise<void> {
     throw new AppError(400, "invalid_state", "Invalid sign-in state. Start again.");
   }
 
-  const row = await prisma.oAuthState.findUnique({ where: { jti } });
+  const row = await findOAuthStateByJti(jti);
   if (!row || row.consumedAt || row.expiresAt.getTime() < Date.now()) {
     throw new AppError(400, "invalid_state", "Sign-in state expired or already used.");
   }
 
-  await prisma.oAuthState.update({
-    where: { jti },
-    data: { consumedAt: new Date() },
-  });
+  await markOAuthStateConsumed(jti);
 }
 
 export async function createSession(claims: {
@@ -65,13 +68,7 @@ export async function createSession(claims: {
   const jti = randomUUID();
   const expiresAt = new Date(Date.now() + config.jwtExpiryHours * 60 * 60 * 1000);
 
-  await prisma.session.create({
-    data: {
-      jti,
-      userId: claims.sub,
-      expiresAt,
-    },
-  });
+  await createSessionRow(jti, claims.sub, expiresAt);
 
   return new SignJWT({
     email: claims.email,
@@ -100,7 +97,7 @@ export async function verifySession(token: string): Promise<SessionClaims> {
     throw new AppError(401, "invalid_session", "Session expired. Sign in again.");
   }
 
-  const session = await prisma.session.findUnique({ where: { jti } });
+  const session = await findSessionByJti(jti);
   if (!session || session.userId !== sub || session.expiresAt.getTime() < Date.now()) {
     throw new AppError(401, "invalid_session", "Session expired. Sign in again.");
   }
@@ -109,9 +106,9 @@ export async function verifySession(token: string): Promise<SessionClaims> {
 }
 
 export async function revokeSession(jti: string): Promise<void> {
-  await prisma.session.deleteMany({ where: { jti } });
+  await deleteSessionByJti(jti);
 }
 
 export async function revokeAllUserSessions(userId: string): Promise<void> {
-  await prisma.session.deleteMany({ where: { userId } });
+  await deleteSessionsByUserId(userId);
 }

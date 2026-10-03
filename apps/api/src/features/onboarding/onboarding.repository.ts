@@ -1,16 +1,11 @@
-import { parseOnboardingInput } from "@coddle/shared";
-import { prisma } from "../db.js";
-import { AppError } from "../lib/errors.js";
-import { toPublicUser } from "./users.js";
+import type { NormalizedOnboarding } from "@coddle/shared";
+import { prisma } from "../../shared/db.js";
+import { findById, type UserWithSkills } from "../users/users.repository.js";
 
-export async function completeOnboarding(userId: string, input: unknown) {
-  const parsed = parseOnboardingInput(input);
-  if (!parsed.ok) {
-    throw new AppError(400, "invalid_onboarding", parsed.message);
-  }
-
-  const { value } = parsed;
-
+export async function saveOnboarding(
+  userId: string,
+  value: NormalizedOnboarding,
+): Promise<UserWithSkills | null> {
   await prisma.$transaction(async (tx) => {
     const skillIds: string[] = [];
     for (const skill of value.skills) {
@@ -43,19 +38,5 @@ export async function completeOnboarding(userId: string, input: unknown) {
     });
   });
 
-  const updated = await prisma.user.findUnique({
-    where: { id: userId },
-    include: {
-      skills: {
-        include: { skill: true },
-        orderBy: { createdAt: "asc" },
-      },
-    },
-  });
-
-  if (!updated) {
-    throw new AppError(404, "user_missing", "Account no longer exists. Sign in again.");
-  }
-
-  return toPublicUser(updated);
+  return findById(userId);
 }

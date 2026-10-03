@@ -1,5 +1,5 @@
-import { config } from "../config.js";
-import { AppError } from "../lib/errors.js";
+import { config } from "../../config.js";
+import { AppError } from "../../shared/errors.js";
 
 export type CoddleProfile = {
   id: string;
