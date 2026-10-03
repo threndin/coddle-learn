@@ -43,4 +43,12 @@ jobs:
             docker-compose -f docker-compose.prod.yml build --no-cache
             docker-compose -f docker-compose.prod.yml up -d
             docker-compose -f docker-compose.prod.yml ps
-            curl -fsS http://localhost:6700/health
+            # API needs a moment for migrate + boot after create
+            for i in 1 2 3 4 5 6 7 8 9 10; do
+              if curl -fsS http://localhost:6700/health; then
+                exit 0
+              fi
+              sleep 3
+            done
+            docker logs coddle-learn-api || true
+            exit 1
