@@ -1,12 +1,14 @@
-export type PublicUser = {
-  id: string;
-  email: string;
-  name: string;
-  avatarUrl: string | null;
-  bio: string | null;
-  coddleUserId: string;
-  lastLoginAt: string | null;
-  createdAt: string;
+import type { ExperienceLevel, LearnUser, PracticeDay } from "@coddle/shared";
+
+export type PublicUser = LearnUser;
+
+export type OnboardingSubmission = {
+  bio: string;
+  experienceLevel: ExperienceLevel;
+  skills: { slug: string; name: string }[];
+  roadmapSlug: string;
+  dailyGoalMinutes: number;
+  practiceDays: PracticeDay[];
 };
 
 function readCookie(name: string): string | null {
@@ -40,4 +42,31 @@ export async function logout(): Promise<void> {
 
 export function startCoddleLogin(): void {
   window.location.href = "/api/auth/coddle/start";
+}
+
+export async function completeOnboarding(input: OnboardingSubmission): Promise<PublicUser> {
+  const csrf = readCookie("learn_csrf");
+  const res = await fetch("/api/onboarding", {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      ...(csrf ? { "x-csrf-token": csrf } : {}),
+    },
+    body: JSON.stringify(input),
+  });
+
+  if (res.status === 401) {
+    throw new Error("UNAUTHENTICATED");
+  }
+
+  if (!res.ok) {
+    const body = (await res.json().catch(() => null)) as {
+      error?: { message?: string };
+    } | null;
+    throw new Error(body?.error?.message ?? "Could not save your setup");
+  }
+
+  const body = (await res.json()) as { data: { user: PublicUser } };
+  return body.data.user;
 }

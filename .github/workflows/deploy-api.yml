@@ -1,0 +1,42 @@
+name: Deploy API
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/api/**"
+      - "packages/shared/**"
+      - "Dockerfile"
+      - "docker-compose.prod.yml"
+      - "scripts/api-entrypoint.sh"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "package.json"
+      - "turbo.json"
+      - "tsconfig.base.json"
+      - ".github/workflows/deploy-api.yml"
+
+concurrency:
+  group: deploy-api
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy API over SSH
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          script_stop: true
+          script: |
+            set -e
+            cd /var/www/coddle-learn
+            git fetch origin main
+            git reset --hard origin/main
+            docker compose -f docker-compose.prod.yml build --no-cache
+            docker compose -f docker-compose.prod.yml up -d
+            docker compose -f docker-compose.prod.yml ps
+            curl -fsS http://localhost:6700/health
