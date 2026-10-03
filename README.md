@@ -62,6 +62,7 @@ Sign-in uses a **Coddle account**. Run the Coddle app (see `docs/architecture.md
 ## Docs
 
 - Product requirements & build plan → [`AGENTS.md`](./AGENTS.md)
+- Screen build order → [`docs/dev-readme.md`](./docs/dev-readme.md)
 - Architecture → [`docs/architecture.md`](./docs/architecture.md)
 - Contributing → [`CONTRIBUTING.md`](./CONTRIBUTING.md)
 

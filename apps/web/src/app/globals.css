@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   /* Primary: Coddle brand blue */
   --brand: #004CC8;
@@ -16,6 +18,17 @@
   --border: #e2e8f0;
   --border-strong: #cbd5e1;
   --gradient-primary: linear-gradient(135deg, #004CC8 0%, #003A9E 100%);
+}
+
+.dark {
+  --brand-soft: #16315f;
+  --brand-glow: rgb(91 155 255 / 0.2);
+  --ink: #f4f7fb;
+  --ink-muted: #9aa8bd;
+  --surface: #0e1524;
+  --surface-subtle: #172033;
+  --border: #2a364c;
+  --border-strong: #3d4d68;
 }
 
 @theme inline {
@@ -37,6 +50,11 @@
 
 html {
   scroll-behavior: smooth;
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
 }
 
 body {
@@ -128,4 +146,8 @@ body {
   html {
     scroll-behavior: auto;
   }
+}
+
+button {
+  cursor: pointer;
 }

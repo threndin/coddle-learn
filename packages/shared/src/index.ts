@@ -7,5 +7,7 @@ export type ApiHealth = {
 export const APP_NAME = "Coddle Learn";
 export const APP_TAGLINE = "Learn, Build, Share, Grow.";
 
+export * from "./onboarding.js";
+
 /** Public repository URL. Empty until the remote exists. */
 export const GITHUB_URL = "https://github.com/threndin/coddle-learn";

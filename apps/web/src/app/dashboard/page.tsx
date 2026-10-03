@@ -4,6 +4,14 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import {
+  formatMinutes,
+  levelById,
+  practiceDaysLabel,
+  roadmapBySlug,
+  weeklyPracticeLabel,
+} from "@coddle/shared";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { fetchMe, logout, type PublicUser } from "@/lib/auth";
 
 export default function DashboardPage() {
@@ -19,6 +27,10 @@ export default function DashboardPage() {
         if (cancelled) return;
         if (!me) {
           router.replace("/login");
+          return;
+        }
+        if (!me.onboardingCompletedAt) {
+          router.replace("/onboarding");
           return;
         }
         setUser(me);
@@ -56,16 +68,19 @@ export default function DashboardPage() {
               alt="Coddle Learn"
               width={140}
               height={34}
-              className="h-8 w-auto"
+              className="h-8 w-auto dark:brightness-0 dark:invert"
             />
           </Link>
-          <button
-            type="button"
-            onClick={() => void onLogout()}
-            className="text-sm font-medium text-ink-muted transition hover:text-ink"
-          >
-            Sign out
-          </button>
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <button
+              type="button"
+              onClick={() => void onLogout()}
+              className="text-sm font-medium text-ink-muted transition hover:text-ink"
+            >
+              Sign out
+            </button>
+          </div>
         </div>
       </header>
 
@@ -74,12 +89,13 @@ export default function DashboardPage() {
           Dashboard
         </p>
         <h1 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
-          Welcome, {user.name.split(" ")[0]}.
+          Welcome, {user.name.trim().split(/\s+/)[0] || user.name}.
         </h1>
         <p className="mt-3 max-w-xl text-ink-muted">
-          You&apos;re signed in with your Coddle account. Learning progress will
-          live here as courses and roadmaps ship.
+          Your plan is set. Courses, progress, and projects will show up here as you learn.
         </p>
+
+        <PlanSummary user={user} />
 
         <dl className="mt-10 space-y-4 border-t border-border pt-8 text-sm">
           <div className="flex flex-col gap-1 sm:flex-row sm:gap-6">
@@ -89,5 +105,49 @@ export default function DashboardPage() {
         </dl>
       </div>
     </main>
+  );
+}
+
+function PlanSummary({ user }: { user: PublicUser }) {
+  const roadmap = user.startingRoadmapSlug ? roadmapBySlug(user.startingRoadmapSlug) : null;
+  const level = user.experienceLevel ? levelById(user.experienceLevel) : null;
+
+  return (
+    <section className="mt-10" aria-label="Your plan">
+      <h2 className="sr-only">Your plan</h2>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <article className="rounded-2xl border border-border bg-surface p-5 sm:col-span-2">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-ink-muted">Roadmap</p>
+          <p className="mt-2 font-display text-xl font-bold tracking-tight text-ink">
+            {roadmap?.name ?? "Your roadmap"}
+          </p>
+          {roadmap ? <p className="mt-2 text-sm leading-relaxed text-ink-muted">{roadmap.summary}</p> : null}
+        </article>
+        <article className="rounded-2xl border border-border bg-surface p-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-ink-muted">Daily goal</p>
+          <p className="mt-2 font-display text-xl font-bold tracking-tight text-ink">
+            {user.dailyGoalMinutes ? formatMinutes(user.dailyGoalMinutes) : "Not set"}
+          </p>
+          {user.dailyGoalMinutes ? (
+            <p className="mt-2 text-sm text-ink-muted">
+              {practiceDaysLabel(user.practiceDays)} · {weeklyPracticeLabel(user.dailyGoalMinutes, user.practiceDays.length)}
+            </p>
+          ) : null}
+          {level ? <p className="mt-3 text-xs font-semibold text-brand">{level.label}</p> : null}
+        </article>
+      </div>
+      {user.skills.length > 0 ? (
+        <ul className="mt-3 flex flex-wrap gap-2">
+          {user.skills.map((skill) => (
+            <li
+              key={skill.slug}
+              className="rounded-full bg-brand-soft px-3 py-1 text-sm font-medium text-ink"
+            >
+              {skill.name}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </section>
   );
 }

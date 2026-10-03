@@ -1,0 +1,44 @@
+# Production: API + Postgres on the VPS.
+# Local Postgres-only setup remains in docker-compose.yml.
+#
+# Data safety: Postgres uses the named volume `coddle_pg_data`.
+# `docker compose -f docker-compose.prod.yml down` keeps data.
+# Never use `down -v` on production unless you intend to wipe the database.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: coddle-learn-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-coddle}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-coddle}
+      POSTGRES_DB: ${POSTGRES_DB:-coddle_learn}
+    volumes:
+      - coddle_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U coddle -d coddle_learn"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # Intentionally not publishing 5432 — only the API container reaches Postgres.
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: coddle-learn-api
+    restart: unless-stopped
+    ports:
+      - "6700:6700"
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      PORT: 6700
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  coddle_pg_data:

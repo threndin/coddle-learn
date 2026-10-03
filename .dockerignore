@@ -1,0 +1,36 @@
+# Dependencies & caches
+node_modules
+**/node_modules
+.pnpm-store
+.turbo
+**/.turbo
+*.tsbuildinfo
+
+# Builds
+**/dist
+**/.next
+**/out
+**/build
+coverage
+
+# Git / IDE
+.git
+.idea
+.vscode
+.DS_Store
+
+# Env secrets (inject via compose env_file on the host)
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+
+# Frontend (API-only image)
+apps/web
+
+# Docs & CI (not needed in the image)
+docs
+.github
+*.md

@@ -8,6 +8,7 @@ import { APP_NAME } from "@coddle/shared";
 import { config } from "./config.js";
 import { errorHandler } from "./middleware/auth.js";
 import { authRouter, healthRouter } from "./routes/auth.js";
+import { onboardingRouter } from "./routes/onboarding.js";
 
 const app = express();
 
@@ -26,6 +27,7 @@ app.use(morgan(config.isProd ? "combined" : "dev"));
 
 app.use(healthRouter);
 app.use("/auth", authRouter);
+app.use("/onboarding", onboardingRouter);
 
 app.use(errorHandler);
 

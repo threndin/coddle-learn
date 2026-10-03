@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="1820" viewBox="0 0 840 1820">
+  <rect width="840" height="1820" fill="#f6f7f9"/>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M 0 1.2 L 9 5 L 0 8.8 Z" fill="#7b8798"/>
+    </marker>
+  </defs>
+  <style>
+    .box { fill: #ffffff; stroke: #d5dbe3; stroke-width: 1.5; }
+    .label { font-family: Arial, sans-serif; font-size: 15px; font-weight: 700; fill: #1b2430; }
+    .edge { fill: none; stroke: #7b8798; stroke-width: 1.5; marker-end: url(#arrow); }
+    .line { fill: none; stroke: #7b8798; stroke-width: 1.5; }
+    .tag { font-family: Arial, sans-serif; font-size: 12px; font-weight: 700; fill: #5c6b7e; }
+  </style>
+
+  <rect class="box" x="292" y="24" width="210" height="46" rx="10"/>
+  <text class="label" x="397" y="47" text-anchor="middle" dominant-baseline="middle">1 Landing</text>
+
+  <rect class="box" x="292" y="106" width="210" height="46" rx="10"/>
+  <text class="label" x="397" y="129" text-anchor="middle" dominant-baseline="middle">2 Sign in</text>
+
+  <polygon points="397,188 502,230 397,272 292,230" fill="#e7f0ff" stroke="#004cc8" stroke-width="1.5"/>
+  <text class="label" x="397" y="230" text-anchor="middle" dominant-baseline="middle" fill="#003a99">Profile complete?</text>
+
+  <rect class="box" x="32" y="310" width="210" height="46" rx="10"/>
+  <text class="label" x="137" y="333" text-anchor="middle" dominant-baseline="middle">3 Onboarding</text>
+
+  <rect class="box" x="292" y="400" width="210" height="46" rx="10"/>
+  <text class="label" x="397" y="423" text-anchor="middle" dominant-baseline="middle">4 Dashboard</text>
+
+  <rect class="box" x="32" y="510" width="210" height="46" rx="10"/>
+  <text class="label" x="137" y="533" text-anchor="middle" dominant-baseline="middle">5 Roadmaps</text>
+  <rect class="box" x="32" y="592" width="210" height="46" rx="10"/>
+  <text class="label" x="137" y="615" text-anchor="middle" dominant-baseline="middle">6 Roadmap</text>
+  <rect class="box" x="32" y="674" width="210" height="46" rx="10"/>
+  <text class="label" x="137" y="697" text-anchor="middle" dominant-baseline="middle">7 Node</text>
+
+  <rect class="box" x="292" y="510" width="210" height="46" rx="10"/>
+  <text class="label" x="397" y="533" text-anchor="middle" dominant-baseline="middle">8 Courses</text>
+  <rect class="box" x="292" y="592" width="210" height="46" rx="10"/>
+  <text class="label" x="397" y="615" text-anchor="middle" dominant-baseline="middle">9 Course</text>
+  <rect class="box" x="292" y="674" width="210" height="46" rx="10"/>
+  <text class="label" x="397" y="697" text-anchor="middle" dominant-baseline="middle">10 Lesson</text>
+
+  <rect class="box" x="552" y="510" width="210" height="46" rx="10"/>
+  <text class="label" x="657" y="533" text-anchor="middle" dominant-baseline="middle">15 Resources</text>
+  <rect class="box" x="552" y="620" width="210" height="46" rx="10"/>
+  <text class="label" x="657" y="643" text-anchor="middle" dominant-baseline="middle">29 Community</text>
+  <rect class="box" x="552" y="702" width="210" height="46" rx="10"/>
+  <text class="label" x="657" y="725" text-anchor="middle" dominant-baseline="middle">30 Discussion</text>
+  <rect class="box" x="552" y="810" width="210" height="46" rx="10"/>
+  <text class="label" x="657" y="833" text-anchor="middle" dominant-baseline="middle">31 Mentors</text>
+
+  <rect class="box" x="162" y="790" width="210" height="46" rx="10"/>
+  <text class="label" x="267" y="813" text-anchor="middle" dominant-baseline="middle">11 to 14 Practice</text>
+
+  <rect class="box" x="292" y="890" width="210" height="46" rx="10"/>
+  <text class="label" x="397" y="913" text-anchor="middle" dominant-baseline="middle">18 Assessment</text>
+  <rect class="box" x="292" y="972" width="210" height="46" rx="10"/>
+  <text class="label" x="397" y="995" text-anchor="middle" dominant-baseline="middle">19 Result</text>
+
+  <rect class="box" x="32" y="1080" width="210" height="46" rx="10"/>
+  <text class="label" x="137" y="1103" text-anchor="middle" dominant-baseline="middle">20 Projects</text>
+  <rect class="box" x="32" y="1162" width="210" height="46" rx="10"/>
+  <text class="label" x="137" y="1185" text-anchor="middle" dominant-baseline="middle">22 Publish project</text>
+
+  <rect class="box" x="292" y="1270" width="210" height="46" rx="10"/>
+  <text class="label" x="397" y="1293" text-anchor="middle" dominant-baseline="middle">23 Credential</text>
+
+  <rect class="box" x="32" y="1380" width="210" height="46" rx="10"/>
+  <text class="label" x="137" y="1403" text-anchor="middle" dominant-baseline="middle">24 Verify</text>
+  <rect class="box" x="552" y="1380" width="210" height="46" rx="10"/>
+  <text class="label" x="657" y="1403" text-anchor="middle" dominant-baseline="middle">25 Badges</text>
+  <rect class="box" x="552" y="1462" width="210" height="46" rx="10"/>
+  <text class="label" x="657" y="1485" text-anchor="middle" dominant-baseline="middle">26 Skill graph</text>
+  <rect class="box" x="552" y="1544" width="210" height="46" rx="10"/>
+  <text class="label" x="657" y="1567" text-anchor="middle" dominant-baseline="middle">27 Public profile</text>
+  <rect class="box" x="552" y="1626" width="210" height="46" rx="10"/>
+  <text class="label" x="657" y="1649" text-anchor="middle" dominant-baseline="middle">34 Contributor studio</text>
+  <rect class="box" x="552" y="1708" width="210" height="46" rx="10"/>
+  <text class="label" x="657" y="1731" text-anchor="middle" dominant-baseline="middle">37 Review queue</text>
+
+  <path class="edge" d="M 397 70 L 397 106"/>
+  <path class="edge" d="M 397 152 L 397 188"/>
+
+  <path class="edge" d="M 292 230 L 137 230 L 137 310"/>
+  <text class="tag" x="168" y="220">No</text>
+  <path class="edge" d="M 397 272 L 397 400"/>
+  <text class="tag" x="408" y="340">Yes</text>
+  <path class="edge" d="M 137 356 L 137 423 L 292 423"/>
+
+  <path class="line" d="M 397 446 L 397 478"/>
+  <path class="line" d="M 137 478 L 657 478"/>
+  <path class="edge" d="M 137 478 L 137 510"/>
+  <path class="edge" d="M 397 478 L 397 510"/>
+  <path class="edge" d="M 657 478 L 657 510"/>
+
+  <path class="edge" d="M 137 556 L 137 592"/>
+  <path class="edge" d="M 137 638 L 137 674"/>
+  <path class="edge" d="M 397 556 L 397 592"/>
+  <path class="edge" d="M 397 638 L 397 674"/>
+
+  <path class="line" d="M 502 423 L 800 423 L 800 833"/>
+  <path class="edge" d="M 800 643 L 762 643"/>
+  <path class="edge" d="M 800 833 L 762 833"/>
+  <path class="edge" d="M 657 666 L 657 702"/>
+
+  <path class="line" d="M 137 720 L 137 752"/>
+  <path class="line" d="M 397 720 L 397 752"/>
+  <path class="line" d="M 137 752 L 397 752"/>
+  <path class="edge" d="M 267 752 L 267 790"/>
+
+  <path class="edge" d="M 267 836 L 267 863 L 397 863 L 397 890"/>
+  <path class="edge" d="M 397 936 L 397 972"/>
+
+  <path class="edge" d="M 397 1018 L 397 1049 L 137 1049 L 137 1080"/>
+  <path class="edge" d="M 137 1126 L 137 1162"/>
+  <path class="edge" d="M 137 1208 L 137 1293 L 292 1293"/>
+  <path class="edge" d="M 502 995 L 530 995 L 530 1293 L 502 1293"/>
+
+  <path class="line" d="M 397 1316 L 397 1348"/>
+  <path class="line" d="M 137 1348 L 657 1348"/>
+  <path class="edge" d="M 137 1348 L 137 1380"/>
+  <path class="edge" d="M 657 1348 L 657 1380"/>
+
+  <path class="edge" d="M 657 1426 L 657 1462"/>
+  <path class="edge" d="M 657 1508 L 657 1544"/>
+  <path class="edge" d="M 657 1590 L 657 1626"/>
+  <path class="edge" d="M 657 1672 L 657 1708"/>
+</svg>

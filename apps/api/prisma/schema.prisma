@@ -8,18 +8,47 @@ datasource db {
 }
 
 model User {
-  id           String    @id @default(cuid())
-  coddleUserId String    @unique @map("coddle_user_id")
-  email        String    @unique
-  name         String
-  avatarUrl    String?   @map("avatar_url")
-  bio          String?
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
-  lastLoginAt  DateTime? @map("last_login_at")
-  sessions     Session[]
+  id                    String    @id @default(cuid())
+  coddleUserId          String    @unique @map("coddle_user_id")
+  email                 String    @unique
+  name                  String
+  avatarUrl             String?   @map("avatar_url")
+  bio                   String?
+  experienceLevel       String?   @map("experience_level")
+  dailyGoalMinutes      Int?      @map("daily_goal_minutes")
+  practiceDays          String[]  @default([]) @map("practice_days")
+  startingRoadmapSlug   String?   @map("starting_roadmap_slug")
+  onboardingCompletedAt DateTime? @map("onboarding_completed_at")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+  lastLoginAt           DateTime? @map("last_login_at")
+  sessions              Session[]
+  skills                UserSkill[]
 
   @@map("users")
+}
+
+model Skill {
+  id        String      @id @default(cuid())
+  slug      String      @unique
+  name      String
+  category  String
+  createdAt DateTime    @default(now()) @map("created_at")
+  users     UserSkill[]
+
+  @@map("skills")
+}
+
+model UserSkill {
+  userId    String   @map("user_id")
+  skillId   String   @map("skill_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skill     Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@id([userId, skillId])
+  @@index([skillId])
+  @@map("user_skills")
 }
 
 model Session {
