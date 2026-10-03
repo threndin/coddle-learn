@@ -96,10 +96,11 @@ authRouter.post(
         throw new AppError(400, "missing_code", "Missing SSO code");
       }
 
-      const { token } = await completeCoddleSignIn(code, state);
+      const { user, token } = await completeCoddleSignIn(code, state);
       setSessionCookie(res, token);
       setCsrfCookie(res);
-      res.redirect(302, `${config.webOrigin}/dashboard`);
+      const nextPath = user.onboardingCompletedAt ? "/dashboard" : "/onboarding";
+      res.redirect(302, `${config.webOrigin}${nextPath}`);
     } catch (error) {
       console.error("[auth/coddle/finish]", error);
       res.redirect(302, `${config.webOrigin}/login?error=signin_failed`);
