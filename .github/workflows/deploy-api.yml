@@ -36,11 +36,11 @@ jobs:
             cd /var/www/coddle-learn
             git fetch origin main
             git reset --hard origin/main
-            # VPS uses legacy docker-compose 1.29.x (hyphen). Docker Engine 29+
-            # breaks "recreate" with KeyError: ContainerConfig — remove API
-            # container first so compose creates a new one instead of recreating.
+            # Same pattern as Coddle backend: down → build → up.
+            # Legacy docker-compose 1.29 + Docker 29 breaks on "recreate";
+            # `down` (without -v) clears containers/networks but keeps DB volume.
+            docker-compose -f docker-compose.prod.yml down
             docker-compose -f docker-compose.prod.yml build --no-cache
-            docker rm -f coddle-learn-api || true
             docker-compose -f docker-compose.prod.yml up -d
             docker-compose -f docker-compose.prod.yml ps
             curl -fsS http://localhost:6700/health
