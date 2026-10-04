@@ -38,7 +38,7 @@ function LoginContent() {
         <div className="sticky top-0 h-svh overflow-hidden bg-brand-navy">
           <Image
             src="/images/login-panel.jpg"
-            alt="A sunlit desk with an open notebook, a pencil, a cup, and a closed laptop"
+            alt="Developer typing code on a laptop in a focused workspace"
             fill
             priority
             sizes="(min-width: 1024px) 58vw, 100vw"
