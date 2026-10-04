@@ -19,6 +19,7 @@ model User {
   practiceDays          String[]  @default([]) @map("practice_days")
   startingRoadmapSlug   String?   @map("starting_roadmap_slug")
   onboardingCompletedAt DateTime? @map("onboarding_completed_at")
+  points                Int       @default(0)
   createdAt             DateTime  @default(now()) @map("created_at")
   updatedAt             DateTime  @updatedAt @map("updated_at")
   lastLoginAt           DateTime? @map("last_login_at")

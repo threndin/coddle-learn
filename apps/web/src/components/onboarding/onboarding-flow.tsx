@@ -22,8 +22,10 @@ import { ProfileStep } from "@/components/onboarding/profile-step";
 import { ReviewStep } from "@/components/onboarding/review-step";
 import { RoadmapStep } from "@/components/onboarding/roadmap-step";
 import { SkillsStep } from "@/components/onboarding/skills-step";
+import { SignOutButton } from "@/components/sign-out-button";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { completeOnboarding, logout, type PublicUser } from "@/lib/auth";
+import { PageLoader } from "@/components/page-loader";
+import { completeOnboarding, type PublicUser } from "@/lib/auth";
 
 const STEPS = [
   { id: "profile", label: "Profile" },
@@ -238,11 +240,6 @@ export function OnboardingFlow({ user }: { user: PublicUser }) {
     setStep(next);
   }
 
-  async function onLogout() {
-    await logout();
-    router.replace("/");
-  }
-
   async function onSubmit() {
     if (!draft.experienceLevel || !draft.roadmapSlug || draft.practiceDays.length === 0 || pending) return;
     setPending(true);
@@ -269,11 +266,7 @@ export function OnboardingFlow({ user }: { user: PublicUser }) {
   }
 
   if (!hydrated) {
-    return (
-      <main className="flex min-h-svh items-center justify-center bg-surface text-ink-muted">
-        <p className="font-mono text-sm">Loading…</p>
-      </main>
-    );
+    return <PageLoader />;
   }
 
   return (
@@ -291,13 +284,7 @@ export function OnboardingFlow({ user }: { user: PublicUser }) {
           </Link>
           <div className="flex items-center gap-3">
             <ThemeToggle />
-            <button
-              type="button"
-              onClick={() => void onLogout()}
-              className="text-sm font-medium text-ink-muted transition hover:text-ink"
-            >
-              Sign out
-            </button>
+            <SignOutButton />
           </div>
         </div>
       </header>

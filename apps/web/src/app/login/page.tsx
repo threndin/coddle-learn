@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { useReducedMotion, motion } from "framer-motion";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { PageLoader } from "@/components/page-loader";
 import { startCoddleLogin } from "@/lib/auth";
 
 const coddleAppUrl = process.env.NEXT_PUBLIC_CODDLE_APP_URL ?? "https://www.coddle.dev";
@@ -37,7 +38,7 @@ function LoginContent() {
         <div className="sticky top-0 h-svh overflow-hidden bg-brand-navy">
           <Image
             src="/images/login-panel.jpg"
-            alt="A sunlit desk with an open notebook, a pencil, a cup, and a closed laptop"
+            alt="Developer typing code on a laptop in a focused workspace"
             fill
             priority
             sizes="(min-width: 1024px) 58vw, 100vw"
@@ -137,13 +138,7 @@ function LoginContent() {
 
 export default function LoginPage() {
   return (
-    <Suspense
-      fallback={
-        <main className="grid-bg flex min-h-svh items-center justify-center text-ink-muted">
-          <p className="font-mono text-sm">Loading…</p>
-        </main>
-      }
-    >
+    <Suspense fallback={<PageLoader />}>
       <LoginContent />
     </Suspense>
   );
