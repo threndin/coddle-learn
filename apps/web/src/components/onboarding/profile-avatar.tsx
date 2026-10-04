@@ -19,11 +19,17 @@ export function ProfileAvatar({
 }: {
   name: string;
   avatarUrl: string | null;
-  size?: "md" | "lg";
+  size?: "sm" | "md" | "lg";
 }) {
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
-  const box = size === "lg" ? "h-16 w-16 text-lg" : "h-12 w-12 text-sm";
+  const box =
+    size === "lg"
+      ? "h-16 w-16 text-lg"
+      : size === "sm"
+        ? "h-8 w-8 text-xs"
+        : "h-12 w-12 text-sm";
   const showImage = Boolean(avatarUrl) && failedUrl !== avatarUrl;
+  const ring = size === "sm" ? "ring-1 ring-border" : "ring-2 ring-white";
 
   if (showImage && avatarUrl) {
     return (
@@ -33,14 +39,14 @@ export function ProfileAvatar({
         src={avatarUrl}
         alt=""
         onError={() => setFailedUrl(avatarUrl)}
-        className={`${box} rounded-full object-cover ring-2 ring-white`}
+        className={`${box} shrink-0 rounded-full object-cover ${ring}`}
       />
     );
   }
 
   return (
     <span
-      className={`${box} inline-flex items-center justify-center rounded-full bg-brand font-semibold text-white ring-2 ring-white`}
+      className={`${box} inline-flex shrink-0 items-center justify-center rounded-full bg-brand font-semibold text-white ${ring}`}
       aria-hidden
     >
       {initials(name)}

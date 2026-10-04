@@ -67,7 +67,7 @@ export function HeaderAuth() {
         Sign in
       </Link>
       <Link
-        href="#loop"
+        href="/login"
         className="rounded-xl border border-white/25 px-4 py-2 text-sm font-semibold text-white transition hover:border-white/50 hover:bg-white/5"
       >
         Start learning

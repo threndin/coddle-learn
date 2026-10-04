@@ -1,11 +1,29 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { GITHUB_URL } from "@coddle/shared";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
+import { fetchMe } from "@/lib/auth";
 
 export function OpenSource() {
   const reduceMotion = useReducedMotion();
+  const [startHref, setStartHref] = useState("/login");
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const me = await fetchMe();
+        if (!cancelled) setStartHref(me ? "/dashboard" : "/login");
+      } catch {
+        if (!cancelled) setStartHref("/login");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <section id="opensource" className="relative overflow-hidden grid-bg px-5 py-20 sm:px-8 sm:py-28">
@@ -29,7 +47,7 @@ export function OpenSource() {
           </p>
           <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
-              href="#loop"
+              href={startHref}
               className="inline-flex items-center gap-2 rounded-xl gradient-primary px-6 py-3.5 text-sm font-bold text-white shadow-[0_0_40px_rgb(0_76_200/0.35)] transition hover:brightness-110"
             >
               Start learning →

@@ -136,6 +136,9 @@ export type LearnSkill = {
   name: string;
 };
 
+/** Points awarded the first time a learner finishes onboarding. */
+export const ONBOARDING_POINTS = 50;
+
 export type LearnUser = {
   id: string;
   email: string;
@@ -150,6 +153,7 @@ export type LearnUser = {
   practiceDays: PracticeDay[];
   startingRoadmapSlug: string | null;
   onboardingCompletedAt: string | null;
+  points: number;
   skills: LearnSkill[];
 };
 

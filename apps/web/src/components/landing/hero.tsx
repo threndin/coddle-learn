@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { fetchMe } from "@/lib/auth";
 
 const roles = [
   "Better Developer",
@@ -299,6 +300,22 @@ function ChipPill({
 
 export function Hero() {
   const reduceMotion = useReducedMotion();
+  const [startHref, setStartHref] = useState("/login");
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const me = await fetchMe();
+        if (!cancelled) setStartHref(me ? "/dashboard" : "/login");
+      } catch {
+        if (!cancelled) setStartHref("/login");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <section className="relative isolate min-h-[95svh] overflow-hidden bg-brand text-white">
@@ -343,7 +360,7 @@ export function Hero() {
 
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
-              href="#loop"
+              href={startHref}
               className="inline-flex items-center justify-center rounded-xl bg-white px-6 py-3 text-sm font-semibold text-brand transition hover:bg-white/90"
             >
               Start learning

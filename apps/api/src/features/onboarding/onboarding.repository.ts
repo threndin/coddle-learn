@@ -1,4 +1,4 @@
-import type { NormalizedOnboarding } from "@coddle/shared";
+import { ONBOARDING_POINTS, type NormalizedOnboarding } from "@coddle/shared";
 import { prisma } from "../../shared/db.js";
 import { findById, type UserWithSkills } from "../users/users.repository.js";
 
@@ -7,6 +7,12 @@ export async function saveOnboarding(
   value: NormalizedOnboarding,
 ): Promise<UserWithSkills | null> {
   await prisma.$transaction(async (tx) => {
+    const existing = await tx.user.findUnique({
+      where: { id: userId },
+      select: { onboardingCompletedAt: true },
+    });
+    const awardOnboardingPoints = !existing?.onboardingCompletedAt;
+
     const skillIds: string[] = [];
     for (const skill of value.skills) {
       const row = await tx.skill.upsert({
@@ -34,6 +40,7 @@ export async function saveOnboarding(
         practiceDays: value.practiceDays,
         startingRoadmapSlug: value.roadmapSlug,
         onboardingCompletedAt: new Date(),
+        ...(awardOnboardingPoints ? { points: { increment: ONBOARDING_POINTS } } : {}),
       },
     });
   });
