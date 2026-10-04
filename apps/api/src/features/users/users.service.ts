@@ -36,6 +36,7 @@ export function toPublicUser(user: User & { skills?: UserWithSkills["skills"] })
     practiceDays: normalizePracticeDays(user.practiceDays),
     startingRoadmapSlug: user.startingRoadmapSlug,
     onboardingCompletedAt: user.onboardingCompletedAt?.toISOString() ?? null,
+    points: user.points,
     skills: (user.skills ?? []).map((row) => ({
       slug: row.skill.slug,
       name: row.skill.name,

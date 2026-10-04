@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { OnboardingFlow } from "@/components/onboarding/onboarding-flow";
+import { PageLoader } from "@/components/page-loader";
 import { fetchMe, type PublicUser } from "@/lib/auth";
 
 export function OnboardingScreen() {
@@ -34,11 +35,7 @@ export function OnboardingScreen() {
   }, [router]);
 
   if (!user) {
-    return (
-      <main className="flex min-h-svh items-center justify-center bg-surface text-ink-muted">
-        <p className="font-mono text-sm">Loading…</p>
-      </main>
-    );
+    return <PageLoader />;
   }
 
   return <OnboardingFlow user={user} />;
