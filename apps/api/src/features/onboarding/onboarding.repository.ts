@@ -1,5 +1,6 @@
 import { ONBOARDING_POINTS, type NormalizedOnboarding } from "@coddle/shared";
 import { prisma } from "../../shared/db.js";
+import { enrollRoadmapBySlug } from "../roadmaps/roadmaps.service.js";
 import { findById, type UserWithSkills } from "../users/users.repository.js";
 
 export async function saveOnboarding(
@@ -44,6 +45,12 @@ export async function saveOnboarding(
       },
     });
   });
+
+  try {
+    await enrollRoadmapBySlug(userId, value.roadmapSlug, { makePrimary: true });
+  } catch {
+    // Catalog may be empty before seed; onboarding profile still saved.
+  }
 
   return findById(userId);
 }

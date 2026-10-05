@@ -8,23 +8,26 @@ datasource db {
 }
 
 model User {
-  id                    String    @id @default(cuid())
-  coddleUserId          String    @unique @map("coddle_user_id")
-  email                 String    @unique
+  id                    String                 @id @default(cuid())
+  coddleUserId          String                 @unique @map("coddle_user_id")
+  email                 String                 @unique
   name                  String
-  avatarUrl             String?   @map("avatar_url")
+  avatarUrl             String?                @map("avatar_url")
   bio                   String?
-  experienceLevel       String?   @map("experience_level")
-  dailyGoalMinutes      Int?      @map("daily_goal_minutes")
-  practiceDays          String[]  @default([]) @map("practice_days")
-  startingRoadmapSlug   String?   @map("starting_roadmap_slug")
-  onboardingCompletedAt DateTime? @map("onboarding_completed_at")
-  points                Int       @default(0)
-  createdAt             DateTime  @default(now()) @map("created_at")
-  updatedAt             DateTime  @updatedAt @map("updated_at")
-  lastLoginAt           DateTime? @map("last_login_at")
+  experienceLevel       String?                @map("experience_level")
+  dailyGoalMinutes      Int?                   @map("daily_goal_minutes")
+  practiceDays          String[]               @default([]) @map("practice_days")
+  startingRoadmapSlug   String?                @map("starting_roadmap_slug")
+  onboardingCompletedAt DateTime?              @map("onboarding_completed_at")
+  points                Int                    @default(0)
+  createdAt             DateTime               @default(now()) @map("created_at")
+  updatedAt             DateTime               @updatedAt @map("updated_at")
+  lastLoginAt           DateTime?              @map("last_login_at")
   sessions              Session[]
   skills                UserSkill[]
+  roadmaps              UserRoadmap[]
+  stepProgress          UserStepProgress[]
+  resourceBookmarks     UserResourceBookmark[]
 
   @@map("users")
 }
@@ -50,6 +53,93 @@ model UserSkill {
   @@id([userId, skillId])
   @@index([skillId])
   @@map("user_skills")
+}
+
+model Roadmap {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  name        String
+  level       String
+  summary     String
+  weeks       Int
+  skillSlugs  String[]      @default([]) @map("skill_slugs")
+  sortOrder   Int           @map("sort_order")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  steps       RoadmapStep[]
+  enrollments UserRoadmap[]
+
+  @@map("roadmaps")
+}
+
+model RoadmapStep {
+  id               String                 @id @default(cuid())
+  roadmapId        String                 @map("roadmap_id")
+  roadmap          Roadmap                @relation(fields: [roadmapId], references: [id], onDelete: Cascade)
+  slug             String
+  title            String
+  summary          String
+  estimatedMinutes Int                    @map("estimated_minutes")
+  sortOrder        Int                    @map("sort_order")
+  learnings        Json                   @default("[]")
+  practice         String                 @default("")
+  branchKey        String?                @map("branch_key")
+  resources        Json                   @default("[]")
+  createdAt        DateTime               @default(now()) @map("created_at")
+  updatedAt        DateTime               @updatedAt @map("updated_at")
+  progress         UserStepProgress[]
+  bookmarks        UserResourceBookmark[]
+
+  @@unique([roadmapId, slug])
+  @@index([roadmapId, sortOrder])
+  @@map("roadmap_steps")
+}
+
+model UserRoadmap {
+  id          String    @id @default(cuid())
+  userId      String    @map("user_id")
+  roadmapId   String    @map("roadmap_id")
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roadmap     Roadmap   @relation(fields: [roadmapId], references: [id], onDelete: Cascade)
+  isPrimary   Boolean   @default(false) @map("is_primary")
+  startedAt   DateTime  @default(now()) @map("started_at")
+  completedAt DateTime? @map("completed_at")
+
+  @@unique([userId, roadmapId])
+  @@index([roadmapId])
+  @@index([userId, isPrimary])
+  @@map("user_roadmaps")
+}
+
+model UserStepProgress {
+  id            String      @id @default(cuid())
+  userId        String      @map("user_id")
+  stepId        String      @map("step_id")
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  step          RoadmapStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
+  status        String
+  pointsAwarded Int         @default(0) @map("points_awarded")
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+
+  @@unique([userId, stepId])
+  @@index([stepId])
+  @@map("user_step_progress")
+}
+
+model UserResourceBookmark {
+  id        String      @id @default(cuid())
+  userId    String      @map("user_id")
+  stepId    String      @map("step_id")
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  step      RoadmapStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
+  url       String
+  title     String
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  @@unique([userId, stepId, url])
+  @@index([stepId])
+  @@map("user_resource_bookmarks")
 }
 
 model Session {

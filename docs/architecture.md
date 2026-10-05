@@ -25,6 +25,7 @@ The Learn API is organized by feature under `apps/api/src`. Each feature uses th
 | `features/auth/` | Coddle SSO, sessions, CSRF, `/auth/*` |
 | `features/users/` | User repository + public user mapping |
 | `features/onboarding/` | `POST /onboarding` |
+| `features/roadmaps/` | Catalog, detail, start, step progress (`/roadmaps/*`) |
 
 | Layer | Responsibility |
 |---|---|
@@ -33,7 +34,7 @@ The Learn API is organized by feature under `apps/api/src`. Each feature uses th
 | `*.service.ts` | Business rules and orchestration |
 | `*.repository.ts` | Prisma / database access |
 
-HTTP paths stay `/health`, `/auth/*`, and `/onboarding`. New domains should add a folder under `features/` with these layers, then mount the router in `app.ts`.
+HTTP paths stay `/health`, `/auth/*`, `/onboarding`, and `/roadmaps/*`. New domains should add a folder under `features/` with these layers, then mount the router in `app.ts`.
 
 ## Tooling
 
@@ -51,9 +52,12 @@ cp apps/web/.env.example apps/web/.env
 docker compose up -d
 pnpm --filter @coddle/api exec prisma migrate deploy
 pnpm --filter @coddle/api exec prisma generate
+pnpm --filter @coddle/api exec prisma db seed
 ```
 
 The web app proxies `/api/*` to the Express API (`API_URL`, default `http://localhost:4000`) so session cookies stay on the Learn origin.
+
+Roadmap catalog rows (`Roadmap`, `RoadmapStep`) are seeded from `@coddle/shared` starter data. Learner progress lives in `UserRoadmap` and `UserStepProgress`.
 
 ## Authentication (Coddle account sync)
 
@@ -104,10 +108,11 @@ Locally, Learn web defaults to port `3002` so Coddle can stay on `3000`. Point `
 ## Current scope
 
 - Monorepo scaffolding and landing page
-- Feature-based API (`health`, `auth`, `users`, `onboarding`)
+- Feature-based API (`health`, `auth`, `users`, `onboarding`, `roadmaps`)
 - Health-check API
-- Prisma User / Skill / Session models + migrations
+- Prisma User / Skill / Session / Roadmap / RoadmapStep / progress models + migrations
 - Coddle SSO start/finish/exchange, `/auth/me`, logout
 - Onboarding persistence (`POST /onboarding`)
+- Roadmap catalog seed + interactive `/roadmaps` and `/roadmaps/[slug]` (in-page step panel)
 - Learn `/login`, `/onboarding`, and `/dashboard`
 - Coddle `/sso/learn` bridge page
