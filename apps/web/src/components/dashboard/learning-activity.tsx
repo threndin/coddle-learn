@@ -105,7 +105,7 @@ export function LearningActivity({ user }: { user: PublicUser }) {
               </h3>
             </div>
             <Link
-              href="/roadmaps"
+              href={roadmap ? `/roadmaps/${roadmap.slug}` : "/roadmaps"}
               className="text-xs font-semibold text-brand transition hover:text-brand-deep"
             >
               Open
@@ -114,7 +114,7 @@ export function LearningActivity({ user }: { user: PublicUser }) {
 
           <p className="mt-2 text-sm leading-relaxed text-ink-muted">
             {roadmap
-              ? `Next up: ${roadmap.nodes[0] ?? "your first node"}. Practice to earn more points.`
+              ? `Next up: ${roadmap.steps[0]?.title ?? "your first step"}. Practice to earn more points.`
               : "Choose a roadmap so today’s session has a clear next step."}
           </p>
 
