@@ -28,10 +28,10 @@ function stepsForUser(user: PublicUser): Step[] {
       id: "open-roadmap",
       label: roadmap ? `Open ${roadmap.name}` : "Open your roadmap",
       why: roadmap
-        ? `Start with ${roadmap.nodes[0] ?? "the first node"} and work through the path.`
+        ? `Start with ${roadmap.steps[0]?.title ?? "the first step"} and work through the path.`
         : "Pick a structured path so you always know what to learn next.",
-      href: "/roadmaps",
-      cta: "View roadmaps",
+      href: roadmap ? `/roadmaps/${roadmap.slug}` : "/roadmaps",
+      cta: roadmap ? "Open roadmap" : "View roadmaps",
       icon: "roadmaps",
     },
     {
@@ -47,7 +47,7 @@ function stepsForUser(user: PublicUser): Step[] {
     {
       id: "explore-courses",
       label: `Explore courses for ${skillHint}`,
-      why: "Courses turn roadmap nodes into guided lessons and practice.",
+      why: "Courses turn roadmap steps into guided lessons and practice.",
       href: "/courses",
       cta: "Browse courses",
       icon: "courses",

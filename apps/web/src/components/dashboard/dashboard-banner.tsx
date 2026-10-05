@@ -12,7 +12,7 @@ export function DashboardBanner({ user }: { user: PublicUser }) {
   const roadmap = user.startingRoadmapSlug
     ? roadmapBySlug(user.startingRoadmapSlug)
     : null;
-  const continueHref = "/roadmaps";
+  const continueHref = roadmap ? `/roadmaps/${roadmap.slug}` : "/roadmaps";
 
   return (
     <section className="relative overflow-hidden gradient-primary text-white">

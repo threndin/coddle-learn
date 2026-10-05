@@ -37,6 +37,7 @@ cp apps/web/.env.example apps/web/.env
 docker compose up -d
 pnpm --filter @coddle/api exec prisma migrate deploy
 pnpm --filter @coddle/api exec prisma generate
+pnpm --filter @coddle/api exec prisma db seed
 pnpm dev
 ```
 
