@@ -269,12 +269,12 @@ function DeckCard({
       <p className="relative mt-3 max-w-md text-sm leading-relaxed text-white/80">{roadmap.summary}</p>
 
       <div className="relative mt-5 flex flex-wrap items-center gap-1.5">
-        {roadmap.nodes.map((node, nodeIndex) => (
-          <span key={node} className="inline-flex items-center gap-1.5">
+        {roadmap.steps.map((step, stepIndex) => (
+          <span key={step.slug} className="inline-flex items-center gap-1.5">
             <span className="rounded-full bg-white/15 px-2.5 py-1 text-xs font-medium text-white">
-              {node}
+              {step.title}
             </span>
-            {nodeIndex < roadmap.nodes.length - 1 ? (
+            {stepIndex < roadmap.steps.length - 1 ? (
               <span className="text-xs text-white/45" aria-hidden>
                 →
               </span>

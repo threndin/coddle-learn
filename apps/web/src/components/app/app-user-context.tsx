@@ -1,24 +1,54 @@
 "use client";
 
-import { createContext, useContext } from "react";
-import type { PublicUser } from "@/lib/auth";
+import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import { fetchMe, type PublicUser } from "@/lib/auth";
 
-const AppUserContext = createContext<PublicUser | null>(null);
+type AppUserContextValue = {
+  user: PublicUser;
+  refreshUser: () => Promise<void>;
+  patchUser: (patch: Partial<PublicUser>) => void;
+};
+
+const AppUserContext = createContext<AppUserContextValue | null>(null);
 
 export function AppUserProvider({
-  user,
+  user: initialUser,
   children,
 }: {
   user: PublicUser;
   children: React.ReactNode;
 }) {
-  return <AppUserContext.Provider value={user}>{children}</AppUserContext.Provider>;
+  const [user, setUser] = useState(initialUser);
+
+  const refreshUser = useCallback(async () => {
+    const me = await fetchMe();
+    if (me) setUser(me);
+  }, []);
+
+  const patchUser = useCallback((patch: Partial<PublicUser>) => {
+    setUser((prev) => ({ ...prev, ...patch }));
+  }, []);
+
+  const value = useMemo(
+    () => ({ user, refreshUser, patchUser }),
+    [user, refreshUser, patchUser],
+  );
+
+  return <AppUserContext.Provider value={value}>{children}</AppUserContext.Provider>;
 }
 
 export function useAppUser(): PublicUser {
-  const user = useContext(AppUserContext);
-  if (!user) {
+  const ctx = useContext(AppUserContext);
+  if (!ctx) {
     throw new Error("useAppUser must be used within AppShell");
   }
-  return user;
+  return ctx.user;
+}
+
+export function useAppUserActions() {
+  const ctx = useContext(AppUserContext);
+  if (!ctx) {
+    throw new Error("useAppUserActions must be used within AppShell");
+  }
+  return { refreshUser: ctx.refreshUser, patchUser: ctx.patchUser };
 }

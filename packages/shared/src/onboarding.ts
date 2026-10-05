@@ -63,73 +63,7 @@ export const SUGGESTED_SKILL_SLUGS: Record<ExperienceLevel, readonly string[]> =
   advanced: ["system-design", "docker", "testing", "go"],
 };
 
-export const STARTER_ROADMAPS = [
-  {
-    slug: "programming-foundations",
-    name: "Programming Foundations",
-    level: "beginner",
-    summary: "How software works, your first programs, and Git.",
-    weeks: 6,
-    nodes: ["Computers", "Programming", "Git", "Debugging"],
-    skillSlugs: ["git"],
-  },
-  {
-    slug: "frontend-developer",
-    name: "Frontend Developer",
-    level: "beginner",
-    summary: "From a web page to a React app you can ship.",
-    weeks: 12,
-    nodes: ["HTML", "CSS", "JavaScript", "TypeScript", "React", "Next.js"],
-    skillSlugs: ["html", "css", "javascript", "typescript", "react", "nextjs"],
-  },
-  {
-    slug: "typescript",
-    name: "TypeScript",
-    level: "intermediate",
-    summary: "Types, generics, and patterns you can use every day.",
-    weeks: 6,
-    nodes: ["JavaScript", "Types", "Generics", "Patterns"],
-    skillSlugs: ["javascript", "typescript"],
-  },
-  {
-    slug: "node-backend",
-    name: "Node Backend",
-    level: "intermediate",
-    summary: "APIs, auth, and Postgres with Node.js.",
-    weeks: 10,
-    nodes: ["JavaScript", "Node", "APIs", "Auth", "Postgres"],
-    skillSlugs: ["javascript", "node", "apis", "auth", "postgres", "sql"],
-  },
-  {
-    slug: "cloud-engineering",
-    name: "Cloud Engineering",
-    level: "intermediate",
-    summary: "Linux, containers, and how software gets to production.",
-    weeks: 10,
-    nodes: ["Linux", "Docker", "CI/CD", "Cloud"],
-    skillSlugs: ["linux", "docker", "git", "cloud"],
-  },
-  {
-    slug: "go-services",
-    name: "Go Services",
-    level: "intermediate",
-    summary: "Small, reliable services in Go.",
-    weeks: 8,
-    nodes: ["Syntax", "Concurrency", "HTTP", "Deploy"],
-    skillSlugs: ["go", "apis", "docker"],
-  },
-  {
-    slug: "system-design",
-    name: "System Design",
-    level: "advanced",
-    summary: "Scaling, tradeoffs, and how large systems are shaped.",
-    weeks: 8,
-    nodes: ["Foundations", "Scaling", "Tradeoffs", "Case studies"],
-    skillSlugs: ["system-design", "sql", "apis"],
-  },
-] as const;
-
-export type StarterRoadmap = (typeof STARTER_ROADMAPS)[number];
+import { STARTER_ROADMAPS } from "./roadmaps.js";
 
 export type LearnSkill = {
   slug: string;
@@ -201,39 +135,6 @@ export function findCatalogSkill(nameOrSlug: string): CatalogSkill | null {
 
 export function levelById(id: string) {
   return EXPERIENCE_LEVELS.find((level) => level.id === id) ?? null;
-}
-
-export function roadmapBySlug(slug: string): StarterRoadmap | null {
-  return STARTER_ROADMAPS.find((roadmap) => roadmap.slug === slug) ?? null;
-}
-
-export function roadmapMatchScore(
-  roadmap: { skillSlugs: readonly string[]; level: ExperienceLevel },
-  input: { skillSlugs: readonly string[]; experienceLevel: ExperienceLevel | null },
-): number {
-  const selected = new Set(input.skillSlugs);
-  let overlap = 0;
-  for (const slug of roadmap.skillSlugs) {
-    if (selected.has(slug)) overlap += 1;
-  }
-  const levelBoost = input.experienceLevel && roadmap.level === input.experienceLevel ? 2 : 0;
-  return overlap * 3 + levelBoost;
-}
-
-export function recommendRoadmap(input: {
-  skillSlugs: readonly string[];
-  experienceLevel: ExperienceLevel | null;
-}): StarterRoadmap | null {
-  let best: StarterRoadmap | null = null;
-  let bestScore = 0;
-  for (const roadmap of STARTER_ROADMAPS) {
-    const score = roadmapMatchScore(roadmap, input);
-    if (score > bestScore) {
-      best = roadmap;
-      bestScore = score;
-    }
-  }
-  return best;
 }
 
 export const PRACTICE_DAYS = [

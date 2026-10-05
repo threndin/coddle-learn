@@ -6,6 +6,7 @@ import { fetchMe, type PublicUser } from "@/lib/auth";
 import { AppUserProvider } from "@/components/app/app-user-context";
 import { AppSidebar } from "@/components/app/app-sidebar";
 import { AppHeader } from "@/components/app/app-header";
+import { ToastProvider } from "@/components/app/toast";
 import { PageLoader } from "@/components/page-loader";
 
 const COLLAPSE_KEY = "learn_sidebar_collapsed";
@@ -92,22 +93,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <AppUserProvider user={user}>
-      <div className="min-h-svh bg-surface-subtle">
-        <AppSidebar
-          collapsed={collapsed}
-          mobileOpen={mobileOpen}
-          onNavigate={() => setMobileOpen(false)}
-        />
-        <div
-          className={[
-            "flex min-h-svh flex-col transition-[padding] duration-200 ease-out",
-            collapsed ? "lg:pl-[4.5rem]" : "lg:pl-60",
-          ].join(" ")}
-        >
-          <AppHeader collapsed={collapsed} onToggleSidebar={toggleSidebar} />
-          <main className="flex-1">{children}</main>
+      <ToastProvider>
+        <div className="min-h-svh bg-surface-subtle">
+          <AppSidebar
+            collapsed={collapsed}
+            mobileOpen={mobileOpen}
+            onNavigate={() => setMobileOpen(false)}
+          />
+          <div
+            className={[
+              "flex min-h-svh flex-col transition-[padding] duration-200 ease-out",
+              collapsed ? "lg:pl-[4.5rem]" : "lg:pl-60",
+            ].join(" ")}
+          >
+            <AppHeader collapsed={collapsed} onToggleSidebar={toggleSidebar} />
+            <main className="flex-1">{children}</main>
+          </div>
         </div>
-      </div>
+      </ToastProvider>
     </AppUserProvider>
   );
 }

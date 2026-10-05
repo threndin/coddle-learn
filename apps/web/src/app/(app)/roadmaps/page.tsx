@@ -1,10 +1,7 @@
-import { ComingSoon } from "@/components/app/coming-soon";
+import { RoadmapsCatalog } from "@/components/roadmaps/roadmaps-catalog";
+import { loadRoadmapCatalog } from "@/lib/roadmaps-server";
 
-export default function RoadmapsPage() {
-  return (
-    <ComingSoon
-      title="Roadmaps"
-      description="Structured learning paths with nodes, resources, and progress. The catalog is next on the build list."
-    />
-  );
+export default async function RoadmapsPage() {
+  const roadmaps = await loadRoadmapCatalog();
+  return <RoadmapsCatalog initialRoadmaps={roadmaps} />;
 }

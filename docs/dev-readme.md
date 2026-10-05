@@ -61,13 +61,13 @@ Empty states point at roadmaps, courses, and resources. Sign out returns to the 
 ### Roadmaps
 
 **5. Roadmap catalog** — `/roadmaps`  
-Paths to choose from, with difficulty and a short description. This is the main way into the product.
+Paths to choose from, with difficulty, step count, and progress if enrolled. This is the main way into the product.
 
 **6. Roadmap** — `/roadmaps/[slug]`  
-Ordered nodes, prerequisites, and completion percentage. Actions: start, resume the next open node.
+Ordered steps on a vertical timeline, completion percentage, and an in-page step panel. Actions: start, select a step, mark complete or skip. Optional deep-link `?step=slug` stays on this page (no separate step routes).
 
-**7. Roadmap node** — `/roadmaps/[slug]/nodes/[nodeSlug]`  
-One step: description, prerequisites, and the courses, lessons, resources, docs, articles, videos, projects, challenges, and assessments attached to it. Actions: complete, skip, save a resource. Completing or skipping updates the percentage on the roadmap and the dashboard.
+**7. Roadmap step (in-page)** — same URL as the roadmap  
+Selecting a step opens the detail panel: summary, estimated time, curated external resources, Complete, and Skip. Completing or skipping updates progress on the roadmap and the dashboard.
 
 ### Courses
 
@@ -268,7 +268,6 @@ onboarding/page.tsx
 dashboard/page.tsx
 roadmaps/page.tsx
 roadmaps/[slug]/page.tsx
-roadmaps/[slug]/nodes/[nodeSlug]/page.tsx
 courses/page.tsx
 courses/[slug]/page.tsx
 courses/[slug]/lessons/[lessonSlug]/page.tsx
