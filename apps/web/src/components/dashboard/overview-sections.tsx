@@ -18,6 +18,14 @@ import {
 } from "@/lib/roadmaps";
 import { useToast } from "@/components/app/toast";
 
+type ContinueCourse = {
+  slug: string;
+  title: string;
+  progressPercent: number;
+  nextLesson: { slug: string; title: string; moduleSlug?: string } | null;
+  completedAt: string | null;
+};
+
 export function OverviewSections({ user }: { user: PublicUser }) {
   const { pushToast } = useToast();
   const starter = user.startingRoadmapSlug
@@ -28,6 +36,7 @@ export function OverviewSections({ user }: { user: PublicUser }) {
     null,
   );
   const [enrolled, setEnrolled] = useState<EnrolledRoadmapSummary[]>([]);
+  const [continueCourse, setContinueCourse] = useState<ContinueCourse | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [busyPrimary, setBusyPrimary] = useState<string | null>(null);
 
@@ -35,15 +44,29 @@ export function OverviewSections({ user }: { user: PublicUser }) {
     let cancelled = false;
     void (async () => {
       try {
-        const value = await fetchContinueLearning();
-        if (!cancelled) {
-          setContinueLearning(value.continue);
-          setEnrolled(value.enrolled);
+        const [roadmapValue, courseRes] = await Promise.all([
+          fetchContinueLearning(),
+          fetch("/api/courses/continue", {
+            credentials: "include",
+            cache: "no-store",
+          }),
+        ]);
+        if (cancelled) return;
+        setContinueLearning(roadmapValue.continue);
+        setEnrolled(roadmapValue.enrolled);
+        if (courseRes.ok) {
+          const body = (await courseRes.json()) as {
+            data: { continue: ContinueCourse | null };
+          };
+          setContinueCourse(body.data.continue);
+        } else {
+          setContinueCourse(null);
         }
       } catch {
         if (!cancelled) {
           setContinueLearning(null);
           setEnrolled([]);
+          setContinueCourse(null);
         }
       } finally {
         if (!cancelled) setLoaded(true);
@@ -219,12 +242,46 @@ export function OverviewSections({ user }: { user: PublicUser }) {
       ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <EmptyPanel
-          title="Courses"
-          body="Courses you start will appear here."
-          href="/courses"
-          cta="Browse courses"
-        />
+        {continueCourse ? (
+          <article className="rounded-2xl border border-border bg-surface p-5">
+            <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-brand">
+              Courses
+            </p>
+            <h2 className="mt-2 font-display text-lg font-bold text-ink">
+              {continueCourse.title}
+            </h2>
+            <p className="mt-2 text-sm text-ink-muted">
+              {continueCourse.nextLesson
+                ? `Next: ${continueCourse.nextLesson.title}`
+                : continueCourse.completedAt
+                  ? "Course complete — review anytime."
+                  : "Continue where you left off."}
+            </p>
+            <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-surface-subtle">
+              <div
+                className="h-full rounded-full bg-brand"
+                style={{ width: `${continueCourse.progressPercent}%` }}
+              />
+            </div>
+            <Link
+              href={
+                continueCourse.nextLesson?.moduleSlug
+                  ? `/courses/${continueCourse.slug}?module=${encodeURIComponent(continueCourse.nextLesson.moduleSlug)}&lesson=${encodeURIComponent(continueCourse.nextLesson.slug)}`
+                  : `/courses/${continueCourse.slug}`
+              }
+              className="mt-4 inline-flex rounded-xl bg-brand px-3 py-2 text-xs font-semibold text-white"
+            >
+              {continueCourse.completedAt ? "Review course" : "Resume course"}
+            </Link>
+          </article>
+        ) : (
+          <EmptyPanel
+            title="Courses"
+            body="Courses you start will appear here."
+            href="/courses"
+            cta="Browse courses"
+          />
+        )}
         <EmptyPanel
           title="Resources"
           body="Saved links and bookmarks land here."

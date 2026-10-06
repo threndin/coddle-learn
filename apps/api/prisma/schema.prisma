@@ -28,17 +28,21 @@ model User {
   roadmaps              UserRoadmap[]
   stepProgress          UserStepProgress[]
   resourceBookmarks     UserResourceBookmark[]
+  createdCourses        Course[]               @relation("CourseCreator")
+  courseEnrollments     UserCourse[]
+  lessonProgress        UserLessonProgress[]
 
   @@map("users")
 }
 
 model Skill {
-  id        String      @id @default(cuid())
-  slug      String      @unique
+  id        String        @id @default(cuid())
+  slug      String        @unique
   name      String
   category  String
-  createdAt DateTime    @default(now()) @map("created_at")
+  createdAt DateTime      @default(now()) @map("created_at")
   users     UserSkill[]
+  courses   CourseSkill[]
 
   @@map("skills")
 }
@@ -162,4 +166,105 @@ model OAuthState {
   createdAt  DateTime  @default(now()) @map("created_at")
 
   @@map("oauth_states")
+}
+
+model Course {
+  id              String        @id @default(cuid())
+  slug            String        @unique
+  title           String
+  summary         String
+  level           String
+  thumbnailUrl    String        @map("thumbnail_url")
+  estimatedHours  Int           @map("estimated_hours")
+  sortOrder       Int           @map("sort_order")
+  publishedAt     DateTime?     @map("published_at")
+  createdByUserId String        @map("created_by_user_id")
+  createdBy       User          @relation("CourseCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+  modules         CourseModule[]
+  skills          CourseSkill[]
+  enrollments     UserCourse[]
+
+  @@index([createdByUserId])
+  @@index([sortOrder])
+  @@map("courses")
+}
+
+model CourseModule {
+  id        String         @id @default(cuid())
+  courseId  String         @map("course_id")
+  course    Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  slug      String
+  title     String
+  summary   String
+  sortOrder Int            @map("sort_order")
+  createdAt DateTime       @default(now()) @map("created_at")
+  updatedAt DateTime       @updatedAt @map("updated_at")
+  lessons   CourseLesson[]
+
+  @@unique([courseId, slug])
+  @@index([courseId, sortOrder])
+  @@map("course_modules")
+}
+
+model CourseLesson {
+  id               String               @id @default(cuid())
+  moduleId         String               @map("module_id")
+  module           CourseModule         @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  slug             String
+  title            String
+  summary          String
+  content          String
+  estimatedMinutes Int                  @map("estimated_minutes")
+  sortOrder        Int                  @map("sort_order")
+  createdAt        DateTime             @default(now()) @map("created_at")
+  updatedAt        DateTime             @updatedAt @map("updated_at")
+  progress         UserLessonProgress[]
+
+  @@unique([moduleId, slug])
+  @@index([moduleId, sortOrder])
+  @@map("course_lessons")
+}
+
+model CourseSkill {
+  courseId  String   @map("course_id")
+  skillId   String   @map("skill_id")
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  skill     Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@id([courseId, skillId])
+  @@index([skillId])
+  @@map("course_skills")
+}
+
+model UserCourse {
+  id          String    @id @default(cuid())
+  userId      String    @map("user_id")
+  courseId    String    @map("course_id")
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  startedAt   DateTime  @default(now()) @map("started_at")
+  completedAt DateTime? @map("completed_at")
+
+  @@unique([userId, courseId])
+  @@index([courseId])
+  @@map("user_courses")
+}
+
+model UserLessonProgress {
+  id            String       @id @default(cuid())
+  userId        String       @map("user_id")
+  lessonId      String       @map("lesson_id")
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson        CourseLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  status        String
+  pointsAwarded Int          @default(0) @map("points_awarded")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+
+  @@unique([userId, lessonId])
+  @@index([lessonId])
+  @@map("user_lesson_progress")
 }
