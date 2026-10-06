@@ -1,10 +1,7 @@
-import { ComingSoon } from "@/components/app/coming-soon";
+import { CoursesCatalog } from "@/components/courses/courses-catalog";
+import { loadCourseCatalog } from "@/lib/courses-server";
 
-export default function CoursesPage() {
-  return (
-    <ComingSoon
-      title="Courses"
-      description="Contributor-built courses with modules, lessons, and practice. This catalog will land soon."
-    />
-  );
+export default async function CoursesPage() {
+  const courses = await loadCourseCatalog();
+  return <CoursesCatalog initialCourses={courses} />;
 }
