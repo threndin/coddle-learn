@@ -5,6 +5,7 @@ import helmet from "helmet";
 import morgan from "morgan";
 import { config } from "./config.js";
 import { authRouter } from "./features/auth/auth.routes.js";
+import { coursesRouter } from "./features/courses/courses.routes.js";
 import { healthRouter } from "./features/health/health.routes.js";
 import { onboardingRouter } from "./features/onboarding/onboarding.routes.js";
 import { roadmapsRouter } from "./features/roadmaps/roadmaps.routes.js";
@@ -30,6 +31,7 @@ export function createApp(): Express {
   app.use("/auth", authRouter);
   app.use("/onboarding", onboardingRouter);
   app.use("/roadmaps", roadmapsRouter);
+  app.use("/courses", coursesRouter);
 
   app.use(errorHandler);
 

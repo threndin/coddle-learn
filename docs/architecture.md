@@ -26,6 +26,7 @@ The Learn API is organized by feature under `apps/api/src`. Each feature uses th
 | `features/users/` | User repository + public user mapping |
 | `features/onboarding/` | `POST /onboarding` |
 | `features/roadmaps/` | Catalog, detail, start, step progress (`/roadmaps/*`) |
+| `features/courses/` | Catalog, detail, start, lesson progress (`/courses/*`) |
 
 | Layer | Responsibility |
 |---|---|
@@ -34,7 +35,7 @@ The Learn API is organized by feature under `apps/api/src`. Each feature uses th
 | `*.service.ts` | Business rules and orchestration |
 | `*.repository.ts` | Prisma / database access |
 
-HTTP paths stay `/health`, `/auth/*`, `/onboarding`, and `/roadmaps/*`. New domains should add a folder under `features/` with these layers, then mount the router in `app.ts`.
+HTTP paths stay `/health`, `/auth/*`, `/onboarding`, `/roadmaps/*`, and `/courses/*`. New domains should add a folder under `features/` with these layers, then mount the router in `app.ts`.
 
 ## Tooling
 
@@ -58,6 +59,8 @@ pnpm --filter @coddle/api exec prisma db seed
 The web app proxies `/api/*` to the Express API (`API_URL`, default `http://localhost:4000`) so session cookies stay on the Learn origin.
 
 Roadmap catalog rows (`Roadmap`, `RoadmapStep`) are seeded from `@coddle/shared` starter data. Learner progress lives in `UserRoadmap` and `UserStepProgress`.
+
+Course catalog rows (`Course`, `CourseModule`, `CourseLesson`, `CourseSkill`) are seeded the same way. Thumbnails upload to Cloudflare R2 under `coddle-learn/courses/{slug}/thumbnail.svg` and are served from `R2_PUBLIC_URL`. Seeded courses set `createdByUserId` to the Learn user matching `SEED_COURSE_CREATOR_EMAIL`.
 
 ## Authentication (Coddle account sync)
 
@@ -94,6 +97,8 @@ Learn /login
 | `WEB_ORIGIN` | `apps/api` | Learn web origin (cookies + redirects) |
 | `API_URL` | `apps/web` | Express base for Next rewrites |
 | `NEXT_PUBLIC_CODDLE_APP_URL` | `apps/web` | Signup link on login page |
+| `R2_*` | `apps/api` | Cloudflare R2 credentials + `cdn.coddle.dev` public URL |
+| `SEED_COURSE_CREATOR_EMAIL` | `apps/api` | Learn user email used as course creator in seed |
 
 ### Env (Coddle)
 
@@ -114,5 +119,6 @@ Locally, Learn web defaults to port `3002` so Coddle can stay on `3000`. Point `
 - Coddle SSO start/finish/exchange, `/auth/me`, logout
 - Onboarding persistence (`POST /onboarding`)
 - Roadmap catalog seed + interactive `/roadmaps` and `/roadmaps/[slug]` (in-page step panel)
+- Course catalog seed + interactive `/courses` and `/courses/[slug]` (modules, markdown lessons, R2 thumbnails, creator, linked skills)
 - Learn `/login`, `/onboarding`, and `/dashboard`
 - Coddle `/sso/learn` bridge page

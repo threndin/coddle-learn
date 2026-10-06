@@ -32,7 +32,32 @@ export const config = {
   ),
   cookieSecure: process.env.COOKIE_SECURE === "true" || isProd,
   isProd,
+  seedCourseCreatorEmail:
+    process.env.SEED_COURSE_CREATOR_EMAIL ?? "kvngjohnny10@gmail.com",
+  r2: {
+    accountId: process.env.R2_ACCOUNT_ID ?? "",
+    accessKeyId: process.env.R2_ACCESS_KEY_ID ?? "",
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY ?? "",
+    bucket: process.env.R2_BUCKET ?? "coddle",
+    endpoint: (process.env.R2_ENDPOINT ?? "").replace(/\/$/, ""),
+    publicUrl: (process.env.R2_PUBLIC_URL ?? "https://cdn.coddle.dev").replace(
+      /\/$/,
+      "",
+    ),
+    /** All Learn objects live under this prefix in the shared bucket. */
+    keyPrefix: "coddle-learn",
+  },
 } as const;
+
+export function isR2Configured(): boolean {
+  return Boolean(
+    config.r2.accountId &&
+      config.r2.accessKeyId &&
+      config.r2.secretAccessKey &&
+      config.r2.endpoint &&
+      config.r2.bucket,
+  );
+}
 
 if (
   config.isProd &&
