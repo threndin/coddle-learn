@@ -4,6 +4,15 @@ const apiUrl = (process.env.API_URL ?? "http://localhost:4000").replace(/\/$/, "
 
 const nextConfig: NextConfig = {
   transpilePackages: ["@coddle/shared"],
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "cdn.coddle.dev",
+        pathname: "/coddle-learn/**",
+      },
+    ],
+  },
   async rewrites() {
     return [
       {
