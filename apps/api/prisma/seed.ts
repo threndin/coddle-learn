@@ -133,6 +133,7 @@ async function seedCourses() {
   for (const [index, course] of STARTER_COURSES.entries()) {
     const thumbnailUrl = await uploadCourseThumbnail(course);
 
+    const now = new Date();
     const saved = await prisma.course.upsert({
       where: { slug: course.slug },
       create: {
@@ -140,20 +141,26 @@ async function seedCourses() {
         title: course.title,
         summary: course.summary,
         level: course.level,
+        status: "published",
+        accent: course.accent,
         thumbnailUrl,
         estimatedHours: course.estimatedHours,
         sortOrder: index,
-        publishedAt: new Date(),
+        submittedAt: now,
+        reviewedAt: now,
+        publishedAt: now,
         createdByUserId: creator.id,
       },
       update: {
         title: course.title,
         summary: course.summary,
         level: course.level,
+        status: "published",
+        accent: course.accent,
         thumbnailUrl,
+        customThumbnail: false,
         estimatedHours: course.estimatedHours,
         sortOrder: index,
-        publishedAt: new Date(),
         createdByUserId: creator.id,
       },
     });
@@ -238,11 +245,6 @@ async function seedCourses() {
       });
     }
   }
-
-  const keepCourseSlugs = STARTER_COURSES.map((course) => course.slug);
-  await prisma.course.deleteMany({
-    where: { slug: { notIn: keepCourseSlugs } },
-  });
 
   console.log(
     `Seeded ${STARTER_COURSES.length} courses (creator: ${creator.email}).`,

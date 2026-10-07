@@ -20,6 +20,7 @@ export type NavIconId =
   | "badges"
   | "notifications"
   | "profile"
+  | "studio"
   | "settings";
 
 export const APP_NAV: AppNavItem[] = [
@@ -88,6 +89,12 @@ export const APP_NAV: AppNavItem[] = [
     label: "Notifications",
     description: "Updates and replies",
     icon: "notifications",
+  },
+  {
+    href: "/studio/courses",
+    label: "Studio",
+    description: "Create and manage your courses",
+    icon: "studio",
   },
   {
     href: "/profile",
@@ -224,6 +231,14 @@ export function NavIcon({
         <svg {...common}>
           <circle cx="12" cy="8" r="3.2" />
           <path d="M5.2 19c1.1-3.2 3.3-4.8 6.8-4.8s5.7 1.6 6.8 4.8" />
+        </svg>
+      );
+    case "studio":
+      return (
+        <svg {...common}>
+          <path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4Z" />
+          <path d="m13.5 6.5 4 4" />
+          <path d="M14 20h6" />
         </svg>
       );
     case "settings":

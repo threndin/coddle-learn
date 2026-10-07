@@ -2,9 +2,12 @@ import { Router } from "express";
 import { asyncHandler } from "../../shared/http/async-handler.js";
 import { requireAuth, requireCsrf } from "../auth/auth.middleware.js";
 import {
+  deleteReviewHandler,
   getContinueHandler,
   getCourseHandler,
   listCoursesHandler,
+  listReviewsHandler,
+  saveReviewHandler,
   startCourseHandler,
   updateProgressHandler,
 } from "./courses.controller.js";
@@ -20,4 +23,12 @@ coursesRouter.post(
   requireAuth,
   requireCsrf,
   asyncHandler(updateProgressHandler),
+);
+coursesRouter.get("/:slug/reviews", requireAuth, asyncHandler(listReviewsHandler));
+coursesRouter.put("/:slug/reviews", requireAuth, requireCsrf, asyncHandler(saveReviewHandler));
+coursesRouter.delete(
+  "/:slug/reviews",
+  requireAuth,
+  requireCsrf,
+  asyncHandler(deleteReviewHandler),
 );

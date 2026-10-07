@@ -1,4 +1,10 @@
-import type { ExperienceLevel, LessonProgressStatus } from "@coddle/shared";
+import type {
+  CourseStatus,
+  ExperienceLevel,
+  LessonProgressStatus,
+  ReviewSort,
+} from "@coddle/shared";
+import { apiRequest } from "@/lib/api-client";
 
 export type CourseCreator = {
   id: string;
@@ -14,6 +20,11 @@ export type CourseSkill = {
 
 export type LessonUiStatus = "locked" | "current" | "completed" | "skipped";
 
+export type CourseRating = {
+  average: number;
+  count: number;
+};
+
 export type CourseCatalogItem = {
   slug: string;
   title: string;
@@ -21,6 +32,8 @@ export type CourseCatalogItem = {
   level: ExperienceLevel | string;
   thumbnailUrl: string;
   estimatedHours: number;
+  publishedAt: string | null;
+  rating: CourseRating;
   createdBy: CourseCreator;
   skills: CourseSkill[];
   skillSlugs: string[];
@@ -59,8 +72,17 @@ export type CourseDetail = {
   title: string;
   summary: string;
   level: ExperienceLevel | string;
+  status: CourseStatus;
   thumbnailUrl: string;
   estimatedHours: number;
+  publishedAt: string | null;
+  updatedAt: string;
+  rating: CourseRating;
+  viewer: {
+    isCreator: boolean;
+    studioCourseId: string | null;
+    canStart: boolean;
+  };
   createdBy: CourseCreator;
   skills: CourseSkill[];
   enrolled: boolean;
@@ -164,4 +186,53 @@ export async function updateCourseProgress(
     pointsAwarded: body.data.pointsAwarded ?? 0,
     courseCompleteBonus: body.data.courseCompleteBonus ?? 0,
   };
+}
+
+export type CourseReview = {
+  id: string;
+  rating: number;
+  body: string;
+  createdAt: string;
+  updatedAt: string;
+  edited: boolean;
+  author: CourseCreator;
+  completedCourse: boolean;
+  isMine: boolean;
+};
+
+export type ReviewSummary = CourseRating & {
+  distribution: Record<1 | 2 | 3 | 4 | 5, number>;
+};
+
+export type ReviewEligibility =
+  | { canReview: true; reason: null }
+  | { canReview: false; reason: "creator" | "not_enrolled" | "not_published" };
+
+export type CourseReviewsPage = {
+  summary: ReviewSummary;
+  reviews: CourseReview[];
+  myReview: CourseReview | null;
+  eligibility: ReviewEligibility;
+  page: number;
+  hasMore: boolean;
+  sort: ReviewSort;
+};
+
+const reviewsPath = (slug: string) => `/courses/${encodeURIComponent(slug)}/reviews`;
+
+export function fetchCourseReviews(slug: string, sort: ReviewSort, page = 1) {
+  return apiRequest<CourseReviewsPage>(
+    `${reviewsPath(slug)}?sort=${encodeURIComponent(sort)}&page=${page}`,
+  );
+}
+
+export function saveCourseReview(slug: string, input: { rating: number; body: string }) {
+  return apiRequest<{ review: CourseReview; summary: ReviewSummary }>(reviewsPath(slug), {
+    method: "PUT",
+    json: input,
+  });
+}
+
+export function deleteCourseReview(slug: string) {
+  return apiRequest<{ summary: ReviewSummary }>(reviewsPath(slug), { method: "DELETE" });
 }

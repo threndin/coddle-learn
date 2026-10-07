@@ -28,9 +28,9 @@ export function HeaderAuth() {
   if (!ready) {
     return (
       <div className="flex items-center gap-2 sm:gap-3">
-        <span className="rounded-xl px-3 py-2 text-sm font-semibold text-white/40 sm:px-4">
+        {/* <span className="rounded-xl px-3 py-2 text-sm font-semibold text-white/40 sm:px-4">
           …
-        </span>
+        </span> */}
         <span className="rounded-xl border border-white/15 px-4 py-2 text-sm font-semibold text-white/40">
           Start learning
         </span>
@@ -60,12 +60,6 @@ export function HeaderAuth() {
 
   return (
     <div className="flex items-center gap-2 sm:gap-3">
-      <Link
-        href="/login"
-        className="rounded-xl px-3 py-2 text-sm font-semibold text-white/80 transition hover:text-white sm:px-4"
-      >
-        Sign in
-      </Link>
       <Link
         href="/login"
         className="rounded-xl border border-white/25 px-4 py-2 text-sm font-semibold text-white transition hover:border-white/50 hover:bg-white/5"
