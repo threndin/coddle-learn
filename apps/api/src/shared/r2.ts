@@ -56,15 +56,47 @@ export async function uploadToR2(input: {
   return { key, url: `${config.r2.publicUrl}/${key}` };
 }
 
+function wrapTitle(title: string, maxChars: number, maxLines: number): string[] {
+  const words = title.trim().split(/\s+/).filter(Boolean);
+  const lines: string[] = [];
+  let current = "";
+  for (const word of words) {
+    const next = current ? `${current} ${word}` : word;
+    if (next.length > maxChars && current) {
+      lines.push(current);
+      current = word;
+    } else {
+      current = next;
+    }
+  }
+  if (current) lines.push(current);
+  if (lines.length <= maxLines) return lines;
+  const kept = lines.slice(0, maxLines);
+  kept[maxLines - 1] = `${kept[maxLines - 1]!.replace(/\s+\S*$/, "")}…`;
+  return kept;
+}
+
 export function courseThumbnailSvg(input: {
   title: string;
   level: string;
   accent: string;
 }): string {
-  const title = escapeXml(input.title);
-  const level = escapeXml(input.level);
+  const label = escapeXml(input.title);
+  const level = escapeXml(input.level.charAt(0).toUpperCase() + input.level.slice(1));
+  const lines = wrapTitle(input.title, 24, 3);
+  const fontSize = lines.length >= 3 ? 56 : 64;
+  const lineHeight = Math.round(fontSize * 1.12);
+  const blockTop = 315 - ((lines.length - 1) * lineHeight) / 2;
+  const titleSpans = lines
+    .map(
+      (line, index) =>
+        `<tspan x="72" y="${Math.round(blockTop + index * lineHeight)}">${escapeXml(line)}</tspan>`,
+    )
+    .join("");
+  const levelY = Math.round(blockTop + (lines.length - 1) * lineHeight + 72);
+
   return `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="${title}">
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="${label}">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="${input.accent}"/>
@@ -75,9 +107,42 @@ export function courseThumbnailSvg(input: {
   <circle cx="980" cy="120" r="180" fill="rgba(255,255,255,0.08)"/>
   <circle cx="160" cy="520" r="220" fill="rgba(255,255,255,0.06)"/>
   <text x="72" y="120" fill="rgba(255,255,255,0.78)" font-family="ui-sans-serif, system-ui, sans-serif" font-size="28" font-weight="700" letter-spacing="4">CODDLE LEARN</text>
-  <text x="72" y="300" fill="#FFFFFF" font-family="ui-sans-serif, system-ui, sans-serif" font-size="64" font-weight="800">${title}</text>
-  <text x="72" y="370" fill="rgba(255,255,255,0.82)" font-family="ui-sans-serif, system-ui, sans-serif" font-size="28" font-weight="600">${level}</text>
+  <text fill="#FFFFFF" font-family="ui-sans-serif, system-ui, sans-serif" font-size="${fontSize}" font-weight="800">${titleSpans}</text>
+  <text x="72" y="${levelY}" fill="rgba(255,255,255,0.82)" font-family="ui-sans-serif, system-ui, sans-serif" font-size="28" font-weight="600">${level}</text>
 </svg>`;
+}
+
+/**
+ * Store a generated course thumbnail. Without R2 (local dev), fall back to an
+ * inline data URI so courses still render.
+ */
+export async function storeGeneratedThumbnail(input: {
+  courseId: string;
+  title: string;
+  level: string;
+  accent: string;
+}): Promise<string> {
+  const svg = courseThumbnailSvg(input);
+  if (!isR2Configured()) {
+    return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+  }
+  const { url } = await uploadToR2({
+    path: `courses/${input.courseId}/thumbnail-${Date.now().toString(36)}.svg`,
+    body: svg,
+    contentType: "image/svg+xml",
+  });
+  return url;
+}
+
+const IMAGE_EXTENSIONS: Record<string, string> = {
+  "image/png": "png",
+  "image/jpeg": "jpg",
+  "image/webp": "webp",
+  "image/gif": "gif",
+};
+
+export function imageExtension(contentType: string): string | null {
+  return IMAGE_EXTENSIONS[contentType] ?? null;
 }
 
 function escapeXml(value: string): string {
