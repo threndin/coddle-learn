@@ -201,9 +201,10 @@ function HeroChips({ reduceMotion }: { reduceMotion: boolean | null }) {
   }, [isMobile]);
 
   const intensities = useMemo(() => {
-    if (focus === null) return visible.map(() => 0);
+    const target = focus === null ? undefined : visible[focus];
+    if (!target) return visible.map(() => 0);
     return visible.map((chip, index) => {
-      const dist = chipDistance(chip, visible[focus]!);
+      const dist = chipDistance(chip, target);
       const reach = isMobile ? 42 : 34;
       if (dist > reach) return 0;
       const falloff = 1 - dist / reach;
@@ -353,8 +354,7 @@ export function Hero() {
             </span>
           </h1>
 
-          <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-white/65 sm:text-lg">
-            Follow structured roadmaps, learn from quality resources, build real
+          <p className="mx-auto mt-6 max-w-2xl text-sm leading-relaxed text-white/65 sm:text-lg">            Follow structured roadmaps, learn from quality resources, build real
             projects, and develop the skills to grow your career.
           </p>
 

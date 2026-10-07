@@ -9,10 +9,14 @@ import {
   formatMinutes,
   levelById,
 } from "@coddle/shared";
+import { COURSE_STATUS_META, type CourseStatus } from "@coddle/shared";
 import { useAppUserActions } from "@/components/app/app-user-context";
 import { useToast } from "@/components/app/toast";
+import { CourseReviews } from "@/components/courses/course-reviews";
 import { LessonMarkdown } from "@/components/courses/lesson-markdown";
 import { ProfileAvatar } from "@/components/onboarding/profile-avatar";
+import { Icon } from "@/components/ui/icon";
+import { Stars } from "@/components/ui/stars";
 import {
   startCourse,
   updateCourseProgress,
@@ -181,6 +185,10 @@ export function CourseDetailView({
 
   const levelLabel = levelById(String(course.level));
   const selectedStatus = selected?.lesson.status;
+  const isPreview = course.status !== "published" && course.status !== "archived";
+  const editHref = course.viewer.studioCourseId
+    ? `/studio/courses/${course.viewer.studioCourseId}`
+    : null;
 
   const modulesPanel = (
     <aside className="flex max-h-[min(32rem,calc(100vh-8rem))] flex-col rounded-2xl border border-border bg-surface p-4 lg:sticky lg:top-24">
@@ -242,6 +250,9 @@ export function CourseDetailView({
 
   return (
     <div className="mx-auto w-full max-w-7xl px-5 py-8 sm:px-8">
+      {isPreview ? (
+        <PreviewBanner status={course.status} editHref={editHref} />
+      ) : null}
       <div className="overflow-hidden rounded-3xl border border-border bg-surface">
         <div className="relative aspect-[21/9] max-h-[280px] w-full overflow-hidden bg-surface-subtle sm:aspect-[3/1]">
           {/* R2 SVG thumbnails; hosts vary with CDN config. */}
@@ -276,7 +287,21 @@ export function CourseDetailView({
                 <p className="text-xs text-ink-muted">Created by</p>
               </div>
             </div>
-            <span className="text-xs text-ink-muted">~{course.estimatedHours} hours</span>
+            <span className="text-xs text-ink-muted">
+              ~{course.estimatedHours} {course.estimatedHours === 1 ? "hour" : "hours"}
+            </span>
+            {course.rating.count > 0 ? (
+              <a
+                href="#reviews"
+                className="inline-flex items-center gap-1.5 rounded-full bg-surface-subtle px-2.5 py-1 text-xs transition hover:bg-brand-soft"
+              >
+                <Stars value={course.rating.average} size="xs" />
+                <span className="font-bold tabular-nums text-ink">
+                  {course.rating.average.toFixed(1)}
+                </span>
+                <span className="text-ink-muted">({course.rating.count})</span>
+              </a>
+            ) : null}
             {course.enrolled ? (
               <span className="text-xs font-semibold tabular-nums text-brand">
                 {course.progressPercent}% complete
@@ -297,16 +322,27 @@ export function CourseDetailView({
             </div>
           ) : null}
 
-          {!course.enrolled ? (
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => void handleStart()}
-              className="mt-6 inline-flex rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
-            >
-              Start course
-            </button>
-          ) : null}
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            {!course.enrolled && course.viewer.canStart ? (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => void handleStart()}
+                className="inline-flex rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+              >
+                Start course
+              </button>
+            ) : null}
+            {editHref ? (
+              <Link
+                href={editHref}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-ink transition hover:bg-surface-subtle"
+              >
+                <Icon name="pencil" className="h-4 w-4" />
+                Edit in Studio
+              </Link>
+            ) : null}
+          </div>
         </div>
       </div>
 
@@ -361,7 +397,9 @@ export function CourseDetailView({
                   )}
                 </div>
               ) : (
-                <p className="text-sm text-ink-muted">Start the course to track progress.</p>
+                <p className="text-sm text-ink-muted">
+                  {isPreview ? "Preview mode" : "Start the course to track progress."}
+                </p>
               )}
             </div>
 
@@ -378,11 +416,55 @@ export function CourseDetailView({
         {modulesPanel}
       </div>
 
+      {!isPreview ? (
+        <div className="mt-6">
+          <CourseReviews
+            slug={slug}
+            onSummaryChange={(rating) =>
+              setCourse((prev) => (prev ? { ...prev, rating } : prev))
+            }
+            onStartCourse={
+              !course.enrolled && course.viewer.canStart ? () => void handleStart() : undefined
+            }
+          />
+        </div>
+      ) : null}
+
       <div className="mt-6">
         <Link href="/courses" className="text-sm font-semibold text-brand">
           ← All courses
         </Link>
       </div>
+    </div>
+  );
+}
+
+function PreviewBanner({
+  status,
+  editHref,
+}: {
+  status: CourseStatus;
+  editHref: string | null;
+}) {
+  return (
+    <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
+      <p className="flex items-center gap-2">
+        <Icon name="eye" className="h-4 w-4 shrink-0" />
+        <span>
+          <span className="font-semibold">Preview.</span> This course is{" "}
+          {COURSE_STATUS_META[status].label.toLowerCase()}, so only you can see it. Progress
+          tracking and reviews turn on once it&apos;s published.
+        </span>
+      </p>
+      {editHref ? (
+        <Link
+          href={editHref}
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-amber-100 px-3 py-1.5 text-xs font-semibold transition hover:bg-amber-200 dark:bg-amber-500/20 dark:hover:bg-amber-500/30"
+        >
+          <Icon name="pencil" className="h-3.5 w-3.5" />
+          Back to editor
+        </Link>
+      ) : null}
     </div>
   );
 }

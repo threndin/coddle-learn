@@ -8,6 +8,7 @@ import {
   startCourse,
   updateCourseProgress,
 } from "./courses.service.js";
+import { getCourseReviews, removeCourseReview, saveCourseReview } from "./reviews.service.js";
 
 function requireSession(req: Request) {
   const session = (req as AuthedRequest).session;
@@ -47,5 +48,29 @@ export async function updateProgressHandler(req: Request, res: Response) {
   const session = requireSession(req);
   const slug = String(req.params.slug ?? "");
   const data = await updateCourseProgress(session.sub, slug, req.body);
+  res.json({ data });
+}
+
+export async function listReviewsHandler(req: Request, res: Response) {
+  const session = requireSession(req);
+  const slug = String(req.params.slug ?? "");
+  const data = await getCourseReviews(session.sub, slug, {
+    sort: req.query.sort,
+    page: req.query.page,
+  });
+  res.json({ data });
+}
+
+export async function saveReviewHandler(req: Request, res: Response) {
+  const session = requireSession(req);
+  const slug = String(req.params.slug ?? "");
+  const data = await saveCourseReview(session.sub, slug, req.body);
+  res.json({ data });
+}
+
+export async function deleteReviewHandler(req: Request, res: Response) {
+  const session = requireSession(req);
+  const slug = String(req.params.slug ?? "");
+  const data = await removeCourseReview(session.sub, slug);
   res.json({ data });
 }

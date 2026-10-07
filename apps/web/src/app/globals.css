@@ -18,6 +18,16 @@
   --border: #e2e8f0;
   --border-strong: #cbd5e1;
   --gradient-primary: linear-gradient(135deg, #004CC8 0%, #003A9E 100%);
+  /* Code + markdown editor tokens */
+  --code-bg: #f6f8fb;
+  --code-keyword: #7c3aed;
+  --code-string: #047857;
+  --code-number: #b45309;
+  --code-comment: #94a3b8;
+  --code-function: #0369a1;
+  --code-type: #be123c;
+  --code-property: #1d4ed8;
+  --code-inline: #c2410c;
 }
 
 .dark {
@@ -29,6 +39,15 @@
   --surface-subtle: #172033;
   --border: #2a364c;
   --border-strong: #3d4d68;
+  --code-bg: #121b2d;
+  --code-keyword: #c4b5fd;
+  --code-string: #6ee7b7;
+  --code-number: #fcd34d;
+  --code-comment: #64748b;
+  --code-function: #7dd3fc;
+  --code-type: #fda4af;
+  --code-property: #93c5fd;
+  --code-inline: #fdba74;
 }
 
 @theme inline {
@@ -150,4 +169,44 @@ body {
 
 button {
   cursor: pointer;
+}
+
+/* CodeMirror search panel, styled to match the app. */
+.cm-editor .cm-panels {
+  background: var(--surface-subtle);
+  color: var(--ink);
+  border-color: var(--border);
+}
+
+.cm-editor .cm-panel.cm-search {
+  padding: 8px 12px;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: 12px;
+}
+
+.cm-editor .cm-panel.cm-search input,
+.cm-editor .cm-panel.cm-search button {
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink);
+  padding: 3px 8px;
+  font-size: 12px;
+}
+
+.cm-editor .cm-panel.cm-search input[type="checkbox"] {
+  padding: 0;
+}
+
+.cm-editor .cm-searchMatch {
+  background: rgb(250 204 21 / 0.35);
+  border-radius: 2px;
+}
+
+.cm-editor .cm-searchMatch-selected {
+  background: rgb(250 204 21 / 0.7);
+}
+
+.cm-editor .cm-codeblock-line {
+  background: var(--code-bg);
 }
