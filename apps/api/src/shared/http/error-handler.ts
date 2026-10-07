@@ -18,6 +18,18 @@ export function errorHandler(
     return;
   }
 
+  const parserError = error as { type?: unknown; status?: unknown } | null;
+  if (parserError && typeof parserError.type === "string" && typeof parserError.status === "number") {
+    const tooLarge = parserError.type === "entity.too.large";
+    res.status(parserError.status).json({
+      error: {
+        code: tooLarge ? "payload_too_large" : "invalid_body",
+        message: tooLarge ? "That upload is too large." : "The request body could not be read.",
+      },
+    });
+    return;
+  }
+
   console.error(error);
   res.status(500).json({
     error: {

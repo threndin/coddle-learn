@@ -7,7 +7,9 @@ import {
 } from "@coddle/shared";
 import type { CourseLesson, UserLessonProgress } from "@prisma/client";
 import { AppError } from "../../shared/errors.js";
+import { ratingSummaries, summaryFor, type RatingSummary } from "./reviews.repository.js";
 import {
+  canViewCourse,
   clearUserCourseCompleted,
   createUserCourse,
   deleteLessonProgress,
@@ -99,6 +101,7 @@ function toCatalogItem(
   enrollment: { startedAt: Date; completedAt: Date | null } | null,
   progress: Map<string, UserLessonProgress>,
   userSkillSlugs: string[],
+  rating: RatingSummary,
 ) {
   const lessons = flattenLessons(course);
   const summary = summarizeProgress(lessons, progress);
@@ -111,6 +114,8 @@ function toCatalogItem(
     level: course.level,
     thumbnailUrl: course.thumbnailUrl,
     estimatedHours: course.estimatedHours,
+    publishedAt: course.publishedAt?.toISOString() ?? null,
+    rating,
     createdBy: creatorPayload(course),
     skills: skillsPayload(course),
     skillSlugs,
@@ -137,6 +142,8 @@ function toDetail(
   course: CourseWithContent,
   enrollment: { startedAt: Date; completedAt: Date | null } | null,
   progress: Map<string, UserLessonProgress>,
+  rating: RatingSummary,
+  userId: string,
 ) {
   const lessons = flattenLessons(course);
   const summary = summarizeProgress(lessons, progress);
@@ -147,13 +154,24 @@ function toDetail(
     lessons.map((lesson, index) => [lesson.id, statuses[index]!]),
   );
 
+  const isCreator = course.createdByUserId === userId;
+
   return {
     slug: course.slug,
     title: course.title,
     summary: course.summary,
     level: course.level,
+    status: course.status,
     thumbnailUrl: course.thumbnailUrl,
     estimatedHours: course.estimatedHours,
+    publishedAt: course.publishedAt?.toISOString() ?? null,
+    updatedAt: course.updatedAt.toISOString(),
+    rating,
+    viewer: {
+      isCreator,
+      studioCourseId: isCreator ? course.id : null,
+      canStart: course.status === "published",
+    },
     createdBy: creatorPayload(course),
     skills: skillsPayload(course),
     enrolled: Boolean(enrollment),
@@ -191,6 +209,7 @@ export async function getCourseCatalog(userId: string) {
     listUserCourses(userId),
     listUserSkillSlugs(userId),
   ]);
+  const ratings = await ratingSummaries(courses.map((course) => course.id));
 
   const enrollmentByCourseId = new Map(
     enrollments.map((row) => [row.courseId, row]),
@@ -211,6 +230,7 @@ export async function getCourseCatalog(userId: string) {
         enrollment,
         progressMap(progressRows),
         userSkillSlugs,
+        summaryFor(ratings, course.id),
       );
     }),
   );
@@ -218,30 +238,48 @@ export async function getCourseCatalog(userId: string) {
   return { courses: items };
 }
 
-export async function getCourseDetail(userId: string, slug: string) {
+/** Loads a course the user may see, or throws the same 404 as a missing slug. */
+export async function loadVisibleCourse(userId: string, slug: string) {
   const course = await findCourseBySlug(slug);
-  if (!course) {
+  const enrollment = course ? await findUserCourse(userId, course.id) : null;
+  if (!course || !canViewCourse(course, userId, Boolean(enrollment))) {
     throw new AppError(404, "course_missing", "That course could not be found.");
   }
+  return { course, enrollment };
+}
 
-  const enrollment = await findUserCourse(userId, course.id);
+export async function getCourseDetail(userId: string, slug: string) {
+  const { course, enrollment } = await loadVisibleCourse(userId, slug);
   const lessons = flattenLessons(course);
-  const progressRows = enrollment
-    ? await listLessonProgressForLessons(
-        userId,
-        lessons.map((lesson) => lesson.id),
-      )
-    : [];
+  const [progressRows, ratings] = await Promise.all([
+    enrollment
+      ? listLessonProgressForLessons(
+          userId,
+          lessons.map((lesson) => lesson.id),
+        )
+      : Promise.resolve([]),
+    ratingSummaries([course.id]),
+  ]);
 
   return {
-    course: toDetail(course, enrollment, progressMap(progressRows)),
+    course: toDetail(
+      course,
+      enrollment,
+      progressMap(progressRows),
+      summaryFor(ratings, course.id),
+      userId,
+    ),
   };
 }
 
 export async function startCourse(userId: string, slug: string) {
-  const course = await findCourseBySlug(slug);
-  if (!course) {
-    throw new AppError(404, "course_missing", "That course could not be found.");
+  const { course } = await loadVisibleCourse(userId, slug);
+  if (course.status !== "published") {
+    throw new AppError(
+      409,
+      "course_not_published",
+      "This course is not published yet, so it cannot be started.",
+    );
   }
 
   const existing = await findUserCourse(userId, course.id);
@@ -277,13 +315,17 @@ export async function updateCourseProgress(
     );
   }
 
-  const course = await findCourseBySlug(slug);
-  if (!course) {
-    throw new AppError(404, "course_missing", "That course could not be found.");
-  }
-
-  let enrollment = await findUserCourse(userId, course.id);
+  const visible = await loadVisibleCourse(userId, slug);
+  const { course } = visible;
+  let enrollment = visible.enrollment;
   if (!enrollment) {
+    if (course.status !== "published") {
+      throw new AppError(
+        409,
+        "course_not_published",
+        "This course is not published yet, so progress cannot be tracked.",
+      );
+    }
     enrollment = await createUserCourse(userId, course.id);
   }
 

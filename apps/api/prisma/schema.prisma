@@ -29,8 +29,10 @@ model User {
   stepProgress          UserStepProgress[]
   resourceBookmarks     UserResourceBookmark[]
   createdCourses        Course[]               @relation("CourseCreator")
+  reviewedCourses       Course[]               @relation("CourseReviewer")
   courseEnrollments     UserCourse[]
   lessonProgress        UserLessonProgress[]
+  courseReviews         CourseReview[]
 
   @@map("users")
 }
@@ -168,27 +170,56 @@ model OAuthState {
   @@map("oauth_states")
 }
 
+/// Lifecycle: draft -> in_review -> (changes_requested -> in_review)* -> published <-> archived.
+/// `reviewedBy*` and `reviewNote` are written by the moderation step (auto or admin).
 model Course {
-  id              String        @id @default(cuid())
-  slug            String        @unique
-  title           String
-  summary         String
-  level           String
-  thumbnailUrl    String        @map("thumbnail_url")
-  estimatedHours  Int           @map("estimated_hours")
-  sortOrder       Int           @map("sort_order")
-  publishedAt     DateTime?     @map("published_at")
-  createdByUserId String        @map("created_by_user_id")
-  createdBy       User          @relation("CourseCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
-  createdAt       DateTime      @default(now()) @map("created_at")
-  updatedAt       DateTime      @updatedAt @map("updated_at")
-  modules         CourseModule[]
-  skills          CourseSkill[]
-  enrollments     UserCourse[]
+  id               String         @id @default(cuid())
+  slug             String         @unique
+  title            String
+  summary          String
+  level            String
+  status           String         @default("draft")
+  accent           String         @default("#004CC8")
+  thumbnailUrl     String         @map("thumbnail_url")
+  customThumbnail  Boolean        @default(false) @map("custom_thumbnail")
+  estimatedHours   Int            @map("estimated_hours")
+  sortOrder        Int            @default(100) @map("sort_order")
+  submittedAt      DateTime?      @map("submitted_at")
+  reviewedAt       DateTime?      @map("reviewed_at")
+  reviewedByUserId String?        @map("reviewed_by_user_id")
+  reviewedBy       User?          @relation("CourseReviewer", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+  reviewNote       String?        @map("review_note")
+  publishedAt      DateTime?      @map("published_at")
+  createdByUserId  String         @map("created_by_user_id")
+  createdBy        User           @relation("CourseCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
+  modules          CourseModule[]
+  skills           CourseSkill[]
+  enrollments      UserCourse[]
+  reviews          CourseReview[]
 
   @@index([createdByUserId])
+  @@index([status, sortOrder])
   @@index([sortOrder])
   @@map("courses")
+}
+
+model CourseReview {
+  id        String   @id @default(cuid())
+  courseId  String   @map("course_id")
+  userId    String   @map("user_id")
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rating    Int
+  body      String   @default("")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([courseId, userId])
+  @@index([courseId, createdAt])
+  @@index([userId])
+  @@map("course_reviews")
 }
 
 model CourseModule {

@@ -32,6 +32,13 @@ export const config = {
   ),
   cookieSecure: process.env.COOKIE_SECURE === "true" || isProd,
   isProd,
+  /**
+   * `auto` publishes a course as soon as it is submitted. Switch to `manual`
+   * once admin review exists; submissions then wait in `in_review`.
+   */
+  courseReviewMode: (process.env.COURSE_REVIEW_MODE === "manual" ? "manual" : "auto") as
+    | "auto"
+    | "manual",
   seedCourseCreatorEmail:
     process.env.SEED_COURSE_CREATOR_EMAIL ?? "kvngjohnny10@gmail.com",
   r2: {

@@ -32,15 +32,16 @@ export type CourseWithContent = Prisma.CourseGetPayload<{
 
 export async function listPublishedCourses(): Promise<CourseWithContent[]> {
   return prisma.course.findMany({
-    where: { publishedAt: { not: null } },
+    where: { status: "published" },
     include: courseInclude,
-    orderBy: { sortOrder: "asc" },
+    orderBy: [{ sortOrder: "asc" }, { publishedAt: "desc" }],
   });
 }
 
+/** Any status; callers decide visibility with `canViewCourse`. */
 export async function findCourseBySlug(slug: string): Promise<CourseWithContent | null> {
-  return prisma.course.findFirst({
-    where: { slug, publishedAt: { not: null } },
+  return prisma.course.findUnique({
+    where: { slug },
     include: courseInclude,
   });
 }
@@ -129,6 +130,16 @@ export async function listUserSkillSlugs(userId: string): Promise<string[]> {
     include: { skill: { select: { slug: true } } },
   });
   return rows.map((row) => row.skill.slug);
+}
+
+export function canViewCourse(
+  course: { status: string; createdByUserId: string },
+  userId: string,
+  enrolled: boolean,
+): boolean {
+  if (course.status === "published") return true;
+  if (course.createdByUserId === userId) return true;
+  return course.status === "archived" && enrolled;
 }
 
 export function flattenLessons(course: CourseWithContent) {
