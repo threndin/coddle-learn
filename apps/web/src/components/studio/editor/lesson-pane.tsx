@@ -1,10 +1,20 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { COURSE_LIMITS, suggestedLessonMinutes } from "@coddle/shared";
+import { COURSE_LIMITS, suggestedLessonMinutes, type ExerciseKind } from "@coddle/shared";
 import { Icon } from "@/components/ui/icon";
-import type { StudioLesson, StudioModule } from "@/lib/studio";
+import type { ExercisePatch, StudioLesson, StudioModule } from "@/lib/studio";
+import { LessonExercisesEditor } from "./exercise-editor";
 import { MarkdownEditor } from "./markdown-editor";
+
+export type ExerciseHandlers = {
+  busy: boolean;
+  focusExerciseId: string | null;
+  onAdd: (kind: ExerciseKind) => void;
+  onPatch: (exerciseId: string, patch: ExercisePatch) => void;
+  onDelete: (exerciseId: string) => void;
+  onMove: (exerciseId: string, direction: -1 | 1) => void;
+};
 
 export type LessonPatch = Partial<{
   title: string;
@@ -48,6 +58,7 @@ export function LessonPane({
   onDelete,
   onUploadImage,
   onError,
+  exercises,
 }: {
   lesson: StudioLesson;
   courseModule: StudioModule;
@@ -61,6 +72,7 @@ export function LessonPane({
   onDelete: () => void;
   onUploadImage?: (file: File) => Promise<string>;
   onError: (message: string) => void;
+  exercises: ExerciseHandlers;
 }) {
   const titleRef = useRef<HTMLInputElement>(null);
   const suggested = suggestedLessonMinutes(lesson.content);
@@ -199,6 +211,20 @@ export function LessonPane({
           emptyAction={{ label: "Start from the lesson template", content: LESSON_TEMPLATE }}
         />
       </div>
+
+      <LessonExercisesEditor
+        exercises={lesson.exercises}
+        readOnly={readOnly}
+        busy={exercises.busy}
+        focusExerciseId={exercises.focusExerciseId}
+        onAdd={exercises.onAdd}
+        onPatch={exercises.onPatch}
+        onDelete={exercises.onDelete}
+        onMove={exercises.onMove}
+        onUploadImage={onUploadImage}
+        onError={onError}
+      />
+      <div className="h-5 shrink-0" aria-hidden />
     </div>
   );
 }

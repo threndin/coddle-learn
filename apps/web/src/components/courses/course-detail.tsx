@@ -3,25 +3,33 @@
 import { useCallback, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useReducedMotion } from "framer-motion";
 import {
   COURSE_COMPLETE_POINTS,
   LESSON_COMPLETE_POINTS,
   formatMinutes,
+  isExerciseDone,
   levelById,
 } from "@coddle/shared";
 import { COURSE_STATUS_META, type CourseStatus } from "@coddle/shared";
 import { useAppUserActions } from "@/components/app/app-user-context";
 import { useToast } from "@/components/app/toast";
 import { CourseReviews } from "@/components/courses/course-reviews";
+import { LessonExercises, type ExerciseAccess } from "@/components/courses/lesson-exercises";
 import { LessonMarkdown } from "@/components/courses/lesson-markdown";
 import { ProfileAvatar } from "@/components/onboarding/profile-avatar";
 import { Icon } from "@/components/ui/icon";
 import { Stars } from "@/components/ui/stars";
+import { errorMessage } from "@/lib/api-client";
 import {
+  resetExercise,
   startCourse,
+  submitExercise,
   updateCourseProgress,
   type CourseDetail,
+  type CourseExerciseDetail,
   type CourseLessonDetail,
+  type ExerciseSubmissionInput,
 } from "@/lib/courses";
 
 type SelectedLesson = {
@@ -43,6 +51,7 @@ export function CourseDetailView({
   const router = useRouter();
   const { pushToast } = useToast();
   const { refreshUser } = useAppUserActions();
+  const reduceMotion = useReducedMotion();
   const [course, setCourse] = useState<CourseDetail | null>(initialCourse);
   const [error, setError] = useState<string | null>(
     initialCourse ? null : "That course could not be found.",
@@ -162,13 +171,65 @@ export function CourseDetailView({
             (item) => item.slug === next.moduleSlug,
           );
           const lesson = module?.lessons.find((item) => item.slug === next.slug);
-          if (module && lesson) selectLesson(module.slug, lesson);
+          if (module && lesson) {
+            const moved =
+              module.slug !== selected.moduleSlug || lesson.slug !== selected.lesson.slug;
+            selectLesson(module.slug, lesson);
+            if (moved) {
+              window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" });
+            }
+          }
         }
       }
     } catch (err) {
       pushToast(err instanceof Error ? err.message : "Could not update progress", "error");
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function handleExerciseSubmit(
+    exercise: CourseExerciseDetail,
+    input: ExerciseSubmissionInput,
+  ) {
+    try {
+      const result = await submitExercise(slug, exercise.id, input);
+      const points = result.pointsAwarded > 0 ? ` (+${result.pointsAwarded} pts)` : "";
+      if (result.result.status === "attempted") {
+        applyDetail(result.course);
+        pushToast(`You scored ${result.result.score ?? 0}%. Review and try again.`, "info");
+      } else {
+        const label =
+          exercise.kind === "quiz"
+            ? "Quiz passed"
+            : exercise.kind === "task"
+              ? "Exercise complete"
+              : exercise.submission
+                ? "Submission updated"
+                : "Submission saved";
+        applyDetail(result.course, `${label}${points}`);
+      }
+      if (result.courseCompleteBonus > 0) {
+        pushToast(`Course complete (+${COURSE_COMPLETE_POINTS} pts)`, "success");
+      }
+      return result;
+    } catch (err) {
+      pushToast(errorMessage(err, "Could not submit exercise"), "error");
+      return null;
+    }
+  }
+
+  async function handleExerciseReset(exercise: CourseExerciseDetail) {
+    try {
+      const { course: detail } = await resetExercise(slug, exercise.id);
+      applyDetail(
+        detail,
+        exercise.kind === "quiz" ? "Quiz reset. Give it another go." : "Exercise reopened",
+      );
+      return true;
+    } catch (err) {
+      pushToast(errorMessage(err, "Could not reset exercise"), "error");
+      return false;
     }
   }
 
@@ -189,6 +250,13 @@ export function CourseDetailView({
   const editHref = course.viewer.studioCourseId
     ? `/studio/courses/${course.viewer.studioCourseId}`
     : null;
+  const exerciseAccess: ExerciseAccess = isPreview
+    ? "preview"
+    : !course.enrolled
+      ? "not-enrolled"
+      : selectedStatus === "locked"
+        ? "locked"
+        : "active";
 
   const modulesPanel = (
     <aside className="flex max-h-[min(32rem,calc(100vh-8rem))] flex-col rounded-2xl border border-border bg-surface p-4 lg:sticky lg:top-24">
@@ -204,6 +272,9 @@ export function CourseDetailView({
                 const active =
                   selected?.moduleSlug === courseModule.slug &&
                   selected.lesson.slug === lesson.slug;
+                const exercisesDone = lesson.exercises.filter((exercise) =>
+                  isExerciseDone(exercise.submission?.status),
+                ).length;
                 return (
                   <li key={lesson.slug}>
                     <button
@@ -217,6 +288,24 @@ export function CourseDetailView({
                       ].join(" ")}
                     >
                       <span className="truncate">{lesson.title}</span>
+                      {lesson.exercises.length > 0 ? (
+                        <span
+                          title={`${exercisesDone} of ${lesson.exercises.length} exercises done`}
+                          className={[
+                            "ml-auto inline-flex shrink-0 items-center gap-0.5 font-mono text-[10px] tabular-nums",
+                            active
+                              ? "text-white/80"
+                              : course.enrolled && exercisesDone === lesson.exercises.length
+                                ? "text-emerald-600 dark:text-emerald-400"
+                                : "text-ink-muted",
+                          ].join(" ")}
+                        >
+                          <Icon name="target" className="h-3 w-3" />
+                          {course.enrolled
+                            ? `${exercisesDone}/${lesson.exercises.length}`
+                            : lesson.exercises.length}
+                        </span>
+                      ) : null}
                       <span
                         className={[
                           "inline-flex shrink-0 items-center justify-center text-[10px] font-semibold uppercase",
@@ -305,6 +394,13 @@ export function CourseDetailView({
             {course.enrolled ? (
               <span className="text-xs font-semibold tabular-nums text-brand">
                 {course.progressPercent}% complete
+                {course.exerciseCount > 0
+                  ? ` · ${course.exercisesDone}/${course.exerciseCount} exercises`
+                  : ""}
+              </span>
+            ) : course.exerciseCount > 0 ? (
+              <span className="text-xs text-ink-muted">
+                {course.exerciseCount} {course.exerciseCount === 1 ? "exercise" : "exercises"}
               </span>
             ) : null}
           </div>
@@ -406,6 +502,33 @@ export function CourseDetailView({
             <div className="mt-6 border-t border-border pt-6">
               <LessonMarkdown content={selected.lesson.content} />
             </div>
+
+            <LessonExercises
+              key={`${selected.moduleSlug}/${selected.lesson.slug}`}
+              exercises={selected.lesson.exercises}
+              access={exerciseAccess}
+              onSubmit={handleExerciseSubmit}
+              onReset={handleExerciseReset}
+            />
+
+            {course.enrolled &&
+            selected.lesson.exercises.length > 0 &&
+            selectedStatus === "current" ? (
+              <div className="mt-8 flex flex-wrap items-center justify-end gap-3 border-t border-border pt-5">
+                <p className="mr-auto text-xs text-ink-muted">
+                  Lessons and exercises are tracked separately. Mark the lesson done when you&apos;ve
+                  read it.
+                </p>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void handleProgress("completed")}
+                  className="rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                >
+                  Mark lesson complete
+                </button>
+              </div>
+            ) : null}
           </div>
         ) : (
           <div className="rounded-3xl border border-dashed border-border bg-surface p-6 text-sm text-ink-muted sm:p-8">

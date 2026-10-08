@@ -26,7 +26,7 @@ The Learn API is organized by feature under `apps/api/src`. Each feature uses th
 | `features/users/` | User repository + public user mapping |
 | `features/onboarding/` | `POST /onboarding` |
 | `features/roadmaps/` | Catalog, detail, start, step progress (`/roadmaps/*`) |
-| `features/courses/` | Catalog, detail, start, lesson progress (`/courses/*`) |
+| `features/courses/` | Catalog, detail, start, lesson progress, exercise submissions (`/courses/*`) |
 
 | Layer | Responsibility |
 |---|---|
@@ -60,7 +60,26 @@ The web app proxies `/api/*` to the Express API (`API_URL`, default `http://loca
 
 Roadmap catalog rows (`Roadmap`, `RoadmapStep`) are seeded from `@coddle/shared` starter data. Learner progress lives in `UserRoadmap` and `UserStepProgress`.
 
-Course catalog rows (`Course`, `CourseModule`, `CourseLesson`, `CourseSkill`) are seeded the same way. Thumbnails upload to Cloudflare R2 under `coddle-learn/courses/{slug}/thumbnail.svg` and are served from `R2_PUBLIC_URL`. Seeded courses set `createdByUserId` to the Learn user matching `SEED_COURSE_CREATOR_EMAIL`.
+Course catalog rows (`Course`, `CourseModule`, `CourseLesson`, `CourseExercise`, `CourseSkill`) are seeded the same way. Thumbnails upload to Cloudflare R2 under `coddle-learn/courses/{slug}/thumbnail.svg` and are served from `R2_PUBLIC_URL`. Seeded courses set `createdByUserId` to the Learn user matching `SEED_COURSE_CREATOR_EMAIL`.
+
+### Exercises
+
+Each lesson can have ordered exercises (`CourseExercise`), shown under the lesson content. Every module needs at least one before a course can be submitted for review. Kinds:
+
+| Kind | Learner action | Done status |
+|---|---|---|
+| `task` | Tick the requirements, mark complete | `completed` |
+| `link` | Submit a GitHub / gist / live URL (+ optional note) | `submitted` |
+| `text` | Write an answer (min 20 characters) | `submitted` |
+| `quiz` | Answer multiple-choice questions, graded on the server | `completed` when the score reaches the pass mark; `attempted` otherwise |
+
+`config` (JSON) holds requirements, quiz questions, and the pass mark. Answer keys and reference solutions are only sent once the learner is done. Submissions live in `UserExerciseSubmission` (one row per learner and exercise; resubmitting overwrites it). There's no review step yet: submitting counts as done.
+
+Course progress counts lessons and exercises together. A course completes only when every lesson is done or skipped **and** every exercise is done. Skipping a lesson doesn't skip its exercises. Modules still unlock on lessons alone.
+
+- `POST /courses/:slug/exercises/:exerciseId/submission` — submit or resubmit
+- `DELETE /courses/:slug/exercises/:exerciseId/submission` — reopen (refunds points)
+- Studio: `POST /studio/courses/:id/lessons/:lessonId/exercises`, `PUT …/lessons/:lessonId/exercises/order`, `PATCH|DELETE /studio/courses/:id/exercises/:exerciseId`
 
 ## Authentication (Coddle account sync)
 
@@ -120,5 +139,6 @@ Locally, Learn web defaults to port `3002` so Coddle can stay on `3000`. Point `
 - Onboarding persistence (`POST /onboarding`)
 - Roadmap catalog seed + interactive `/roadmaps` and `/roadmaps/[slug]` (in-page step panel)
 - Course catalog seed + interactive `/courses` and `/courses/[slug]` (modules, markdown lessons, R2 thumbnails, creator, linked skills)
+- Lesson exercises (task, link, written answer, quiz) authored in Studio and submitted under each lesson
 - Learn `/login`, `/onboarding`, and `/dashboard`
 - Coddle `/sso/learn` bridge page

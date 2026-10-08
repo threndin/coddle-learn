@@ -8,30 +8,31 @@ datasource db {
 }
 
 model User {
-  id                    String                 @id @default(cuid())
-  coddleUserId          String                 @unique @map("coddle_user_id")
-  email                 String                 @unique
+  id                    String                   @id @default(cuid())
+  coddleUserId          String                   @unique @map("coddle_user_id")
+  email                 String                   @unique
   name                  String
-  avatarUrl             String?                @map("avatar_url")
+  avatarUrl             String?                  @map("avatar_url")
   bio                   String?
-  experienceLevel       String?                @map("experience_level")
-  dailyGoalMinutes      Int?                   @map("daily_goal_minutes")
-  practiceDays          String[]               @default([]) @map("practice_days")
-  startingRoadmapSlug   String?                @map("starting_roadmap_slug")
-  onboardingCompletedAt DateTime?              @map("onboarding_completed_at")
-  points                Int                    @default(0)
-  createdAt             DateTime               @default(now()) @map("created_at")
-  updatedAt             DateTime               @updatedAt @map("updated_at")
-  lastLoginAt           DateTime?              @map("last_login_at")
+  experienceLevel       String?                  @map("experience_level")
+  dailyGoalMinutes      Int?                     @map("daily_goal_minutes")
+  practiceDays          String[]                 @default([]) @map("practice_days")
+  startingRoadmapSlug   String?                  @map("starting_roadmap_slug")
+  onboardingCompletedAt DateTime?                @map("onboarding_completed_at")
+  points                Int                      @default(0)
+  createdAt             DateTime                 @default(now()) @map("created_at")
+  updatedAt             DateTime                 @updatedAt @map("updated_at")
+  lastLoginAt           DateTime?                @map("last_login_at")
   sessions              Session[]
   skills                UserSkill[]
   roadmaps              UserRoadmap[]
   stepProgress          UserStepProgress[]
   resourceBookmarks     UserResourceBookmark[]
-  createdCourses        Course[]               @relation("CourseCreator")
-  reviewedCourses       Course[]               @relation("CourseReviewer")
+  createdCourses        Course[]                 @relation("CourseCreator")
+  reviewedCourses       Course[]                 @relation("CourseReviewer")
   courseEnrollments     UserCourse[]
   lessonProgress        UserLessonProgress[]
+  exerciseSubmissions   UserExerciseSubmission[]
   courseReviews         CourseReview[]
 
   @@map("users")
@@ -252,10 +253,52 @@ model CourseLesson {
   createdAt        DateTime             @default(now()) @map("created_at")
   updatedAt        DateTime             @updatedAt @map("updated_at")
   progress         UserLessonProgress[]
+  exercises        CourseExercise[]
 
   @@unique([moduleId, slug])
   @@index([moduleId, sortOrder])
   @@map("course_lessons")
+}
+
+/// `kind`: task | link | text | quiz. `config` holds requirements and quiz questions.
+model CourseExercise {
+  id               String                   @id @default(cuid())
+  lessonId         String                   @map("lesson_id")
+  lesson           CourseLesson             @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  kind             String
+  title            String
+  instructions     String                   @default("")
+  hint             String                   @default("")
+  solution         String                   @default("")
+  config           Json                     @default("{}")
+  estimatedMinutes Int                      @default(15) @map("estimated_minutes")
+  sortOrder        Int                      @map("sort_order")
+  createdAt        DateTime                 @default(now()) @map("created_at")
+  updatedAt        DateTime                 @updatedAt @map("updated_at")
+  submissions      UserExerciseSubmission[]
+
+  @@index([lessonId, sortOrder])
+  @@map("course_exercises")
+}
+
+/// `status`: completed | submitted | attempted (failed quiz, not done).
+model UserExerciseSubmission {
+  id            String         @id @default(cuid())
+  userId        String         @map("user_id")
+  exerciseId    String         @map("exercise_id")
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exercise      CourseExercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  status        String
+  response      Json           @default("{}")
+  score         Int?
+  attempts      Int            @default(1)
+  pointsAwarded Int            @default(0) @map("points_awarded")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+
+  @@unique([userId, exerciseId])
+  @@index([exerciseId])
+  @@map("user_exercise_submissions")
 }
 
 model CourseSkill {

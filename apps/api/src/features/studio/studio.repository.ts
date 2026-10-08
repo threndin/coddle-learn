@@ -7,12 +7,19 @@ const studioCourseInclude = {
   },
   modules: {
     orderBy: { sortOrder: "asc" as const },
-    include: { lessons: { orderBy: { sortOrder: "asc" as const } } },
+    include: {
+      lessons: {
+        orderBy: { sortOrder: "asc" as const },
+        include: { exercises: { orderBy: { sortOrder: "asc" as const } } },
+      },
+    },
   },
   _count: { select: { enrollments: true } },
 } satisfies Prisma.CourseInclude;
 
 export type StudioCourse = Prisma.CourseGetPayload<{ include: typeof studioCourseInclude }>;
+export type StudioLessonRow = StudioCourse["modules"][number]["lessons"][number];
+export type StudioExerciseRow = StudioLessonRow["exercises"][number];
 
 const studioListInclude = {
   modules: {
@@ -120,12 +127,42 @@ export async function deleteLesson(lessonId: string) {
   return prisma.courseLesson.delete({ where: { id: lessonId } });
 }
 
-export async function totalLessonMinutes(courseId: string): Promise<number> {
-  const result = await prisma.courseLesson.aggregate({
-    where: { module: { courseId } },
-    _sum: { estimatedMinutes: true },
-  });
-  return result._sum.estimatedMinutes ?? 0;
+export async function createExercise(data: Prisma.CourseExerciseUncheckedCreateInput) {
+  return prisma.courseExercise.create({ data });
+}
+
+export async function updateExercise(
+  exerciseId: string,
+  data: Prisma.CourseExerciseUncheckedUpdateInput,
+) {
+  return prisma.courseExercise.update({ where: { id: exerciseId }, data });
+}
+
+export async function deleteExercise(exerciseId: string) {
+  return prisma.courseExercise.delete({ where: { id: exerciseId } });
+}
+
+export async function reorderExercises(exerciseIds: string[]) {
+  await prisma.$transaction(
+    exerciseIds.map((id, sortOrder) =>
+      prisma.courseExercise.update({ where: { id }, data: { sortOrder } }),
+    ),
+  );
+}
+
+/** Lesson reading time plus exercise time. */
+export async function totalCourseMinutes(courseId: string): Promise<number> {
+  const [lessons, exercises] = await Promise.all([
+    prisma.courseLesson.aggregate({
+      where: { module: { courseId } },
+      _sum: { estimatedMinutes: true },
+    }),
+    prisma.courseExercise.aggregate({
+      where: { lesson: { module: { courseId } } },
+      _sum: { estimatedMinutes: true },
+    }),
+  ]);
+  return (lessons._sum.estimatedMinutes ?? 0) + (exercises._sum.estimatedMinutes ?? 0);
 }
 
 export type OutlinePlan = {
