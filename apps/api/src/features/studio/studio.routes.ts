@@ -4,18 +4,22 @@ import { asyncHandler } from "../../shared/http/async-handler.js";
 import { requireAuth, requireCsrf } from "../auth/auth.middleware.js";
 import {
   archiveHandler,
+  createExerciseHandler,
   createHandler,
   createLessonHandler,
   createModuleHandler,
+  deleteExerciseHandler,
   deleteHandler,
   deleteLessonHandler,
   deleteModuleHandler,
   getHandler,
   listHandler,
   outlineHandler,
+  reorderExercisesHandler,
   resetThumbnailHandler,
   restoreHandler,
   submitHandler,
+  updateExerciseHandler,
   updateHandler,
   updateLessonHandler,
   updateModuleHandler,
@@ -83,4 +87,24 @@ studioRouter.delete(
   "/courses/:courseId/lessons/:lessonId",
   ...write,
   asyncHandler(deleteLessonHandler),
+);
+studioRouter.post(
+  "/courses/:courseId/lessons/:lessonId/exercises",
+  ...write,
+  asyncHandler(createExerciseHandler),
+);
+studioRouter.put(
+  "/courses/:courseId/lessons/:lessonId/exercises/order",
+  ...write,
+  asyncHandler(reorderExercisesHandler),
+);
+studioRouter.patch(
+  "/courses/:courseId/exercises/:exerciseId",
+  ...write,
+  asyncHandler(updateExerciseHandler),
+);
+studioRouter.delete(
+  "/courses/:courseId/exercises/:exerciseId",
+  ...write,
+  asyncHandler(deleteExerciseHandler),
 );

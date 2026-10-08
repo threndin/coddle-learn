@@ -1,10 +1,40 @@
 import type {
   CourseChecklistItem,
   CourseStatus,
+  ExerciseKind,
   ExperienceLevel,
+  QuizQuestion,
 } from "@coddle/shared";
 import { apiRequest } from "@/lib/api-client";
 import type { CourseSkill } from "@/lib/courses";
+
+export type StudioExercise = {
+  id: string;
+  kind: ExerciseKind;
+  title: string;
+  instructions: string;
+  hint: string;
+  solution: string;
+  estimatedMinutes: number;
+  requirements: string[];
+  questions: QuizQuestion[];
+  passPercent: number;
+  updatedAt: string;
+};
+
+export type ExercisePatch = Partial<
+  Pick<
+    StudioExercise,
+    | "title"
+    | "instructions"
+    | "hint"
+    | "solution"
+    | "estimatedMinutes"
+    | "requirements"
+    | "questions"
+    | "passPercent"
+  >
+>;
 
 export type StudioLesson = {
   id: string;
@@ -14,6 +44,7 @@ export type StudioLesson = {
   content: string;
   estimatedMinutes: number;
   updatedAt: string;
+  exercises: StudioExercise[];
 };
 
 export type StudioModule = {
@@ -197,9 +228,41 @@ export function updateLesson(
   patch: Partial<{ title: string; summary: string; content: string; estimatedMinutes: number }>,
   options: { keepalive?: boolean } = {},
 ) {
-  return apiRequest<{ lesson: StudioLesson }>(
+  return apiRequest<{ lesson: Omit<StudioLesson, "exercises"> }>(
     `${base(courseId)}/lessons/${encodeURIComponent(lessonId)}`,
     { method: "PATCH", json: patch, keepalive: options.keepalive },
+  );
+}
+
+export function createExercise(
+  courseId: string,
+  lessonId: string,
+  input: { kind: ExerciseKind; title?: string },
+) {
+  return apiRequest<CreatedResponse>(
+    `${base(courseId)}/lessons/${encodeURIComponent(lessonId)}/exercises`,
+    { method: "POST", json: input },
+  );
+}
+
+export function updateExercise(courseId: string, exerciseId: string, patch: ExercisePatch) {
+  return apiRequest<{ exercise: StudioExercise }>(
+    `${base(courseId)}/exercises/${encodeURIComponent(exerciseId)}`,
+    { method: "PATCH", json: patch },
+  );
+}
+
+export function deleteExercise(courseId: string, exerciseId: string) {
+  return apiRequest<CourseResponse>(
+    `${base(courseId)}/exercises/${encodeURIComponent(exerciseId)}`,
+    { method: "DELETE" },
+  );
+}
+
+export function reorderExercises(courseId: string, lessonId: string, exerciseIds: string[]) {
+  return apiRequest<CourseResponse>(
+    `${base(courseId)}/lessons/${encodeURIComponent(lessonId)}/exercises/order`,
+    { method: "PUT", json: { exerciseIds } },
   );
 }
 
