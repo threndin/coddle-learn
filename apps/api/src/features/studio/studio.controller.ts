@@ -4,17 +4,21 @@ import type { AuthedRequest } from "../auth/auth.middleware.js";
 import {
   archiveStudioCourse,
   createStudioCourse,
+  createStudioExercise,
   createStudioLesson,
   createStudioModule,
   deleteStudioCourse,
+  deleteStudioExercise,
   deleteStudioLesson,
   deleteStudioModule,
   getStudioCourse,
   listStudioCourses,
+  reorderStudioExercises,
   resetCourseThumbnail,
   restoreStudioCourse,
   submitStudioCourse,
   updateStudioCourse,
+  updateStudioExercise,
   updateStudioLesson,
   updateStudioModule,
   updateStudioOutline,
@@ -147,6 +151,49 @@ export async function updateLessonHandler(req: Request, res: Response) {
 export async function deleteLessonHandler(req: Request, res: Response) {
   res.json({
     data: await deleteStudioLesson(requireUserId(req), param(req, "courseId"), param(req, "lessonId")),
+  });
+}
+
+export async function createExerciseHandler(req: Request, res: Response) {
+  res.status(201).json({
+    data: await createStudioExercise(
+      requireUserId(req),
+      param(req, "courseId"),
+      param(req, "lessonId"),
+      req.body,
+    ),
+  });
+}
+
+export async function reorderExercisesHandler(req: Request, res: Response) {
+  res.json({
+    data: await reorderStudioExercises(
+      requireUserId(req),
+      param(req, "courseId"),
+      param(req, "lessonId"),
+      req.body,
+    ),
+  });
+}
+
+export async function updateExerciseHandler(req: Request, res: Response) {
+  res.json({
+    data: await updateStudioExercise(
+      requireUserId(req),
+      param(req, "courseId"),
+      param(req, "exerciseId"),
+      req.body,
+    ),
+  });
+}
+
+export async function deleteExerciseHandler(req: Request, res: Response) {
+  res.json({
+    data: await deleteStudioExercise(
+      requireUserId(req),
+      param(req, "courseId"),
+      param(req, "exerciseId"),
+    ),
   });
 }
 

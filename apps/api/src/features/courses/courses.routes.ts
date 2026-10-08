@@ -7,8 +7,10 @@ import {
   getCourseHandler,
   listCoursesHandler,
   listReviewsHandler,
+  resetExerciseHandler,
   saveReviewHandler,
   startCourseHandler,
+  submitExerciseHandler,
   updateProgressHandler,
 } from "./courses.controller.js";
 
@@ -23,6 +25,18 @@ coursesRouter.post(
   requireAuth,
   requireCsrf,
   asyncHandler(updateProgressHandler),
+);
+coursesRouter.post(
+  "/:slug/exercises/:exerciseId/submission",
+  requireAuth,
+  requireCsrf,
+  asyncHandler(submitExerciseHandler),
+);
+coursesRouter.delete(
+  "/:slug/exercises/:exerciseId/submission",
+  requireAuth,
+  requireCsrf,
+  asyncHandler(resetExerciseHandler),
 );
 coursesRouter.get("/:slug/reviews", requireAuth, asyncHandler(listReviewsHandler));
 coursesRouter.put("/:slug/reviews", requireAuth, requireCsrf, asyncHandler(saveReviewHandler));

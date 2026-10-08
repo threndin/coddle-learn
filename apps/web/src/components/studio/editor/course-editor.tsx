@@ -10,6 +10,7 @@ import {
   SKILL_CATALOG,
   courseChecklist,
   estimatedHoursFromMinutes,
+  type ExerciseKind,
 } from "@coddle/shared";
 import { useToast } from "@/components/app/toast";
 import { StatusBadge } from "@/components/studio/status-badge";
@@ -19,21 +20,27 @@ import { Menu, type MenuItem } from "@/components/ui/menu";
 import { errorMessage } from "@/lib/api-client";
 import { timeAgo } from "@/lib/format";
 import {
+  createExercise,
   createLesson,
   createModule,
+  deleteExercise,
   deleteLesson,
   deleteModule,
   deleteStudioCourse,
+  reorderExercises,
   resetThumbnail,
   runLifecycleAction,
   saveOutline,
+  updateExercise,
   updateLesson,
   updateModule,
   updateStudioCourse,
   uploadLessonImage,
   uploadThumbnail,
+  type ExercisePatch,
   type LifecycleAction,
   type StudioCourse,
+  type StudioExercise,
   type StudioModule,
 } from "@/lib/studio";
 import { LessonPane, type LessonPatch } from "./lesson-pane";
@@ -48,7 +55,21 @@ type Confirm =
   | { kind: "archive" }
   | { kind: "delete-course" }
   | { kind: "delete-module"; moduleId: string }
-  | { kind: "delete-lesson"; lessonId: string };
+  | { kind: "delete-lesson"; lessonId: string }
+  | { kind: "delete-exercise"; exerciseId: string };
+
+function mapExercises(
+  course: StudioCourse,
+  update: (exercise: StudioExercise) => StudioExercise,
+): StudioCourse {
+  return {
+    ...course,
+    modules: course.modules.map((m) => ({
+      ...m,
+      lessons: m.lessons.map((l) => ({ ...l, exercises: l.exercises.map(update) })),
+    })),
+  };
+}
 
 function applyCoursePatch(course: StudioCourse, patch: Record<string, unknown>): StudioCourse {
   const { skillSlugs, ...rest } = patch as CoursePatch;
@@ -93,6 +114,7 @@ export function CourseEditor({
     initialSelection(initialCourse, initialLessonId, initialModuleId),
   );
   const [focusLessonId, setFocusLessonId] = useState<string | null>(null);
+  const [focusExerciseId, setFocusExerciseId] = useState<string | null>(null);
   const [outlineOpen, setOutlineOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [confirm, setConfirm] = useState<Confirm | null>(null);
@@ -111,7 +133,13 @@ export function CourseEditor({
   );
   const ready = checklist.every((item) => item.done);
   const totalMinutes = course.modules.reduce(
-    (sum, m) => sum + m.lessons.reduce((inner, l) => inner + l.estimatedMinutes, 0),
+    (sum, m) =>
+      sum +
+      m.lessons.reduce(
+        (inner, l) =>
+          inner + l.estimatedMinutes + l.exercises.reduce((ex, e) => ex + e.estimatedMinutes, 0),
+        0,
+      ),
     0,
   );
   const canSubmit = course.status === "draft" || course.status === "changes_requested";
@@ -169,7 +197,14 @@ export function CourseEditor({
         modules: base.modules.map((m) => ({
           ...m,
           ...(queue.pending(`module:${m.id}`) ?? {}),
-          lessons: m.lessons.map((l) => ({ ...l, ...(queue.pending(`lesson:${l.id}`) ?? {}) })),
+          lessons: m.lessons.map((l) => ({
+            ...l,
+            ...(queue.pending(`lesson:${l.id}`) ?? {}),
+            exercises: l.exercises.map((e) => ({
+              ...e,
+              ...(queue.pending(`exercise:${e.id}`) ?? {}),
+            })),
+          })),
         })),
       };
     },
@@ -278,6 +313,47 @@ export function CourseEditor({
     );
   }
 
+  function patchExercise(exerciseId: string, patch: ExercisePatch) {
+    setCourse((prev) => mapExercises(prev, (e) => (e.id === exerciseId ? { ...e, ...patch } : e)));
+    const toSave = { ...patch };
+    if (toSave.title !== undefined && !toSave.title.trim()) delete toSave.title;
+    if (Object.keys(toSave).length === 0) return;
+    const typing =
+      patch.instructions !== undefined || patch.solution !== undefined || patch.hint !== undefined;
+    queue.schedule(
+      `exercise:${exerciseId}`,
+      toSave,
+      async (pending) => {
+        const { exercise } = await updateExercise(courseId, exerciseId, pending as ExercisePatch);
+        setCourse((prev) =>
+          mapExercises(prev, (e) => (e.id === exerciseId ? { ...e, updatedAt: exercise.updatedAt } : e)),
+        );
+      },
+      typing ? 900 : 600,
+    );
+  }
+
+  async function addExercise(lessonId: string, kind: ExerciseKind) {
+    const result = await structural(() => createExercise(courseId, lessonId, { kind }));
+    if (result) setFocusExerciseId(result.createdId);
+  }
+
+  function moveExercise(lessonId: string, exerciseId: string, direction: -1 | 1) {
+    const lesson = course.modules.flatMap((m) => m.lessons).find((l) => l.id === lessonId);
+    if (!lesson) return;
+    const from = lesson.exercises.findIndex((e) => e.id === exerciseId);
+    const to = from + direction;
+    if (from < 0 || to < 0 || to >= lesson.exercises.length) return;
+    const ids = lesson.exercises.map((e) => e.id);
+    [ids[from], ids[to]] = [ids[to]!, ids[from]!];
+    void structural(() => reorderExercises(courseId, lessonId, ids));
+  }
+
+  async function removeExercise(exerciseId: string) {
+    queue.discard(`exercise:${exerciseId}`);
+    await structural(() => deleteExercise(courseId, exerciseId), "Exercise deleted");
+  }
+
   /* ------------------------------ Structure ------------------------------ */
 
   async function addModule(title: string) {
@@ -321,7 +397,10 @@ export function CourseEditor({
   async function removeModule(moduleId: string) {
     const target = course.modules.find((m) => m.id === moduleId);
     queue.discard(`module:${moduleId}`);
-    target?.lessons.forEach((l) => queue.discard(`lesson:${l.id}`));
+    target?.lessons.forEach((l) => {
+      queue.discard(`lesson:${l.id}`);
+      l.exercises.forEach((e) => queue.discard(`exercise:${e.id}`));
+    });
     const result = await structural(() => deleteModule(courseId, moduleId), "Module deleted");
     if (result) setSelection({ kind: "course" });
   }
@@ -329,6 +408,9 @@ export function CourseEditor({
   async function removeLesson(lessonId: string) {
     const parent = course.modules.find((m) => m.lessons.some((l) => l.id === lessonId));
     queue.discard(`lesson:${lessonId}`);
+    parent?.lessons
+      .find((l) => l.id === lessonId)
+      ?.exercises.forEach((e) => queue.discard(`exercise:${e.id}`));
     const result = await structural(() => deleteLesson(courseId, lessonId), "Lesson deleted");
     if (result && parent) setSelection({ kind: "module", id: parent.id });
   }
@@ -399,6 +481,14 @@ export function CourseEditor({
           onDelete={() => setConfirm({ kind: "delete-lesson", lessonId: current.lesson.id })}
           onUploadImage={uploadImage}
           onError={(message) => pushToast(message, "error")}
+          exercises={{
+            busy,
+            focusExerciseId,
+            onAdd: (kind) => void addExercise(current.lesson.id, kind),
+            onPatch: patchExercise,
+            onDelete: (exerciseId) => setConfirm({ kind: "delete-exercise", exerciseId }),
+            onMove: (exerciseId, direction) => moveExercise(current.lesson.id, exerciseId, direction),
+          }}
         />
       );
     }
@@ -465,6 +555,12 @@ export function CourseEditor({
   const confirmLesson =
     confirm?.kind === "delete-lesson"
       ? flatLessons.find((item) => item.lesson.id === confirm.lessonId)?.lesson
+      : null;
+  const confirmExercise =
+    confirm?.kind === "delete-exercise"
+      ? flatLessons
+          .flatMap((item) => item.lesson.exercises)
+          .find((exercise) => exercise.id === confirm.exerciseId)
       : null;
 
   return (
@@ -664,6 +760,27 @@ export function CourseEditor({
         tone="danger"
         onConfirm={async () => {
           if (confirm?.kind === "delete-lesson") await removeLesson(confirm.lessonId);
+          setConfirm(null);
+        }}
+        onClose={() => setConfirm(null)}
+      />
+      <ConfirmDialog
+        open={confirm?.kind === "delete-exercise"}
+        title="Delete this exercise?"
+        description={
+          confirmExercise ? (
+            <>
+              <span className="font-semibold text-ink">{confirmExercise.title || "Untitled exercise"}</span>{" "}
+              will be removed.
+              {course.publishedAt ? " Learner submissions for it are lost." : ""}
+            </>
+          ) : null
+        }
+        confirmLabel="Delete exercise"
+        pendingLabel="Deleting…"
+        tone="danger"
+        onConfirm={async () => {
+          if (confirm?.kind === "delete-exercise") await removeExercise(confirm.exerciseId);
           setConfirm(null);
         }}
         onClose={() => setConfirm(null)}

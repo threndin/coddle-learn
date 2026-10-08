@@ -181,7 +181,13 @@ export function OutlinePanel({
 
   const lessonCount = items.reduce((sum, m) => sum + m.lessons.length, 0);
   const totalMinutes = items.reduce(
-    (sum, m) => sum + m.lessons.reduce((inner, l) => inner + l.estimatedMinutes, 0),
+    (sum, m) =>
+      sum +
+      m.lessons.reduce(
+        (inner, l) =>
+          inner + l.estimatedMinutes + l.exercises.reduce((ex, e) => ex + e.estimatedMinutes, 0),
+        0,
+      ),
     0,
   );
 
@@ -392,6 +398,12 @@ function SortableModule({
             {courseModule.title}
           </span>
         </button>
+        {courseModule.lessons.every((l) => l.exercises.length === 0) ? (
+          <span
+            title="Add an exercise to one of this module's lessons"
+            className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500"
+          />
+        ) : null}
         <span className="shrink-0 pr-1.5 font-mono text-[10px] tabular-nums text-ink-muted">
           {courseModule.lessons.length}
         </span>
@@ -488,6 +500,18 @@ function SortableLesson({
         >
           <span className="truncate">{lesson.title}</span>
         </button>
+        {lesson.exercises.length > 0 ? (
+          <span
+            title={`${lesson.exercises.length} ${lesson.exercises.length === 1 ? "exercise" : "exercises"}`}
+            className={[
+              "inline-flex shrink-0 items-center gap-0.5 font-mono text-[10px] tabular-nums",
+              active ? "text-white/70" : "text-ink-muted",
+            ].join(" ")}
+          >
+            <Icon name="target" className="h-3 w-3" />
+            {lesson.exercises.length}
+          </span>
+        ) : null}
         {thin ? (
           <span
             title="Needs more content before submitting"

@@ -5,12 +5,19 @@ import {
   courseChecklist,
   EDITABLE_COURSE_STATUSES,
   estimatedHoursFromMinutes,
+  EXERCISE_LIMITS,
   isCourseAccent,
   isCourseStatus,
+  isExerciseKind,
   isExperienceLevel,
+  QUIZ_ID_PATTERN,
+  readExerciseConfig,
   slugify,
   uniqueSlug,
   type CourseStatus,
+  type ExerciseConfig,
+  type ExerciseKind,
+  type QuizQuestion,
 } from "@coddle/shared";
 import { config, isR2Configured } from "../../config.js";
 import { AppError } from "../../shared/errors.js";
@@ -21,21 +28,27 @@ import {
   completedCounts,
   courseSlugsLike,
   createCourse,
+  createExercise,
   createLesson,
   createModule,
   deleteCourse,
+  deleteExercise,
   deleteLesson,
   deleteModule,
   findStudioCourse,
   listCreatorCourses,
+  reorderExercises,
   replaceCourseSkills,
   skillIdsForSlugs,
-  totalLessonMinutes,
+  totalCourseMinutes,
   updateCourse,
+  updateExercise,
   updateLesson,
   updateModule,
   type OutlinePlan,
   type StudioCourse,
+  type StudioExerciseRow,
+  type StudioLessonRow,
 } from "./studio.repository.js";
 
 type Body = Record<string, unknown>;
@@ -51,14 +64,14 @@ function readText(
   body: Body,
   key: string,
   label: string,
-  limits: { min?: number; max: number },
+  limits: { min?: number; max: number; markdown?: boolean },
 ): string | undefined {
   if (!(key in body)) return undefined;
   const raw = body[key];
   if (typeof raw !== "string") {
     throw new AppError(400, "invalid_field", `${label} must be text.`, { field: key });
   }
-  const value = key === "content" ? raw : raw.trim();
+  const value = key === "content" || limits.markdown ? raw : raw.trim();
   if (limits.min !== undefined && value.trim().length < limits.min) {
     throw new AppError(
       400,
@@ -143,6 +156,16 @@ function checklistFor(course: StudioCourse) {
       lessons: courseModule.lessons.map((lesson) => ({
         title: lesson.title,
         content: lesson.content,
+        exercises: lesson.exercises.map((exercise) => {
+          const config = readExerciseConfig(exercise.config);
+          return {
+            kind: exercise.kind,
+            title: exercise.title,
+            instructions: exercise.instructions,
+            requirements: config.requirements,
+            questions: config.questions,
+          };
+        }),
       })),
     })),
   });
@@ -161,7 +184,24 @@ function permissionsFor(course: StudioCourse) {
   };
 }
 
-function lessonPayload(lesson: StudioCourse["modules"][number]["lessons"][number]) {
+function exercisePayload(exercise: StudioExerciseRow) {
+  const config = readExerciseConfig(exercise.config);
+  return {
+    id: exercise.id,
+    kind: exercise.kind,
+    title: exercise.title,
+    instructions: exercise.instructions,
+    hint: exercise.hint,
+    solution: exercise.solution,
+    estimatedMinutes: exercise.estimatedMinutes,
+    requirements: config.requirements,
+    questions: config.questions,
+    passPercent: config.passPercent,
+    updatedAt: exercise.updatedAt.toISOString(),
+  };
+}
+
+function lessonFields(lesson: Omit<StudioLessonRow, "exercises">) {
   return {
     id: lesson.id,
     slug: lesson.slug,
@@ -171,6 +211,10 @@ function lessonPayload(lesson: StudioCourse["modules"][number]["lessons"][number
     estimatedMinutes: lesson.estimatedMinutes,
     updatedAt: lesson.updatedAt.toISOString(),
   };
+}
+
+function lessonPayload(lesson: StudioLessonRow) {
+  return { ...lessonFields(lesson), exercises: lesson.exercises.map(exercisePayload) };
 }
 
 async function toStudioCourse(course: StudioCourse) {
@@ -227,7 +271,7 @@ async function respond(userId: string, courseId: string) {
 }
 
 async function refreshEstimate(courseId: string) {
-  const minutes = await totalLessonMinutes(courseId);
+  const minutes = await totalCourseMinutes(courseId);
   await updateCourse(courseId, { estimatedHours: estimatedHoursFromMinutes(minutes) });
 }
 
@@ -736,7 +780,7 @@ export async function updateStudioLesson(
 
   const saved = Object.keys(data).length > 0 ? await updateLesson(lessonId, data) : lesson;
   if (fields.estimatedMinutes !== undefined) await refreshEstimate(course.id);
-  return { lesson: lessonPayload(saved) };
+  return { lesson: lessonFields(saved) };
 }
 
 export async function deleteStudioLesson(userId: string, courseId: string, lessonId: string) {
@@ -745,6 +789,291 @@ export async function deleteStudioLesson(userId: string, courseId: string, lesso
   findLesson(course, lessonId);
   await deleteLesson(lessonId);
   await refreshEstimate(course.id);
+  return respond(userId, courseId);
+}
+
+/* --------------------------------- Exercises -------------------------------- */
+
+const DEFAULT_EXERCISE_TITLES: Record<ExerciseKind, string> = {
+  task: "Practice task",
+  link: "Share your work",
+  text: "Explain it in your own words",
+  quiz: "Knowledge check",
+};
+
+function quizId() {
+  return randomBytes(4).toString("hex");
+}
+
+function blankQuestion(): QuizQuestion {
+  return {
+    id: quizId(),
+    prompt: "",
+    options: [
+      { id: quizId(), text: "" },
+      { id: quizId(), text: "" },
+    ],
+    correctOptionId: null,
+    explanation: "",
+  };
+}
+
+function fieldError(message: string, field: string): never {
+  throw new AppError(400, "invalid_field", message, { field });
+}
+
+function readExerciseMinutes(body: Body): number | undefined {
+  if (!("estimatedMinutes" in body)) return undefined;
+  const value = Number(body.estimatedMinutes);
+  if (
+    !Number.isInteger(value) ||
+    value < EXERCISE_LIMITS.minutesMin ||
+    value > EXERCISE_LIMITS.minutesMax
+  ) {
+    fieldError(
+      `Exercise time must be between ${EXERCISE_LIMITS.minutesMin} and ${EXERCISE_LIMITS.minutesMax} minutes.`,
+      "estimatedMinutes",
+    );
+  }
+  return value;
+}
+
+/** Empty rows are allowed while authoring; the checklist and learner view ignore them. */
+function readRequirements(body: Body): string[] | undefined {
+  if (!("requirements" in body)) return undefined;
+  const raw = body.requirements;
+  if (!Array.isArray(raw) || raw.some((item) => typeof item !== "string")) {
+    fieldError("Requirements must be a list of text.", "requirements");
+  }
+  const list = raw as string[];
+  if (list.length > EXERCISE_LIMITS.requirementsMax) {
+    fieldError(`Add up to ${EXERCISE_LIMITS.requirementsMax} requirements.`, "requirements");
+  }
+  if (list.some((item) => item.length > EXERCISE_LIMITS.requirementMax)) {
+    fieldError(
+      `Each requirement must be ${EXERCISE_LIMITS.requirementMax} characters or fewer.`,
+      "requirements",
+    );
+  }
+  return list;
+}
+
+function readQuestions(body: Body): QuizQuestion[] | undefined {
+  if (!("questions" in body)) return undefined;
+  const raw = body.questions;
+  if (!Array.isArray(raw)) fieldError("Questions must be a list.", "questions");
+  if (raw.length > EXERCISE_LIMITS.questionsMax) {
+    fieldError(`Quizzes can have up to ${EXERCISE_LIMITS.questionsMax} questions.`, "questions");
+  }
+
+  const questionIds = new Set<string>();
+  return raw.map((entry, index) => {
+    const label = `Question ${index + 1}`;
+    const item = (entry ?? {}) as Record<string, unknown>;
+    const id = typeof item.id === "string" ? item.id : "";
+    if (!QUIZ_ID_PATTERN.test(id) || questionIds.has(id)) {
+      fieldError(`${label} has an invalid id. Refresh and try again.`, "questions");
+    }
+    questionIds.add(id);
+
+    const prompt = typeof item.prompt === "string" ? item.prompt : "";
+    if (prompt.length > EXERCISE_LIMITS.questionPromptMax) {
+      fieldError(
+        `${label} must be ${EXERCISE_LIMITS.questionPromptMax} characters or fewer.`,
+        "questions",
+      );
+    }
+    const explanation = typeof item.explanation === "string" ? item.explanation : "";
+    if (explanation.length > EXERCISE_LIMITS.explanationMax) {
+      fieldError(
+        `${label} explanation must be ${EXERCISE_LIMITS.explanationMax} characters or fewer.`,
+        "questions",
+      );
+    }
+
+    if (!Array.isArray(item.options) || item.options.length > EXERCISE_LIMITS.optionsMax) {
+      fieldError(`${label} can have up to ${EXERCISE_LIMITS.optionsMax} answers.`, "questions");
+    }
+    const optionIds = new Set<string>();
+    const options = (item.options as unknown[]).map((option) => {
+      const value = (option ?? {}) as Record<string, unknown>;
+      const optionId = typeof value.id === "string" ? value.id : "";
+      const text = typeof value.text === "string" ? value.text : "";
+      if (!QUIZ_ID_PATTERN.test(optionId) || optionIds.has(optionId)) {
+        fieldError(`${label} has an invalid answer id. Refresh and try again.`, "questions");
+      }
+      if (text.length > EXERCISE_LIMITS.optionTextMax) {
+        fieldError(
+          `${label} answers must be ${EXERCISE_LIMITS.optionTextMax} characters or fewer.`,
+          "questions",
+        );
+      }
+      optionIds.add(optionId);
+      return { id: optionId, text };
+    });
+
+    const correct = typeof item.correctOptionId === "string" ? item.correctOptionId : null;
+    return {
+      id,
+      prompt,
+      options,
+      correctOptionId: correct && optionIds.has(correct) ? correct : null,
+      explanation,
+    };
+  });
+}
+
+function readPassPercent(body: Body): number | undefined {
+  if (!("passPercent" in body)) return undefined;
+  const value = Number(body.passPercent);
+  if (
+    !Number.isInteger(value) ||
+    value < EXERCISE_LIMITS.passPercentMin ||
+    value > EXERCISE_LIMITS.passPercentMax
+  ) {
+    fieldError(
+      `Pass mark must be between ${EXERCISE_LIMITS.passPercentMin}% and ${EXERCISE_LIMITS.passPercentMax}%.`,
+      "passPercent",
+    );
+  }
+  return value;
+}
+
+function findExercise(course: StudioCourse, exerciseId: string) {
+  for (const courseModule of course.modules) {
+    for (const lesson of courseModule.lessons) {
+      const exercise = lesson.exercises.find((item) => item.id === exerciseId);
+      if (exercise) return { lesson, exercise };
+    }
+  }
+  throw new AppError(404, "exercise_missing", "That exercise could not be found.");
+}
+
+export async function createStudioExercise(
+  userId: string,
+  courseId: string,
+  lessonId: string,
+  input: unknown,
+) {
+  const course = await loadOwnedCourse(userId, courseId);
+  assertEditable(course);
+  const { lesson } = findLesson(course, lessonId);
+  const body = asBody(input);
+  if (!isExerciseKind(body.kind)) {
+    fieldError("Choose an exercise type.", "kind");
+  }
+  const kind = body.kind;
+  const title =
+    readText(body, "title", "Exercise title", { min: 1, max: EXERCISE_LIMITS.titleMax }) ??
+    DEFAULT_EXERCISE_TITLES[kind];
+  if (lesson.exercises.length >= EXERCISE_LIMITS.perLessonMax) {
+    throw new AppError(
+      409,
+      "too_many_exercises",
+      `Lessons can have up to ${EXERCISE_LIMITS.perLessonMax} exercises.`,
+    );
+  }
+
+  const config: ExerciseConfig = {
+    requirements: [],
+    questions: kind === "quiz" ? [blankQuestion()] : [],
+    passPercent: EXERCISE_LIMITS.passPercentDefault,
+  };
+  const created = await createExercise({
+    lessonId,
+    kind,
+    title,
+    config,
+    estimatedMinutes: kind === "quiz" ? 5 : 15,
+    sortOrder: (lesson.exercises.at(-1)?.sortOrder ?? -1) + 1,
+  });
+  await refreshEstimate(course.id);
+  return { ...(await respond(userId, courseId)), createdId: created.id };
+}
+
+/** Lean response, like lessons: autosave fires often and the client owns the draft. */
+export async function updateStudioExercise(
+  userId: string,
+  courseId: string,
+  exerciseId: string,
+  input: unknown,
+) {
+  const course = await loadOwnedCourse(userId, courseId);
+  assertEditable(course);
+  const { exercise } = findExercise(course, exerciseId);
+  const body = asBody(input);
+
+  const title = readText(body, "title", "Exercise title", {
+    min: 1,
+    max: EXERCISE_LIMITS.titleMax,
+  });
+  const instructions = readText(body, "instructions", "Instructions", {
+    max: EXERCISE_LIMITS.instructionsMax,
+    markdown: true,
+  });
+  const hint = readText(body, "hint", "Hint", { max: EXERCISE_LIMITS.hintMax, markdown: true });
+  const solution = readText(body, "solution", "Solution", {
+    max: EXERCISE_LIMITS.solutionMax,
+    markdown: true,
+  });
+  const estimatedMinutes = readExerciseMinutes(body);
+  const requirements = readRequirements(body);
+  const questions = readQuestions(body);
+  const passPercent = readPassPercent(body);
+
+  const data: Parameters<typeof updateExercise>[1] = {};
+  if (title !== undefined) data.title = title;
+  if (instructions !== undefined) data.instructions = instructions;
+  if (hint !== undefined) data.hint = hint;
+  if (solution !== undefined) data.solution = solution;
+  if (estimatedMinutes !== undefined) data.estimatedMinutes = estimatedMinutes;
+  if (requirements !== undefined || questions !== undefined || passPercent !== undefined) {
+    const config = readExerciseConfig(exercise.config);
+    data.config = {
+      requirements: requirements ?? config.requirements,
+      questions: questions ?? config.questions,
+      passPercent: passPercent ?? config.passPercent,
+    } satisfies ExerciseConfig;
+  }
+
+  const saved = Object.keys(data).length > 0 ? await updateExercise(exerciseId, data) : exercise;
+  if (estimatedMinutes !== undefined) await refreshEstimate(course.id);
+  return { exercise: exercisePayload(saved) };
+}
+
+export async function deleteStudioExercise(userId: string, courseId: string, exerciseId: string) {
+  const course = await loadOwnedCourse(userId, courseId);
+  assertEditable(course);
+  findExercise(course, exerciseId);
+  await deleteExercise(exerciseId);
+  await refreshEstimate(course.id);
+  return respond(userId, courseId);
+}
+
+export async function reorderStudioExercises(
+  userId: string,
+  courseId: string,
+  lessonId: string,
+  input: unknown,
+) {
+  const course = await loadOwnedCourse(userId, courseId);
+  assertEditable(course);
+  const { lesson } = findLesson(course, lessonId);
+  const raw = asBody(input).exerciseIds;
+  const known = new Set(lesson.exercises.map((exercise) => exercise.id));
+  if (
+    !Array.isArray(raw) ||
+    raw.length !== known.size ||
+    new Set(raw).size !== raw.length ||
+    raw.some((id) => typeof id !== "string" || !known.has(id))
+  ) {
+    throw new AppError(
+      409,
+      "outline_stale",
+      "The exercises changed in another tab. Refresh and try again.",
+    );
+  }
+  await reorderExercises(raw as string[]);
   return respond(userId, courseId);
 }
 

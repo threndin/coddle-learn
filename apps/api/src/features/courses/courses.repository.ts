@@ -21,6 +21,9 @@ const courseInclude = {
     include: {
       lessons: {
         orderBy: { sortOrder: "asc" as const },
+        include: {
+          exercises: { orderBy: { sortOrder: "asc" as const } },
+        },
       },
     },
   },
@@ -102,6 +105,36 @@ export async function deleteLessonProgress(userId: string, lessonId: string) {
   });
 }
 
+export async function listExerciseSubmissions(userId: string, exerciseIds: string[]) {
+  if (exerciseIds.length === 0) return [];
+  return prisma.userExerciseSubmission.findMany({
+    where: { userId, exerciseId: { in: exerciseIds } },
+  });
+}
+
+export async function upsertExerciseSubmission(
+  userId: string,
+  exerciseId: string,
+  data: {
+    status: string;
+    response: Prisma.InputJsonValue;
+    score: number | null;
+    pointsAwarded: number;
+  },
+) {
+  return prisma.userExerciseSubmission.upsert({
+    where: { userId_exerciseId: { userId, exerciseId } },
+    create: { userId, exerciseId, ...data },
+    update: { ...data, attempts: { increment: 1 } },
+  });
+}
+
+export async function deleteExerciseSubmission(userId: string, exerciseId: string) {
+  return prisma.userExerciseSubmission.deleteMany({
+    where: { userId, exerciseId },
+  });
+}
+
 export async function markUserCourseCompleted(userId: string, courseId: string) {
   return prisma.userCourse.update({
     where: { userId_courseId: { userId, courseId } },
@@ -150,4 +183,11 @@ export function flattenLessons(course: CourseWithContent) {
       moduleTitle: courseModule.title,
     })),
   );
+}
+
+export type FlatLesson = ReturnType<typeof flattenLessons>[number];
+export type CourseExerciseRow = FlatLesson["exercises"][number];
+
+export function flattenExercises(lessons: FlatLesson[]) {
+  return lessons.flatMap((lesson) => lesson.exercises);
 }

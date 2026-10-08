@@ -1,5 +1,7 @@
 import type {
   CourseStatus,
+  ExerciseKind,
+  ExerciseSubmissionStatus,
   ExperienceLevel,
   LessonProgressStatus,
   ReviewSort,
@@ -40,6 +42,7 @@ export type CourseCatalogItem = {
   matchedSkillSlugs: string[];
   moduleCount: number;
   lessonCount: number;
+  exerciseCount: number;
   enrolled: boolean;
   startedAt: string | null;
   completedAt: string | null;
@@ -51,6 +54,47 @@ export type CourseCatalogItem = {
   } | null;
 };
 
+export type ExerciseSubmissionResponse = {
+  checked?: number[];
+  url?: string;
+  note?: string;
+  answer?: string;
+  answers?: Record<string, string>;
+  results?: Record<string, boolean>;
+  correct?: number;
+  total?: number;
+};
+
+export type CourseExerciseDetail = {
+  id: string;
+  kind: ExerciseKind;
+  title: string;
+  instructions: string;
+  estimatedMinutes: number;
+  hint: string;
+  hasSolution: boolean;
+  /** Only sent once the learner is done. */
+  solution: string | null;
+  requirements: string[];
+  quiz: {
+    passPercent: number;
+    questions: {
+      id: string;
+      prompt: string;
+      options: { id: string; text: string }[];
+      correctOptionId: string | null;
+      explanation: string | null;
+    }[];
+  } | null;
+  submission: {
+    status: ExerciseSubmissionStatus;
+    response: ExerciseSubmissionResponse;
+    score: number | null;
+    attempts: number;
+    updatedAt: string;
+  } | null;
+};
+
 export type CourseLessonDetail = {
   slug: string;
   title: string;
@@ -58,6 +102,7 @@ export type CourseLessonDetail = {
   content: string;
   estimatedMinutes: number;
   status: LessonUiStatus;
+  exercises: CourseExerciseDetail[];
 };
 
 export type CourseModuleDetail = {
@@ -89,6 +134,8 @@ export type CourseDetail = {
   startedAt: string | null;
   completedAt: string | null;
   progressPercent: number;
+  exerciseCount: number;
+  exercisesDone: number;
   nextLesson: {
     slug: string;
     title: string;
@@ -186,6 +233,37 @@ export async function updateCourseProgress(
     pointsAwarded: body.data.pointsAwarded ?? 0,
     courseCompleteBonus: body.data.courseCompleteBonus ?? 0,
   };
+}
+
+export type ExerciseSubmissionInput = {
+  checked?: number[];
+  url?: string;
+  note?: string;
+  answer?: string;
+  answers?: Record<string, string>;
+};
+
+export type ExerciseSubmitResult = {
+  course: CourseDetail;
+  result: { status: ExerciseSubmissionStatus; score: number | null };
+  pointsAwarded: number;
+  courseCompleteBonus: number;
+};
+
+const exercisePath = (slug: string, exerciseId: string) =>
+  `/courses/${encodeURIComponent(slug)}/exercises/${encodeURIComponent(exerciseId)}/submission`;
+
+export function submitExercise(slug: string, exerciseId: string, input: ExerciseSubmissionInput) {
+  return apiRequest<ExerciseSubmitResult>(exercisePath(slug, exerciseId), {
+    method: "POST",
+    json: input,
+  });
+}
+
+export function resetExercise(slug: string, exerciseId: string) {
+  return apiRequest<{ course: CourseDetail }>(exercisePath(slug, exerciseId), {
+    method: "DELETE",
+  });
 }
 
 export type CourseReview = {
