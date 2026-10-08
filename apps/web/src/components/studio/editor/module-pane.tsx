@@ -24,7 +24,17 @@ export function ModulePane({
   onAddLesson: () => void;
   onDelete: () => void;
 }) {
-  const minutes = courseModule.lessons.reduce((sum, lesson) => sum + lesson.estimatedMinutes, 0);
+  const minutes = courseModule.lessons.reduce(
+    (sum, lesson) =>
+      sum +
+      lesson.estimatedMinutes +
+      lesson.exercises.reduce((inner, exercise) => inner + exercise.estimatedMinutes, 0),
+    0,
+  );
+  const exerciseCount = courseModule.lessons.reduce(
+    (sum, lesson) => sum + lesson.exercises.length,
+    0,
+  );
   const empty = courseModule.title.trim().length === 0;
 
   return (
@@ -72,10 +82,21 @@ export function ModulePane({
           {pluralize(courseModule.lessons.length, "lesson")}
         </span>
         <span className="inline-flex items-center gap-1">
+          <Icon name="target" className="h-3.5 w-3.5" />
+          {pluralize(exerciseCount, "exercise")}
+        </span>
+        <span className="inline-flex items-center gap-1">
           <Icon name="clock" className="h-3.5 w-3.5" />
           {formatMinutes(minutes || 0)}
         </span>
       </div>
+
+      {exerciseCount === 0 && courseModule.lessons.length > 0 ? (
+        <p className="mt-4 flex items-start gap-2 rounded-xl bg-amber-50 px-3.5 py-2.5 text-xs text-amber-800 dark:bg-amber-500/10 dark:text-amber-200">
+          <Icon name="info" className="mt-px h-3.5 w-3.5 shrink-0" />
+          Every module needs at least one exercise. Open a lesson and add one under its content.
+        </p>
+      ) : null}
 
       <section className="mt-4 overflow-hidden rounded-2xl border border-border bg-surface">
         {courseModule.lessons.length === 0 ? (
@@ -108,6 +129,12 @@ export function ModulePane({
                         {lesson.summary || "No summary"}
                       </span>
                     </span>
+                    {lesson.exercises.length > 0 ? (
+                      <span className="inline-flex shrink-0 items-center gap-1 font-mono text-[11px] text-ink-muted">
+                        <Icon name="target" className="h-3 w-3" />
+                        {lesson.exercises.length}
+                      </span>
+                    ) : null}
                     {thin ? (
                       <span className="shrink-0 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
                         Needs content

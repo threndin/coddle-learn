@@ -1,3 +1,5 @@
+import { exerciseIssues, type ExerciseReadinessInput } from "./exercises.js";
+
 export const COURSE_STATUSES = [
   "draft",
   "in_review",
@@ -141,7 +143,11 @@ export type CourseChecklistInput = {
   skillCount: number;
   modules: readonly {
     title: string;
-    lessons: readonly { title: string; content: string }[];
+    lessons: readonly {
+      title: string;
+      content: string;
+      exercises: readonly ExerciseReadinessInput[];
+    }[];
   }[];
 };
 
@@ -157,6 +163,8 @@ export function courseChecklist(input: CourseChecklistInput): CourseChecklistIte
   const thinLessons = lessons.filter(
     (lesson) => lesson.content.trim().length < COURSE_LIMITS.lessonContentMin,
   );
+  const exercises = lessons.flatMap((lesson) => lesson.exercises);
+  const unfinishedExercises = exercises.filter((exercise) => exerciseIssues(exercise).length > 0);
   return [
     {
       id: "title",
@@ -192,6 +200,23 @@ export function courseChecklist(input: CourseChecklistInput): CourseChecklistIte
           ? `Every lesson has real content (${thinLessons.length} still thin)`
           : "Every lesson has real content",
       done: lessons.length > 0 && thinLessons.length === 0,
+    },
+    {
+      id: "exercises",
+      label: "Every module has an exercise",
+      done:
+        input.modules.length > 0 &&
+        input.modules.every((courseModule) =>
+          courseModule.lessons.some((lesson) => lesson.exercises.length > 0),
+        ),
+    },
+    {
+      id: "exercise-content",
+      label:
+        unfinishedExercises.length > 0
+          ? `Every exercise is ready (${unfinishedExercises.length} still need work)`
+          : "Every exercise is ready",
+      done: exercises.length > 0 && unfinishedExercises.length === 0,
     },
   ];
 }

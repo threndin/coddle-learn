@@ -1,8 +1,12 @@
 import "dotenv/config";
 import {
+  EXERCISE_LIMITS,
   SKILL_CATALOG,
   STARTER_COURSES,
+  STARTER_EXERCISES,
   STARTER_ROADMAPS,
+  type CourseExerciseSeed,
+  type ExerciseConfig,
 } from "@coddle/shared";
 import { PrismaClient } from "@prisma/client";
 import { config } from "../src/config.js";
@@ -125,6 +129,49 @@ async function uploadCourseThumbnail(course: (typeof STARTER_COURSES)[number]) {
   return url;
 }
 
+/**
+ * Matches exercises by position so re-seeding keeps learner submissions. A kind
+ * change at a position replaces that exercise.
+ */
+async function seedExercises(lessonId: string, seeds: readonly CourseExerciseSeed[]) {
+  const existing = await prisma.courseExercise.findMany({
+    where: { lessonId },
+    orderBy: { sortOrder: "asc" },
+  });
+
+  for (const [index, seed] of seeds.entries()) {
+    const config: ExerciseConfig = {
+      requirements: [...(seed.requirements ?? [])],
+      questions: (seed.questions ?? []).map((question) => ({
+        ...question,
+        options: question.options.map((option) => ({ ...option })),
+      })),
+      passPercent: seed.passPercent ?? EXERCISE_LIMITS.passPercentDefault,
+    };
+    const data = {
+      title: seed.title,
+      instructions: seed.instructions,
+      hint: seed.hint ?? "",
+      solution: seed.solution ?? "",
+      estimatedMinutes: seed.estimatedMinutes,
+      sortOrder: index,
+      config,
+    };
+    const current = existing[index];
+    if (current && current.kind === seed.kind) {
+      await prisma.courseExercise.update({ where: { id: current.id }, data });
+      continue;
+    }
+    if (current) await prisma.courseExercise.delete({ where: { id: current.id } });
+    await prisma.courseExercise.create({ data: { ...data, lessonId, kind: seed.kind } });
+  }
+
+  const extra = existing.slice(seeds.length).map((exercise) => exercise.id);
+  if (extra.length > 0) {
+    await prisma.courseExercise.deleteMany({ where: { id: { in: extra } } });
+  }
+}
+
 async function seedCourses() {
   const creator = await resolveCourseCreator();
   const skills = await prisma.skill.findMany();
@@ -193,7 +240,7 @@ async function seedCourses() {
       const keepLessonSlugs = new Set<string>();
       for (const [lessonIndex, courseLesson] of courseModule.lessons.entries()) {
         keepLessonSlugs.add(courseLesson.slug);
-        await prisma.courseLesson.upsert({
+        const savedLesson = await prisma.courseLesson.upsert({
           where: {
             moduleId_slug: {
               moduleId: savedModule.id,
@@ -217,6 +264,10 @@ async function seedCourses() {
             sortOrder: lessonIndex,
           },
         });
+        await seedExercises(
+          savedLesson.id,
+          STARTER_EXERCISES[`${course.slug}/${courseModule.slug}/${courseLesson.slug}`] ?? [],
+        );
       }
 
       await prisma.courseLesson.deleteMany({

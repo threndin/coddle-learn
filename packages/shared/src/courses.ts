@@ -242,16 +242,6 @@ Description lists work well for terms and definitions:
 
 <pre><code>&lt;h1&gt;Hello&lt;/h1&gt;</code></pre>
 \`\`\`
-
-## Practice
-
-Expand your profile page:
-
-1. Add an \`<h2>\` for "About" and "Skills"
-2. Put your bio under About
-3. Turn skills into a \`<ul>\`
-4. Add an ordered list called "This week" with 3 learning steps
-5. Mark one important phrase with \`<strong>\`
 `,
           }),
           lesson({
@@ -411,16 +401,6 @@ Better:
 - Search engines understand the outline better
 - Your future CSS and JavaScript have clearer hooks
 - The HTML stays readable without class names
-
-## Practice
-
-Rewrite a div-heavy layout into landmarks:
-
-1. Start from a page that only uses \`<div>\` (write one if needed)
-2. Replace the outer shell with \`header\`, \`nav\`, \`main\`, \`footer\`
-3. Group related content into \`section\` or \`article\`
-4. Keep the visual look the same for now (CSS comes next)
-5. In DevTools accessibility tree, confirm landmarks appear
 `,
           }),
         ],
@@ -498,19 +478,6 @@ Placeholders are not labels. Placeholders disappear when the user types.
 - \`type="submit"\` sends the form
 - \`type="button"\` does nothing by itself (use with JavaScript later)
 - \`type="reset"\` clears fields (use rarely; it surprises people)
-
-## Practice
-
-Build a "Learning profile" form with:
-
-1. Name (text)
-2. Email (email, required)
-3. Experience level (select)
-4. Bio (textarea)
-5. Practice days (checkboxes in a fieldset)
-6. Submit button
-
-Click each label and confirm the matching control focuses.
 `,
           }),
           lesson({
@@ -562,10 +529,6 @@ Use tables when you have rows and columns of **data**. Do not use tables to posi
 ## When not to use a table
 
 Page chrome (header, sidebar, footer) belongs in landmarks and CSS layout, not in \`<table>\`.
-
-## Practice
-
-Add a table to your profile page that shows 3 practice sessions: day, topic, and minutes. Include a caption and header cells.
 `,
           }),
         ],
@@ -722,15 +685,6 @@ Prefer a small scale: \`0.5rem\`, \`1rem\`, \`1.5rem\`, \`2rem\`. Consistent gap
   margin-top: var(--space);
 }
 \`\`\`
-
-## Practice
-
-Update your stylesheet:
-
-1. Define CSS variables for ink, muted, brand, surface, and border
-2. Style a \`.button\` class with brand background and white text
-3. Limit paragraph width with \`ch\`
-4. Give \`.card\` a white surface, border, radius, and padding from your tokens
 `,
           }),
           lesson({
@@ -794,16 +748,6 @@ Temporarily outline boxes while you learn:
 \`\`\`
 
 Remove it when you finish.
-
-## Practice
-
-Build a profile card:
-
-1. Max width around 360px
-2. Padding of 1.25rem
-3. 1px border and rounded corners
-4. Center it horizontally with margin
-5. Confirm the total width in DevTools Computed panel
 `,
           }),
         ],
@@ -893,16 +837,6 @@ With \`flex-direction: column\`, those axes swap.
   gap: 0.75rem;
 }
 \`\`\`
-
-## Practice
-
-Build a navbar:
-
-1. Logo on the left
-2. Links on the right
-3. Vertically centered items
-4. Gap between links
-5. On a narrow window, links should wrap instead of overflowing
 `,
           }),
           lesson({
@@ -1002,27 +936,13 @@ A personal learning profile with:
 <footer>…</footer>
 \`\`\`
 
-## Acceptance checklist
-
-- [ ] Valid landmark structure (\`header\`, \`nav\`, \`main\`, \`footer\`)
-- [ ] One \`h1\`, logical \`h2\` sections
-- [ ] Every form control has a label
-- [ ] Images have useful \`alt\` text (or empty alt if decorative)
-- [ ] CSS lives in an external file with variables
-- [ ] Box model uses \`border-box\`
-- [ ] Header uses flexbox
-- [ ] Page is readable at ~360px width
-- [ ] No layout tables
-
 ## Stretch goals
 
 - Add a resources list with external links
 - Style the submit button with a hover state
 - Add a subtle card shadow **or** border (pick one, keep it calm)
 
-## Practice
-
-Finish the page, then walk the checklist out loud. If a box fails, fix that one thing before adding new decoration.
+The acceptance checklist is in the exercise below. Submit your page there when every item passes.
 `,
           }),
         ],
@@ -1081,10 +1001,6 @@ function add(a, b) {
 
 const double = (n) => n * 2;
 \`\`\`
-
-## Practice
-
-Write \`formatMinutes(total)\` that returns a human label like \`1h 20m\`.
 `,
           }),
         ],
@@ -1107,10 +1023,6 @@ button?.addEventListener("click", () => {
   button.textContent = "Saved";
 });
 \`\`\`
-
-## Practice
-
-Build a counter: a number and two buttons that increment and decrement it.
 `,
           }),
           lesson({
@@ -1130,10 +1042,6 @@ for (const skill of skills) {
   list?.append(li);
 }
 \`\`\`
-
-## Practice
-
-Render a todo list from an array. Add one new item when a form submits.
 `,
           }),
         ],
@@ -1171,10 +1079,6 @@ export function Badge({ label }: BadgeProps) {
 \`\`\`
 
 Components receive **props** and return UI. Parents pass data down; children should not mutate that data.
-
-## Practice
-
-Build a \`CourseCard\` that accepts \`title\`, \`level\`, and \`summary\` props.
 `,
           }),
           lesson({

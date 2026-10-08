@@ -8,6 +8,7 @@ import {
   startCourse,
   updateCourseProgress,
 } from "./courses.service.js";
+import { resetExercise, submitExercise } from "./exercises.service.js";
 import { getCourseReviews, removeCourseReview, saveCourseReview } from "./reviews.service.js";
 
 function requireSession(req: Request) {
@@ -48,6 +49,22 @@ export async function updateProgressHandler(req: Request, res: Response) {
   const session = requireSession(req);
   const slug = String(req.params.slug ?? "");
   const data = await updateCourseProgress(session.sub, slug, req.body);
+  res.json({ data });
+}
+
+export async function submitExerciseHandler(req: Request, res: Response) {
+  const session = requireSession(req);
+  const slug = String(req.params.slug ?? "");
+  const exerciseId = String(req.params.exerciseId ?? "");
+  const data = await submitExercise(session.sub, slug, exerciseId, req.body);
+  res.json({ data });
+}
+
+export async function resetExerciseHandler(req: Request, res: Response) {
+  const session = requireSession(req);
+  const slug = String(req.params.slug ?? "");
+  const exerciseId = String(req.params.exerciseId ?? "");
+  const data = await resetExercise(session.sub, slug, exerciseId);
   res.json({ data });
 }
 

@@ -1,11 +1,13 @@
 import {
   COURSE_COMPLETE_POINTS,
   courseProgressPercent,
+  isExerciseDone,
   isLessonProgressStatus,
   LESSON_COMPLETE_POINTS,
   matchedSkillSlugs,
+  readExerciseConfig,
 } from "@coddle/shared";
-import type { CourseLesson, UserLessonProgress } from "@prisma/client";
+import type { CourseLesson, UserExerciseSubmission, UserLessonProgress } from "@prisma/client";
 import { AppError } from "../../shared/errors.js";
 import { ratingSummaries, summaryFor, type RatingSummary } from "./reviews.repository.js";
 import {
@@ -16,29 +18,58 @@ import {
   findCourseBySlug,
   findLessonProgress,
   findUserCourse,
+  flattenExercises,
   flattenLessons,
   incrementUserPoints,
+  listExerciseSubmissions,
   listLessonProgressForLessons,
   listPublishedCourses,
   listUserCourses,
   listUserSkillSlugs,
   markUserCourseCompleted,
   upsertLessonProgress,
+  type CourseExerciseRow,
   type CourseWithContent,
+  type FlatLesson,
 } from "./courses.repository.js";
 
 export type LessonUiStatus = "locked" | "current" | "completed" | "skipped";
 
-function progressMap(rows: UserLessonProgress[]) {
-  return new Map(rows.map((row) => [row.lessonId, row]));
+type Enrollment = { startedAt: Date; completedAt: Date | null };
+
+export type ProgressState = {
+  lessons: Map<string, UserLessonProgress>;
+  exercises: Map<string, UserExerciseSubmission>;
+};
+
+const EMPTY_PROGRESS: ProgressState = { lessons: new Map(), exercises: new Map() };
+
+export async function loadProgressState(
+  userId: string,
+  lessons: FlatLesson[],
+): Promise<ProgressState> {
+  const [lessonRows, submissionRows] = await Promise.all([
+    listLessonProgressForLessons(
+      userId,
+      lessons.map((lesson) => lesson.id),
+    ),
+    listExerciseSubmissions(
+      userId,
+      flattenExercises(lessons).map((exercise) => exercise.id),
+    ),
+  ]);
+  return {
+    lessons: new Map(lessonRows.map((row) => [row.lessonId, row])),
+    exercises: new Map(submissionRows.map((row) => [row.exerciseId, row])),
+  };
 }
 
-function deriveLessonStatuses(
-  lessons: CourseLesson[],
+export function deriveLessonStatuses<T extends CourseLesson>(
+  lessons: T[],
   progress: Map<string, UserLessonProgress>,
-): { statuses: LessonUiStatus[]; nextLesson: CourseLesson | null } {
+): { statuses: LessonUiStatus[]; nextLesson: T | null } {
   const statuses: LessonUiStatus[] = [];
-  let nextLesson: CourseLesson | null = null;
+  let nextLesson: T | null = null;
   let locked = false;
 
   for (const lesson of lessons) {
@@ -63,21 +94,38 @@ function deriveLessonStatuses(
   return { statuses, nextLesson };
 }
 
-function summarizeProgress(
-  lessons: CourseLesson[],
-  progress: Map<string, UserLessonProgress>,
-) {
-  const { statuses, nextLesson } = deriveLessonStatuses(lessons, progress);
-  const doneCount = statuses.filter(
+/**
+ * Lessons and exercises both count toward progress. Once every lesson is done,
+ * "next" points at the first lesson that still has an open exercise.
+ */
+function summarizeProgress(lessons: FlatLesson[], state: ProgressState) {
+  const { statuses, nextLesson: currentLesson } = deriveLessonStatuses(lessons, state.lessons);
+  const exerciseDone = (exercise: CourseExerciseRow) =>
+    isExerciseDone(state.exercises.get(exercise.id)?.status);
+  const exercises = flattenExercises(lessons);
+  const lessonsDone = statuses.filter(
     (status) => status === "completed" || status === "skipped",
   ).length;
+  const exercisesDone = exercises.filter(exerciseDone).length;
+  const nextLesson =
+    currentLesson ??
+    lessons.find((lesson) => lesson.exercises.some((exercise) => !exerciseDone(exercise))) ??
+    null;
+  const doneCount = lessonsDone + exercisesDone;
+  const totalCount = lessons.length + exercises.length;
   return {
     statuses,
     nextLesson,
     doneCount,
-    totalCount: lessons.length,
-    progressPercent: courseProgressPercent(doneCount, lessons.length),
+    totalCount,
+    exerciseCount: exercises.length,
+    exercisesDone,
+    progressPercent: courseProgressPercent(doneCount, totalCount),
   };
+}
+
+function nextLessonPayload(lesson: FlatLesson | null) {
+  return lesson ? { slug: lesson.slug, title: lesson.title, moduleSlug: lesson.moduleSlug } : null;
 }
 
 function creatorPayload(course: CourseWithContent) {
@@ -96,15 +144,57 @@ function skillsPayload(course: CourseWithContent) {
   }));
 }
 
+/** Answer keys and solutions stay server-side until the learner is done. */
+function exercisePayload(
+  exercise: CourseExerciseRow,
+  submission: UserExerciseSubmission | undefined,
+) {
+  const config = readExerciseConfig(exercise.config);
+  const done = isExerciseDone(submission?.status);
+  return {
+    id: exercise.id,
+    kind: exercise.kind,
+    title: exercise.title,
+    instructions: exercise.instructions,
+    estimatedMinutes: exercise.estimatedMinutes,
+    hint: exercise.hint,
+    hasSolution: exercise.solution.trim().length > 0,
+    solution: done ? exercise.solution : null,
+    requirements: config.requirements.filter((item) => item.trim()),
+    quiz:
+      exercise.kind === "quiz"
+        ? {
+            passPercent: config.passPercent,
+            questions: config.questions.map((question) => ({
+              id: question.id,
+              prompt: question.prompt,
+              options: question.options.filter((option) => option.text.trim()),
+              correctOptionId: done ? question.correctOptionId : null,
+              explanation: done ? question.explanation : null,
+            })),
+          }
+        : null,
+    submission: submission
+      ? {
+          status: submission.status,
+          response: submission.response,
+          score: submission.score,
+          attempts: submission.attempts,
+          updatedAt: submission.updatedAt.toISOString(),
+        }
+      : null,
+  };
+}
+
 function toCatalogItem(
   course: CourseWithContent,
-  enrollment: { startedAt: Date; completedAt: Date | null } | null,
-  progress: Map<string, UserLessonProgress>,
+  enrollment: Enrollment | null,
+  state: ProgressState,
   userSkillSlugs: string[],
   rating: RatingSummary,
 ) {
   const lessons = flattenLessons(course);
-  const summary = summarizeProgress(lessons, progress);
+  const summary = summarizeProgress(lessons, state);
   const skillSlugs = skillsPayload(course).map((skill) => skill.slug);
 
   return {
@@ -122,36 +212,26 @@ function toCatalogItem(
     matchedSkillSlugs: matchedSkillSlugs(skillSlugs, userSkillSlugs),
     moduleCount: course.modules.length,
     lessonCount: lessons.length,
+    exerciseCount: summary.exerciseCount,
     enrolled: Boolean(enrollment),
     startedAt: enrollment?.startedAt.toISOString() ?? null,
     completedAt: enrollment?.completedAt?.toISOString() ?? null,
     progressPercent: enrollment ? summary.progressPercent : 0,
-    nextLesson:
-      enrollment && summary.nextLesson
-        ? {
-            slug: summary.nextLesson.slug,
-            title: summary.nextLesson.title,
-            moduleSlug: lessons.find((item) => item.id === summary.nextLesson!.id)
-              ?.moduleSlug,
-          }
-        : null,
+    nextLesson: enrollment ? nextLessonPayload(summary.nextLesson) : null,
   };
 }
 
 function toDetail(
   course: CourseWithContent,
-  enrollment: { startedAt: Date; completedAt: Date | null } | null,
-  progress: Map<string, UserLessonProgress>,
+  enrollment: Enrollment | null,
+  state: ProgressState,
   rating: RatingSummary,
   userId: string,
 ) {
   const lessons = flattenLessons(course);
-  const summary = summarizeProgress(lessons, progress);
-  const statuses = enrollment
-    ? summary.statuses
-    : deriveLessonStatuses(lessons, new Map()).statuses;
+  const summary = summarizeProgress(lessons, state);
   const statusByLessonId = new Map(
-    lessons.map((lesson, index) => [lesson.id, statuses[index]!]),
+    lessons.map((lesson, index) => [lesson.id, summary.statuses[index]!]),
   );
 
   const isCreator = course.createdByUserId === userId;
@@ -178,15 +258,9 @@ function toDetail(
     startedAt: enrollment?.startedAt.toISOString() ?? null,
     completedAt: enrollment?.completedAt?.toISOString() ?? null,
     progressPercent: enrollment ? summary.progressPercent : 0,
-    nextLesson:
-      enrollment && summary.nextLesson
-        ? {
-            slug: summary.nextLesson.slug,
-            title: summary.nextLesson.title,
-            moduleSlug: lessons.find((item) => item.id === summary.nextLesson!.id)
-              ?.moduleSlug,
-          }
-        : null,
+    exerciseCount: summary.exerciseCount,
+    exercisesDone: enrollment ? summary.exercisesDone : 0,
+    nextLesson: enrollment ? nextLessonPayload(summary.nextLesson) : null,
     modules: course.modules.map((courseModule) => ({
       slug: courseModule.slug,
       title: courseModule.title,
@@ -198,6 +272,9 @@ function toDetail(
         content: lesson.content,
         estimatedMinutes: lesson.estimatedMinutes,
         status: statusByLessonId.get(lesson.id) ?? "locked",
+        exercises: lesson.exercises.map((exercise) =>
+          exercisePayload(exercise, state.exercises.get(exercise.id)),
+        ),
       })),
     })),
   };
@@ -218,17 +295,13 @@ export async function getCourseCatalog(userId: string) {
   const items = await Promise.all(
     courses.map(async (course) => {
       const enrollment = enrollmentByCourseId.get(course.id) ?? null;
-      const lessons = flattenLessons(course);
-      const progressRows = enrollment
-        ? await listLessonProgressForLessons(
-            userId,
-            lessons.map((lesson) => lesson.id),
-          )
-        : [];
+      const state = enrollment
+        ? await loadProgressState(userId, flattenLessons(course))
+        : EMPTY_PROGRESS;
       return toCatalogItem(
         course,
         enrollment,
-        progressMap(progressRows),
+        state,
         userSkillSlugs,
         summaryFor(ratings, course.id),
       );
@@ -248,27 +321,58 @@ export async function loadVisibleCourse(userId: string, slug: string) {
   return { course, enrollment };
 }
 
+/** Progress writes enroll the learner on first touch, but only on published courses. */
+export async function ensureEnrollment(
+  userId: string,
+  course: CourseWithContent,
+  enrollment: Enrollment | null,
+): Promise<Enrollment> {
+  if (enrollment) return enrollment;
+  if (course.status !== "published") {
+    throw new AppError(
+      409,
+      "course_not_published",
+      "This course is not published yet, so progress cannot be tracked.",
+    );
+  }
+  return createUserCourse(userId, course.id);
+}
+
+/**
+ * Recomputes completion after any progress change. Returns the bonus awarded
+ * (0 when nothing changed or completion was undone).
+ */
+export async function syncCourseCompletion(
+  userId: string,
+  course: CourseWithContent,
+  enrollment: Enrollment,
+): Promise<number> {
+  const lessons = flattenLessons(course);
+  const summary = summarizeProgress(lessons, await loadProgressState(userId, lessons));
+  const wasComplete = Boolean(enrollment.completedAt);
+  const nowComplete = summary.totalCount > 0 && summary.doneCount >= summary.totalCount;
+
+  if (nowComplete && !wasComplete) {
+    await markUserCourseCompleted(userId, course.id);
+    await incrementUserPoints(userId, COURSE_COMPLETE_POINTS);
+    return COURSE_COMPLETE_POINTS;
+  }
+  if (!nowComplete && wasComplete) {
+    await clearUserCourseCompleted(userId, course.id);
+    await incrementUserPoints(userId, -COURSE_COMPLETE_POINTS);
+  }
+  return 0;
+}
+
 export async function getCourseDetail(userId: string, slug: string) {
   const { course, enrollment } = await loadVisibleCourse(userId, slug);
-  const lessons = flattenLessons(course);
-  const [progressRows, ratings] = await Promise.all([
-    enrollment
-      ? listLessonProgressForLessons(
-          userId,
-          lessons.map((lesson) => lesson.id),
-        )
-      : Promise.resolve([]),
+  const [state, ratings] = await Promise.all([
+    enrollment ? loadProgressState(userId, flattenLessons(course)) : Promise.resolve(EMPTY_PROGRESS),
     ratingSummaries([course.id]),
   ]);
 
   return {
-    course: toDetail(
-      course,
-      enrollment,
-      progressMap(progressRows),
-      summaryFor(ratings, course.id),
-      userId,
-    ),
+    course: toDetail(course, enrollment, state, summaryFor(ratings, course.id), userId),
   };
 }
 
@@ -317,17 +421,7 @@ export async function updateCourseProgress(
 
   const visible = await loadVisibleCourse(userId, slug);
   const { course } = visible;
-  let enrollment = visible.enrollment;
-  if (!enrollment) {
-    if (course.status !== "published") {
-      throw new AppError(
-        409,
-        "course_not_published",
-        "This course is not published yet, so progress cannot be tracked.",
-      );
-    }
-    enrollment = await createUserCourse(userId, course.id);
-  }
+  const enrollment = await ensureEnrollment(userId, course, visible.enrollment);
 
   const courseModule = course.modules.find((item) => item.slug === moduleSlug);
   const lesson = courseModule?.lessons.find((item) => item.slug === lessonSlug);
@@ -340,7 +434,7 @@ export async function updateCourseProgress(
     userId,
     lessons.map((item) => item.id),
   );
-  const progress = progressMap(progressRows);
+  const progress = new Map(progressRows.map((row) => [row.lessonId, row]));
   const { statuses } = deriveLessonStatuses(lessons, progress);
   const lessonIndex = lessons.findIndex((item) => item.id === lesson.id);
   const uiStatus = statuses[lessonIndex];
@@ -369,35 +463,16 @@ export async function updateCourseProgress(
       pointsAwarded = LESSON_COMPLETE_POINTS;
       await incrementUserPoints(userId, LESSON_COMPLETE_POINTS);
     }
-    if (action === "skipped") {
-      pointsAwarded = existing?.pointsAwarded ?? 0;
-    }
 
     await upsertLessonProgress(userId, lesson.id, action, pointsAwarded);
   }
 
-  const refreshed = await listLessonProgressForLessons(
-    userId,
-    lessons.map((item) => item.id),
-  );
-  const refreshedProgress = progressMap(refreshed);
-  const summary = summarizeProgress(lessons, refreshedProgress);
-  const wasComplete = Boolean(enrollment.completedAt);
-  const nowComplete = summary.doneCount >= summary.totalCount && summary.totalCount > 0;
-
-  if (nowComplete && !wasComplete) {
-    await markUserCourseCompleted(userId, course.id);
-    await incrementUserPoints(userId, COURSE_COMPLETE_POINTS);
-  } else if (!nowComplete && wasComplete) {
-    await clearUserCourseCompleted(userId, course.id);
-    await incrementUserPoints(userId, -COURSE_COMPLETE_POINTS);
-  }
-
+  const courseCompleteBonus = await syncCourseCompletion(userId, course, enrollment);
   const detail = await getCourseDetail(userId, slug);
   return {
     ...detail,
     pointsAwarded: action === "completed" ? LESSON_COMPLETE_POINTS : 0,
-    courseCompleteBonus: nowComplete && !wasComplete ? COURSE_COMPLETE_POINTS : 0,
+    courseCompleteBonus,
   };
 }
 
@@ -410,41 +485,32 @@ export async function getContinueCourse(userId: string) {
   const active =
     enrollments.find((row) => !row.completedAt) ?? enrollments[0] ?? null;
 
-  const enrolled = await Promise.all(
-    enrollments.map(async (row) => {
-      const lessons = flattenLessons(row.course);
-      const progressRows = await listLessonProgressForLessons(
-        userId,
-        lessons.map((lesson) => lesson.id),
-      );
-      const summary = summarizeProgress(lessons, progressMap(progressRows));
-      return {
-        slug: row.course.slug,
-        title: row.course.title,
-        progressPercent: summary.progressPercent,
-        completedAt: row.completedAt?.toISOString() ?? null,
-        nextLesson: summary.nextLesson
-          ? {
-              slug: summary.nextLesson.slug,
-              title: summary.nextLesson.title,
-              moduleSlug: lessons.find((item) => item.id === summary.nextLesson!.id)
-                ?.moduleSlug,
-            }
-          : null,
-      };
-    }),
+  const summaries = new Map(
+    await Promise.all(
+      enrollments.map(async (row) => {
+        const lessons = flattenLessons(row.course);
+        const state = await loadProgressState(userId, lessons);
+        return [row.courseId, summarizeProgress(lessons, state)] as const;
+      }),
+    ),
   );
+
+  const enrolled = enrollments.map((row) => {
+    const summary = summaries.get(row.courseId)!;
+    return {
+      slug: row.course.slug,
+      title: row.course.title,
+      progressPercent: summary.progressPercent,
+      completedAt: row.completedAt?.toISOString() ?? null,
+      nextLesson: nextLessonPayload(summary.nextLesson),
+    };
+  });
 
   if (!active) {
     return { continue: null, enrolled };
   }
 
-  const lessons = flattenLessons(active.course);
-  const progressRows = await listLessonProgressForLessons(
-    userId,
-    lessons.map((lesson) => lesson.id),
-  );
-  const summary = summarizeProgress(lessons, progressMap(progressRows));
+  const summary = summaries.get(active.courseId)!;
 
   return {
     continue: {
@@ -453,14 +519,7 @@ export async function getContinueCourse(userId: string) {
       summary: active.course.summary,
       thumbnailUrl: active.course.thumbnailUrl,
       progressPercent: summary.progressPercent,
-      nextLesson: summary.nextLesson
-        ? {
-            slug: summary.nextLesson.slug,
-            title: summary.nextLesson.title,
-            moduleSlug: lessons.find((item) => item.id === summary.nextLesson!.id)
-              ?.moduleSlug,
-          }
-        : null,
+      nextLesson: nextLessonPayload(summary.nextLesson),
       completedAt: active.completedAt?.toISOString() ?? null,
     },
     enrolled,
