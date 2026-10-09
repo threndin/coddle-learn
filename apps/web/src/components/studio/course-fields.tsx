@@ -108,15 +108,19 @@ export function SkillPicker({
   value,
   onChange,
   disabled,
+  max = COURSE_LIMITS.skillMax,
+  footnote = "Learners with these skills see this course as a match.",
 }: {
   value: string[];
   onChange: (slugs: string[]) => void;
   disabled?: boolean;
+  max?: number;
+  footnote?: string;
 }) {
   const [category, setCategory] = useState<SkillCategory>("All");
   const [query, setQuery] = useState("");
   const selected = new Set(value);
-  const full = value.length >= COURSE_LIMITS.skillMax;
+  const full = value.length >= max;
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -193,8 +197,7 @@ export function SkillPicker({
         ) : null}
       </div>
       <p className="mt-3 text-[11px] text-ink-muted">
-        {value.length}/{COURSE_LIMITS.skillMax} selected · Learners with these skills see this course
-        as a match.
+        {value.length}/{max} selected · {footnote}
       </p>
     </div>
   );

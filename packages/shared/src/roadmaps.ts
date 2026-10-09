@@ -1,14 +1,5 @@
 import type { ExperienceLevel } from "./onboarding.js";
 
-export const RESOURCE_TYPES = ["docs", "article", "video", "course", "tool"] as const;
-export type ResourceType = (typeof RESOURCE_TYPES)[number];
-
-export type RoadmapResourceSeed = {
-  title: string;
-  url: string;
-  type: ResourceType;
-};
-
 export type RoadmapStepSeed = {
   slug: string;
   title: string;
@@ -18,7 +9,8 @@ export type RoadmapStepSeed = {
   learnings: readonly string[];
   /** One concrete practice prompt for the step. */
   practice: string;
-  resources: readonly RoadmapResourceSeed[];
+  /** URLs from `STARTER_RESOURCES`, in display order. */
+  resources: readonly string[];
   /**
    * Consecutive steps sharing a branchKey form an OR group —
    * completing any one unlocks the next step after the group.
@@ -81,16 +73,8 @@ export const STARTER_ROADMAPS: readonly StarterRoadmap[] = [
         ],
         practice: "Open your terminal, create a folder called practice, and write a one-line hello.txt file inside it.",
         resources: [
-          {
-            title: "MDN: Getting started with the web",
-            url: "https://developer.mozilla.org/en-US/docs/Learn_web_development/Getting_started",
-            type: "docs",
-          },
-          {
-            title: "The Command Line Crash Course",
-            url: "https://learnpythonthehardway.org/book/appendixa.html",
-            type: "article",
-          },
+          "https://developer.mozilla.org/en-US/docs/Learn_web_development/Getting_started",
+          "https://learnpythonthehardway.org/book/appendixa.html",
         ],
       }),
       step({
@@ -105,21 +89,9 @@ export const STARTER_ROADMAPS: readonly StarterRoadmap[] = [
         ],
         practice: "Write a script that asks for a name and prints a personalized greeting; then break it on purpose and fix the error.",
         resources: [
-          {
-            title: "JavaScript first steps (MDN)",
-            url: "https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Scripting",
-            type: "docs",
-          },
-          {
-            title: "freeCodeCamp: JavaScript Algorithms and Data Structures",
-            url: "https://www.freecodecamp.org/learn/javascript-algorithms-and-data-structures-v8/",
-            type: "course",
-          },
-          {
-            title: "javascript.info: Intro",
-            url: "https://javascript.info/intro",
-            type: "article",
-          },
+          "https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Scripting",
+          "https://www.freecodecamp.org/learn/javascript-algorithms-and-data-structures-v8/",
+          "https://javascript.info/intro",
         ],
       }),
       step({
@@ -134,21 +106,9 @@ export const STARTER_ROADMAPS: readonly StarterRoadmap[] = [
         ],
         practice: "Create a GitHub repo for your practice folder, make three commits with clear messages, and push them.",
         resources: [
-          {
-            title: "Git Handbook (GitHub)",
-            url: "https://docs.github.com/en/get-started/using-git/about-git",
-            type: "docs",
-          },
-          {
-            title: "Oh My Git! (interactive)",
-            url: "https://ohmygit.org/",
-            type: "tool",
-          },
-          {
-            title: "Pro Git book (free)",
-            url: "https://git-scm.com/book/en/v2",
-            type: "docs",
-          },
+          "https://docs.github.com/en/get-started/using-git/about-git",
+          "https://ohmygit.org/",
+          "https://git-scm.com/book/en/v2",
         ],
       }),
       step({
@@ -163,16 +123,8 @@ export const STARTER_ROADMAPS: readonly StarterRoadmap[] = [
         ],
         practice: "Take a broken snippet (or break your greeting script), list three hypotheses, then fix it using the debugger.",
         resources: [
-          {
-            title: "Chrome DevTools overview",
-            url: "https://developer.chrome.com/docs/devtools/overview",
-            type: "docs",
-          },
-          {
-            title: "How to debug JavaScript (MDN)",
-            url: "https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Scripting/Debugging_JavaScript",
-            type: "docs",
-          },
+          "https://developer.chrome.com/docs/devtools/overview",
+          "https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Scripting/Debugging_JavaScript",
         ],
       }),
       step({
@@ -187,16 +139,8 @@ export const STARTER_ROADMAPS: readonly StarterRoadmap[] = [
         ],
         practice: "Build a tiny contact list in memory: add, list, and find contacts by name using functions.",
         resources: [
-          {
-            title: "Functions (MDN)",
-            url: "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Functions",
-            type: "docs",
-          },
-          {
-            title: "Working with objects (MDN)",
-            url: "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Working_with_objects",
-            type: "docs",
-          },
+          "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Functions",
+          "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Working_with_objects",
         ],
       }),
       step({
@@ -211,16 +155,8 @@ export const STARTER_ROADMAPS: readonly StarterRoadmap[] = [
         ],
         practice: "Build a to-do list or tip calculator, push it to GitHub, and write a README with setup steps.",
         resources: [
-          {
-            title: "Writing a great README",
-            url: "https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes",
-            type: "docs",
-          },
-          {
-            title: "How to think about side projects",
-            url: "https://www.freecodecamp.org/news/how-to-build-a-personal-project/",
-            type: "article",
-          },
+          "https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes",
+          "https://www.freecodecamp.org/news/how-to-build-a-personal-project/",
         ],
       }),
     ],
@@ -245,16 +181,8 @@ export const STARTER_ROADMAPS: readonly StarterRoadmap[] = [
         ],
         practice: "Build a personal profile page with header, main, and footer using only semantic HTML.",
         resources: [
-          {
-            title: "HTML: A good basis for accessibility (MDN)",
-            url: "https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Accessibility/HTML",
-            type: "docs",
-          },
-          {
-            title: "HTML living standard",
-            url: "https://html.spec.whatwg.org/multipage/",
-            type: "docs",
-          },
+          "https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Accessibility/HTML",
+          "https://html.spec.whatwg.org/multipage/",
         ],
       }),
       step({
@@ -269,21 +197,9 @@ export const STARTER_ROADMAPS: readonly StarterRoadmap[] = [
         ],
         practice: "Style your profile page so it looks good at 375px and 1200px widths.",
         resources: [
-          {
-            title: "CSS layout (MDN)",
-            url: "https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/CSS_layout",
-            type: "docs",
-          },
-          {
-            title: "web.dev: Learn CSS",
-            url: "https://web.dev/learn/css",
-            type: "course",
-          },
-          {
-            title: "Flexbox Froggy",
-            url: "https://flexboxfroggy.com/",
-            type: "tool",
-          },
+          "https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/CSS_layout",
+          "https://web.dev/learn/css",
+          "https://flexboxfroggy.com/",
         ],
       }),
       step({
@@ -298,16 +214,8 @@ export const STARTER_ROADMAPS: readonly StarterRoadmap[] = [
         ],
         practice: "Add a theme toggle and a live character counter to a form on your profile page.",
         resources: [
-          {
-            title: "JavaScript guide (MDN)",
-            url: "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide",
-            type: "docs",
-          },
-          {
-            title: "javascript.info",
-            url: "https://javascript.info/",
-            type: "article",
-          },
+          "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide",
+          "https://javascript.info/",
         ],
       }),
       step({
@@ -322,16 +230,8 @@ export const STARTER_ROADMAPS: readonly StarterRoadmap[] = [
         ],
         practice: "Convert one of your scripts to TypeScript and type the data it uses.",
         resources: [
-          {
-            title: "TypeScript for the New Programmer",
-            url: "https://www.typescriptlang.org/docs/handbook/typescript-from-scratch.html",
-            type: "docs",
-          },
-          {
-            title: "TypeScript Handbook",
-            url: "https://www.typescriptlang.org/docs/handbook/intro.html",
-            type: "docs",
-          },
+          "https://www.typescriptlang.org/docs/handbook/typescript-from-scratch.html",
+          "https://www.typescriptlang.org/docs/handbook/intro.html",
         ],
       }),
       step({
@@ -346,16 +246,8 @@ export const STARTER_ROADMAPS: readonly StarterRoadmap[] = [
         ],
         practice: "Rebuild your profile tip or to-do UI as a React app with at least three components.",
         resources: [
-          {
-            title: "React Learn",
-            url: "https://react.dev/learn",
-            type: "docs",
-          },
-          {
-            title: "Thinking in React",
-            url: "https://react.dev/learn/thinking-in-react",
-            type: "article",
-          },
+          "https://react.dev/learn",
+          "https://react.dev/learn/thinking-in-react",
         ],
       }),
       step({
@@ -370,16 +262,8 @@ export const STARTER_ROADMAPS: readonly StarterRoadmap[] = [
         ],
         practice: "Create a Next.js app with a home page and a projects page; deploy it and share the URL.",
         resources: [
-          {
-            title: "Next.js Learn",
-            url: "https://nextjs.org/learn",
-            type: "course",
-          },
-          {
-            title: "Next.js Docs",
-            url: "https://nextjs.org/docs",
-            type: "docs",
-          },
+          "https://nextjs.org/learn",
+          "https://nextjs.org/docs",
         ],
       }),
       step({
@@ -394,16 +278,8 @@ export const STARTER_ROADMAPS: readonly StarterRoadmap[] = [
         ],
         practice: "Run through your deployed app with keyboard only and fix every issue you find.",
         resources: [
-          {
-            title: "web.dev: Accessible to all",
-            url: "https://web.dev/learn/accessibility",
-            type: "course",
-          },
-          {
-            title: "axe DevTools",
-            url: "https://www.deque.com/axe/devtools/",
-            type: "tool",
-          },
+          "https://web.dev/learn/accessibility",
+          "https://www.deque.com/axe/devtools/",
         ],
       }),
     ],
@@ -428,11 +304,7 @@ export const STARTER_ROADMAPS: readonly StarterRoadmap[] = [
         ],
         practice: "Rewrite a callback-based snippet to async/await and export it as a module.",
         resources: [
-          {
-            title: "Modern JavaScript tutorial",
-            url: "https://javascript.info/",
-            type: "article",
-          },
+          "https://javascript.info/",
         ],
       }),
       step({
@@ -447,16 +319,8 @@ export const STARTER_ROADMAPS: readonly StarterRoadmap[] = [
         ],
         practice: "Type a User, Session, and ApiError union for a tiny auth response payload.",
         resources: [
-          {
-            title: "Everyday Types",
-            url: "https://www.typescriptlang.org/docs/handbook/2/everyday-types.html",
-            type: "docs",
-          },
-          {
-            title: "Narrowing",
-            url: "https://www.typescriptlang.org/docs/handbook/2/narrowing.html",
-            type: "docs",
-          },
+          "https://www.typescriptlang.org/docs/handbook/2/everyday-types.html",
+          "https://www.typescriptlang.org/docs/handbook/2/narrowing.html",
         ],
       }),
       step({
@@ -472,11 +336,7 @@ export const STARTER_ROADMAPS: readonly StarterRoadmap[] = [
         practice: "Model a BlogPost and Author with interfaces; extend BlogPost into FeaturedPost.",
         branchKey: "modeling-style",
         resources: [
-          {
-            title: "Interfaces vs type aliases",
-            url: "https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#differences-between-type-aliases-and-interfaces",
-            type: "docs",
-          },
+          "https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#differences-between-type-aliases-and-interfaces",
         ],
       }),
       step({
@@ -492,11 +352,7 @@ export const STARTER_ROADMAPS: readonly StarterRoadmap[] = [
         practice: "Model the same BlogPost domain with type aliases and a status union.",
         branchKey: "modeling-style",
         resources: [
-          {
-            title: "Type aliases",
-            url: "https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#type-aliases",
-            type: "docs",
-          },
+          "https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#type-aliases",
         ],
       }),
       step({
@@ -511,11 +367,7 @@ export const STARTER_ROADMAPS: readonly StarterRoadmap[] = [
         ],
         practice: "Write a generic identity and a generic first() helper with tests or console asserts.",
         resources: [
-          {
-            title: "Generics handbook chapter",
-            url: "https://www.typescriptlang.org/docs/handbook/2/generics.html",
-            type: "docs",
-          },
+          "https://www.typescriptlang.org/docs/handbook/2/generics.html",
         ],
       }),
       step({
@@ -530,16 +382,8 @@ export const STARTER_ROADMAPS: readonly StarterRoadmap[] = [
         ],
         practice: "Take a full User type and derive CreateUserInput and PublicUser with utility types.",
         resources: [
-          {
-            title: "Utility Types",
-            url: "https://www.typescriptlang.org/docs/handbook/utility-types.html",
-            type: "docs",
-          },
-          {
-            title: "Total TypeScript tips",
-            url: "https://www.totaltypescript.com/tips",
-            type: "article",
-          },
+          "https://www.typescriptlang.org/docs/handbook/utility-types.html",
+          "https://www.totaltypescript.com/tips",
         ],
       }),
     ],
@@ -564,11 +408,7 @@ export const STARTER_ROADMAPS: readonly StarterRoadmap[] = [
         ],
         practice: "Write an async function that fetches two URLs and returns both results or a clear error.",
         resources: [
-          {
-            title: "Node.js guides",
-            url: "https://nodejs.org/en/learn/getting-started/introduction-to-nodejs",
-            type: "docs",
-          },
+          "https://nodejs.org/en/learn/getting-started/introduction-to-nodejs",
         ],
       }),
       step({
@@ -583,16 +423,8 @@ export const STARTER_ROADMAPS: readonly StarterRoadmap[] = [
         ],
         practice: "Create an Express server with GET /health that returns JSON and starts via an npm script.",
         resources: [
-          {
-            title: "Introduction to Node.js",
-            url: "https://nodejs.org/en/learn/getting-started/introduction-to-nodejs",
-            type: "docs",
-          },
-          {
-            title: "Express Hello world",
-            url: "https://expressjs.com/en/starter/hello-world.html",
-            type: "docs",
-          },
+          "https://nodejs.org/en/learn/getting-started/introduction-to-nodejs",
+          "https://expressjs.com/en/starter/hello-world.html",
         ],
       }),
       step({
@@ -607,16 +439,8 @@ export const STARTER_ROADMAPS: readonly StarterRoadmap[] = [
         ],
         practice: "Build CRUD routes for notes in memory with 400 responses for invalid input.",
         resources: [
-          {
-            title: "MDN: HTTP overview",
-            url: "https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Overview",
-            type: "docs",
-          },
-          {
-            title: "Microsoft REST API guidelines",
-            url: "https://github.com/microsoft/api-guidelines/blob/vNext/azure/Guidelines.md",
-            type: "article",
-          },
+          "https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Overview",
+          "https://github.com/microsoft/api-guidelines/blob/vNext/azure/Guidelines.md",
         ],
       }),
       step({
@@ -631,16 +455,8 @@ export const STARTER_ROADMAPS: readonly StarterRoadmap[] = [
         ],
         practice: "Add a fake login that sets an httpOnly session cookie and a logout that clears it.",
         resources: [
-          {
-            title: "OWASP Authentication Cheat Sheet",
-            url: "https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html",
-            type: "docs",
-          },
-          {
-            title: "web.dev: SameSite cookies explained",
-            url: "https://web.dev/articles/samesite-cookies-explained",
-            type: "article",
-          },
+          "https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html",
+          "https://web.dev/articles/samesite-cookies-explained",
         ],
       }),
       step({
@@ -655,16 +471,8 @@ export const STARTER_ROADMAPS: readonly StarterRoadmap[] = [
         ],
         practice: "Create a notes table and replace your in-memory store with Postgres queries.",
         resources: [
-          {
-            title: "PostgreSQL tutorial",
-            url: "https://www.postgresql.org/docs/current/tutorial.html",
-            type: "docs",
-          },
-          {
-            title: "Prisma docs: Getting started",
-            url: "https://www.prisma.io/docs/getting-started",
-            type: "docs",
-          },
+          "https://www.postgresql.org/docs/current/tutorial.html",
+          "https://www.prisma.io/docs/getting-started",
         ],
       }),
       step({
@@ -679,16 +487,8 @@ export const STARTER_ROADMAPS: readonly StarterRoadmap[] = [
         ],
         practice: "Add tests for creating a note and rejecting an empty title.",
         resources: [
-          {
-            title: "Vitest docs",
-            url: "https://vitest.dev/guide/",
-            type: "docs",
-          },
-          {
-            title: "Testing HTTP APIs (overview)",
-            url: "https://www.freecodecamp.org/news/how-to-test-api-endpoints/",
-            type: "article",
-          },
+          "https://vitest.dev/guide/",
+          "https://www.freecodecamp.org/news/how-to-test-api-endpoints/",
         ],
       }),
     ],
@@ -713,16 +513,8 @@ export const STARTER_ROADMAPS: readonly StarterRoadmap[] = [
         ],
         practice: "On a Linux VM or container, create a user, copy a file with scp/rsync concepts, and inspect a running process.",
         resources: [
-          {
-            title: "Linux Journey",
-            url: "https://linuxjourney.com/",
-            type: "course",
-          },
-          {
-            title: "The Linux command line",
-            url: "https://linuxcommand.org/tlcl.php",
-            type: "article",
-          },
+          "https://linuxjourney.com/",
+          "https://linuxcommand.org/tlcl.php",
         ],
       }),
       step({
@@ -737,16 +529,8 @@ export const STARTER_ROADMAPS: readonly StarterRoadmap[] = [
         ],
         practice: "Containerize a Node or static app and run it with docker compose up.",
         resources: [
-          {
-            title: "Docker Get Started",
-            url: "https://docs.docker.com/get-started/",
-            type: "docs",
-          },
-          {
-            title: "Compose overview",
-            url: "https://docs.docker.com/compose/",
-            type: "docs",
-          },
+          "https://docs.docker.com/get-started/",
+          "https://docs.docker.com/compose/",
         ],
       }),
       step({
@@ -761,16 +545,8 @@ export const STARTER_ROADMAPS: readonly StarterRoadmap[] = [
         ],
         practice: "Add a GitHub Actions workflow that installs dependencies and runs tests on every PR.",
         resources: [
-          {
-            title: "GitHub Actions: Quickstart",
-            url: "https://docs.github.com/en/actions/get-started/quickstart",
-            type: "docs",
-          },
-          {
-            title: "What is CI/CD?",
-            url: "https://about.gitlab.com/topics/ci-cd/",
-            type: "article",
-          },
+          "https://docs.github.com/en/actions/get-started/quickstart",
+          "https://about.gitlab.com/topics/ci-cd/",
         ],
       }),
       step({
@@ -786,11 +562,7 @@ export const STARTER_ROADMAPS: readonly StarterRoadmap[] = [
         practice: "Deploy a static site or containerized hello-world on AWS and document the steps you took.",
         branchKey: "cloud-provider",
         resources: [
-          {
-            title: "AWS Cloud Essentials",
-            url: "https://aws.amazon.com/getting-started/cloud-essentials/",
-            type: "docs",
-          },
+          "https://aws.amazon.com/getting-started/cloud-essentials/",
         ],
       }),
       step({
@@ -806,16 +578,8 @@ export const STARTER_ROADMAPS: readonly StarterRoadmap[] = [
         practice: "Deploy a hello-world service on GCP and write down the resources you created.",
         branchKey: "cloud-provider",
         resources: [
-          {
-            title: "Google Cloud skills boost",
-            url: "https://www.cloudskillsboost.google/",
-            type: "course",
-          },
-          {
-            title: "GCP getting started",
-            url: "https://cloud.google.com/docs/get-started",
-            type: "docs",
-          },
+          "https://www.cloudskillsboost.google/",
+          "https://cloud.google.com/docs/get-started",
         ],
       }),
       step({
@@ -830,11 +594,7 @@ export const STARTER_ROADMAPS: readonly StarterRoadmap[] = [
         ],
         practice: "Add request logging and a /health check to an app, then break it and watch the signals change.",
         resources: [
-          {
-            title: "Google SRE book: Monitoring distributed systems",
-            url: "https://sre.google/sre-book/monitoring-distributed-systems/",
-            type: "article",
-          },
+          "https://sre.google/sre-book/monitoring-distributed-systems/",
         ],
       }),
     ],
@@ -859,16 +619,8 @@ export const STARTER_ROADMAPS: readonly StarterRoadmap[] = [
         ],
         practice: "Write a package with Add and must-handle error example; run go test.",
         resources: [
-          {
-            title: "A Tour of Go",
-            url: "https://go.dev/tour/",
-            type: "course",
-          },
-          {
-            title: "Effective Go",
-            url: "https://go.dev/doc/effective_go",
-            type: "docs",
-          },
+          "https://go.dev/tour/",
+          "https://go.dev/doc/effective_go",
         ],
       }),
       step({
@@ -883,16 +635,8 @@ export const STARTER_ROADMAPS: readonly StarterRoadmap[] = [
         ],
         practice: "Fetch several URLs concurrently and collect results without a race.",
         resources: [
-          {
-            title: "Go concurrency patterns",
-            url: "https://go.dev/blog/pipelines",
-            type: "article",
-          },
-          {
-            title: "Tour: Concurrency",
-            url: "https://go.dev/tour/concurrency/1",
-            type: "course",
-          },
+          "https://go.dev/blog/pipelines",
+          "https://go.dev/tour/concurrency/1",
         ],
       }),
       step({
@@ -907,16 +651,8 @@ export const STARTER_ROADMAPS: readonly StarterRoadmap[] = [
         ],
         practice: "Build GET /health and POST /echo JSON endpoints with tests.",
         resources: [
-          {
-            title: "net/http package",
-            url: "https://pkg.go.dev/net/http",
-            type: "docs",
-          },
-          {
-            title: "Writing Web Applications",
-            url: "https://go.dev/doc/articles/wiki/",
-            type: "article",
-          },
+          "https://pkg.go.dev/net/http",
+          "https://go.dev/doc/articles/wiki/",
         ],
       }),
       step({
@@ -931,11 +667,7 @@ export const STARTER_ROADMAPS: readonly StarterRoadmap[] = [
         ],
         practice: "Dockerize your HTTP service and run it with a published port.",
         resources: [
-          {
-            title: "Go Docker guide",
-            url: "https://docs.docker.com/language/golang/",
-            type: "docs",
-          },
+          "https://docs.docker.com/language/golang/",
         ],
       }),
       step({
@@ -950,11 +682,7 @@ export const STARTER_ROADMAPS: readonly StarterRoadmap[] = [
         ],
         practice: "Add a context timeout to an outbound HTTP call and assert it cancels.",
         resources: [
-          {
-            title: "Go blog: Context",
-            url: "https://go.dev/blog/context",
-            type: "article",
-          },
+          "https://go.dev/blog/context",
         ],
       }),
     ],
@@ -979,16 +707,8 @@ export const STARTER_ROADMAPS: readonly StarterRoadmap[] = [
         ],
         practice: "Pick a familiar app (URL shortener or chat) and write requirements + capacity guesses for 1M users.",
         resources: [
-          {
-            title: "System Design Primer",
-            url: "https://github.com/donnemartin/system-design-primer",
-            type: "article",
-          },
-          {
-            title: "ByteByteGo: Getting started",
-            url: "https://bytebytego.com/courses/system-design-interview/getting-started",
-            type: "article",
-          },
+          "https://github.com/donnemartin/system-design-primer",
+          "https://bytebytego.com/courses/system-design-interview/getting-started",
         ],
       }),
       step({
@@ -1003,16 +723,8 @@ export const STARTER_ROADMAPS: readonly StarterRoadmap[] = [
         ],
         practice: "Draw a design for a read-heavy feed with cache + DB and list three failure modes.",
         resources: [
-          {
-            title: "Caching overview",
-            url: "https://aws.amazon.com/caching/",
-            type: "docs",
-          },
-          {
-            title: "Load balancing concepts",
-            url: "https://www.nginx.com/resources/glossary/load-balancing/",
-            type: "article",
-          },
+          "https://aws.amazon.com/caching/",
+          "https://www.nginx.com/resources/glossary/load-balancing/",
         ],
       }),
       step({
@@ -1027,11 +739,7 @@ export const STARTER_ROADMAPS: readonly StarterRoadmap[] = [
         ],
         practice: "Rewrite your feed design with a queue for fan-out and list what you gained/lost.",
         resources: [
-          {
-            title: "CAP Twelve Years Later",
-            url: "https://www.infoq.com/articles/cap-twelve-years-later-how-the-rules-have-changed/",
-            type: "article",
-          },
+          "https://www.infoq.com/articles/cap-twelve-years-later-how-the-rules-have-changed/",
         ],
       }),
       step({
@@ -1046,11 +754,7 @@ export const STARTER_ROADMAPS: readonly StarterRoadmap[] = [
         ],
         practice: "For a URL shortener, write the read/write paths and the schema/indexes you would use.",
         resources: [
-          {
-            title: "Use the Index, Luke",
-            url: "https://use-the-index-luke.com/",
-            type: "article",
-          },
+          "https://use-the-index-luke.com/",
         ],
       }),
       step({
@@ -1065,16 +769,8 @@ export const STARTER_ROADMAPS: readonly StarterRoadmap[] = [
         ],
         practice: "Record yourself (or write a walkthrough) designing a URL shortener end-to-end.",
         resources: [
-          {
-            title: "System Design Primer: solutions",
-            url: "https://github.com/donnemartin/system-design-primer#system-design-interview-questions-with-solutions",
-            type: "article",
-          },
-          {
-            title: "AWS Architecture Center",
-            url: "https://aws.amazon.com/architecture/",
-            type: "docs",
-          },
+          "https://github.com/donnemartin/system-design-primer#system-design-interview-questions-with-solutions",
+          "https://aws.amazon.com/architecture/",
         ],
       }),
     ],
