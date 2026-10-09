@@ -4,6 +4,14 @@ import { prisma } from "../../shared/db.js";
 const roadmapWithSteps = {
   steps: {
     orderBy: { sortOrder: "asc" as const },
+    include: {
+      resources: {
+        orderBy: { sortOrder: "asc" as const },
+        include: {
+          resource: { select: { id: true, title: true, url: true, type: true, status: true } },
+        },
+      },
+    },
   },
 } satisfies Prisma.RoadmapInclude;
 
@@ -139,38 +147,6 @@ export async function incrementUserPoints(userId: string, amount: number) {
   return prisma.user.update({
     where: { id: userId },
     data: { points: { increment: amount } },
-  });
-}
-
-export async function listBookmarksForSteps(userId: string, stepIds: string[]) {
-  if (stepIds.length === 0) return [];
-  return prisma.userResourceBookmark.findMany({
-    where: { userId, stepId: { in: stepIds } },
-  });
-}
-
-export async function upsertBookmark(input: {
-  userId: string;
-  stepId: string;
-  url: string;
-  title: string;
-}) {
-  return prisma.userResourceBookmark.upsert({
-    where: {
-      userId_stepId_url: {
-        userId: input.userId,
-        stepId: input.stepId,
-        url: input.url,
-      },
-    },
-    create: input,
-    update: { title: input.title },
-  });
-}
-
-export async function deleteBookmark(userId: string, stepId: string, url: string) {
-  return prisma.userResourceBookmark.deleteMany({
-    where: { userId, stepId, url },
   });
 }
 

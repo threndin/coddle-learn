@@ -4,6 +4,7 @@ import {
   SKILL_CATALOG,
   STARTER_COURSES,
   STARTER_EXERCISES,
+  STARTER_RESOURCES,
   STARTER_ROADMAPS,
   type CourseExerciseSeed,
   type ExerciseConfig,
@@ -31,7 +32,41 @@ async function seedSkills() {
   }
 }
 
-async function seedRoadmaps() {
+/** Upserts by URL and never deletes, so community submissions are untouched. */
+async function seedResources(): Promise<Map<string, string>> {
+  const skills = await prisma.skill.findMany();
+  const skillIdBySlug = new Map(skills.map((skill) => [skill.slug, skill.id]));
+  const resourceIdByUrl = new Map<string, string>();
+
+  for (const resource of STARTER_RESOURCES) {
+    const data = {
+      title: resource.title,
+      description: resource.description,
+      type: resource.type,
+      level: resource.level,
+      status: "published",
+    };
+    const saved = await prisma.resource.upsert({
+      where: { url: resource.url },
+      create: { ...data, url: resource.url, publishedAt: new Date() },
+      update: data,
+    });
+    resourceIdByUrl.set(resource.url, saved.id);
+
+    await prisma.resourceSkill.deleteMany({ where: { resourceId: saved.id } });
+    for (const skillSlug of resource.skillSlugs) {
+      const skillId = skillIdBySlug.get(skillSlug);
+      if (!skillId) {
+        throw new Error(`Missing skill slug for resource seed: ${skillSlug}`);
+      }
+      await prisma.resourceSkill.create({ data: { resourceId: saved.id, skillId } });
+    }
+  }
+
+  return resourceIdByUrl;
+}
+
+async function seedRoadmaps(resourceIdByUrl: Map<string, string>) {
   for (const [index, roadmap] of STARTER_ROADMAPS.entries()) {
     const saved = await prisma.roadmap.upsert({
       where: { slug: roadmap.slug },
@@ -58,7 +93,7 @@ async function seedRoadmaps() {
 
     for (const [stepIndex, step] of roadmap.steps.entries()) {
       keepSlugs.add(step.slug);
-      await prisma.roadmapStep.upsert({
+      const savedStep = await prisma.roadmapStep.upsert({
         where: {
           roadmapId_slug: {
             roadmapId: saved.id,
@@ -75,7 +110,6 @@ async function seedRoadmaps() {
           learnings: [...step.learnings],
           practice: step.practice,
           branchKey: step.branchKey ?? null,
-          resources: [...step.resources],
         },
         update: {
           title: step.title,
@@ -85,8 +119,18 @@ async function seedRoadmaps() {
           learnings: [...step.learnings],
           practice: step.practice,
           branchKey: step.branchKey ?? null,
-          resources: [...step.resources],
         },
+      });
+
+      await prisma.roadmapStepResource.deleteMany({ where: { stepId: savedStep.id } });
+      await prisma.roadmapStepResource.createMany({
+        data: step.resources.map((url, sortOrder) => {
+          const resourceId = resourceIdByUrl.get(url);
+          if (!resourceId) {
+            throw new Error(`Roadmap step ${roadmap.slug}/${step.slug} links unknown resource ${url}`);
+          }
+          return { stepId: savedStep.id, resourceId, sortOrder };
+        }),
       });
     }
 
@@ -304,7 +348,9 @@ async function seedCourses() {
 
 async function main() {
   await seedSkills();
-  await seedRoadmaps();
+  const resourceIdByUrl = await seedResources();
+  console.log(`Seeded ${STARTER_RESOURCES.length} resources.`);
+  await seedRoadmaps(resourceIdByUrl);
   console.log(`Seeded ${STARTER_ROADMAPS.length} roadmaps.`);
   await seedCourses();
 }

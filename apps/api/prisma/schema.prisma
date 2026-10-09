@@ -28,6 +28,7 @@ model User {
   roadmaps              UserRoadmap[]
   stepProgress          UserStepProgress[]
   resourceBookmarks     UserResourceBookmark[]
+  submittedResources    Resource[]               @relation("ResourceSubmitter")
   createdCourses        Course[]                 @relation("CourseCreator")
   reviewedCourses       Course[]                 @relation("CourseReviewer")
   courseEnrollments     UserCourse[]
@@ -46,6 +47,7 @@ model Skill {
   createdAt DateTime      @default(now()) @map("created_at")
   users     UserSkill[]
   courses   CourseSkill[]
+  resources ResourceSkill[]
 
   @@map("skills")
 }
@@ -91,11 +93,10 @@ model RoadmapStep {
   learnings        Json                   @default("[]")
   practice         String                 @default("")
   branchKey        String?                @map("branch_key")
-  resources        Json                   @default("[]")
   createdAt        DateTime               @default(now()) @map("created_at")
   updatedAt        DateTime               @updatedAt @map("updated_at")
   progress         UserStepProgress[]
-  bookmarks        UserResourceBookmark[]
+  resources        RoadmapStepResource[]
 
   @@unique([roadmapId, slug])
   @@index([roadmapId, sortOrder])
@@ -134,18 +135,65 @@ model UserStepProgress {
   @@map("user_step_progress")
 }
 
-model UserResourceBookmark {
-  id        String      @id @default(cuid())
-  userId    String      @map("user_id")
-  stepId    String      @map("step_id")
-  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  step      RoadmapStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
-  url       String
-  title     String
-  createdAt DateTime    @default(now()) @map("created_at")
+/// `url` is the normalized form from `normalizeResourceUrl`, so it doubles as the duplicate check.
+/// `status`: pending | published | rejected. Seeded resources have no submitter.
+model Resource {
+  id                String                 @id @default(cuid())
+  url               String                 @unique
+  title             String
+  description       String                 @default("")
+  type              String
+  level             String
+  status            String                 @default("pending")
+  submittedByUserId String?                @map("submitted_by_user_id")
+  submittedBy       User?                  @relation("ResourceSubmitter", fields: [submittedByUserId], references: [id], onDelete: SetNull)
+  reviewNote        String?                @map("review_note")
+  publishedAt       DateTime?              @map("published_at")
+  createdAt         DateTime               @default(now()) @map("created_at")
+  updatedAt         DateTime               @updatedAt @map("updated_at")
+  skills            ResourceSkill[]
+  steps             RoadmapStepResource[]
+  bookmarks         UserResourceBookmark[]
 
-  @@unique([userId, stepId, url])
-  @@index([stepId])
+  @@index([status, publishedAt])
+  @@index([submittedByUserId, createdAt])
+  @@map("resources")
+}
+
+model ResourceSkill {
+  resourceId String   @map("resource_id")
+  skillId    String   @map("skill_id")
+  resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  skill      Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@id([resourceId, skillId])
+  @@index([skillId])
+  @@map("resource_skills")
+}
+
+model RoadmapStepResource {
+  stepId     String      @map("step_id")
+  resourceId String      @map("resource_id")
+  step       RoadmapStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
+  resource   Resource    @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  sortOrder  Int         @map("sort_order")
+
+  @@id([stepId, resourceId])
+  @@index([resourceId])
+  @@map("roadmap_step_resources")
+}
+
+model UserResourceBookmark {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  resourceId String   @map("resource_id")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@unique([userId, resourceId])
+  @@index([resourceId])
   @@map("user_resource_bookmarks")
 }
 
