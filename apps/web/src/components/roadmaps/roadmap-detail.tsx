@@ -217,7 +217,6 @@ export function RoadmapDetailView({
       const detail = await toggleBookmark(slug, {
         stepSlug: selected.slug,
         url: resource.url,
-        title: resource.title,
         remove: Boolean(resource.bookmarked),
       });
       setRoadmap(detail);

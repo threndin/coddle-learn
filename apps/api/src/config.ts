@@ -39,6 +39,10 @@ export const config = {
   courseReviewMode: (process.env.COURSE_REVIEW_MODE === "manual" ? "manual" : "auto") as
     | "auto"
     | "manual",
+  /** Same switch for submitted resources; `manual` leaves them `pending`. */
+  resourceReviewMode: (process.env.RESOURCE_REVIEW_MODE === "manual" ? "manual" : "auto") as
+    | "auto"
+    | "manual",
   seedCourseCreatorEmail:
     process.env.SEED_COURSE_CREATOR_EMAIL ?? "kvngjohnny10@gmail.com",
   r2: {

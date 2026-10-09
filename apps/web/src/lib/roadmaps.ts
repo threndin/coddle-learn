@@ -1,6 +1,7 @@
 import type { ExperienceLevel, StepProgressStatus } from "@coddle/shared";
 
 export type RoadmapResource = {
+  id: string;
   title: string;
   url: string;
   type: string;
@@ -175,7 +176,7 @@ export async function updateRoadmapProgress(
 
 export async function toggleBookmark(
   slug: string,
-  input: { stepSlug: string; url: string; title: string; remove?: boolean },
+  input: { stepSlug: string; url: string; remove?: boolean },
 ): Promise<RoadmapDetail> {
   const res = await fetch(`/api/roadmaps/${encodeURIComponent(slug)}/bookmarks`, {
     method: "POST",

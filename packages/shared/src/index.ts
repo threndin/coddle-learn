@@ -9,6 +9,8 @@ export const APP_TAGLINE = "Learn, Build, Share, Grow.";
 
 export * from "./onboarding.js";
 export * from "./roadmaps.js";
+export * from "./resources.js";
+export * from "./starter-resources.js";
 export * from "./courses.js";
 export * from "./course-studio.js";
 export * from "./exercises.js";

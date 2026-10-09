@@ -9,15 +9,18 @@ import {
 import type { RoadmapStep, UserStepProgress } from "@prisma/client";
 import { AppError } from "../../shared/errors.js";
 import {
+  deleteBookmark,
+  listBookmarkedResourceIds,
+  upsertBookmark,
+} from "../resources/resources.repository.js";
+import {
   clearUserRoadmapCompleted,
   createUserRoadmap,
-  deleteBookmark,
   deleteStepProgress,
   findRoadmapBySlug,
   findStepProgress,
   findUserRoadmap,
   incrementUserPoints,
-  listBookmarksForSteps,
   listRoadmaps,
   listStepProgressForRoadmap,
   listUserRoadmaps,
@@ -25,7 +28,6 @@ import {
   markUserRoadmapCompleted,
   setPrimaryRoadmap,
   type RoadmapWithSteps,
-  upsertBookmark,
   upsertStepProgress,
 } from "./roadmaps.repository.js";
 import { prisma } from "../../shared/db.js";
@@ -37,12 +39,6 @@ export type StepUiStatus =
   | "skipped"
   | "optional";
 
-type ResourcePayload = {
-  title: string;
-  url: string;
-  type: string;
-};
-
 type StepUnit =
   | { kind: "single"; steps: [RoadmapStep] }
   | { kind: "branch"; key: string; steps: RoadmapStep[] };
@@ -52,26 +48,12 @@ function parseStringArray(value: unknown): string[] {
   return value.filter((item): item is string => typeof item === "string");
 }
 
-function parseResources(value: unknown): ResourcePayload[] {
-  if (!Array.isArray(value)) return [];
-  const resources: ResourcePayload[] = [];
-  for (const item of value) {
-    if (!item || typeof item !== "object") continue;
-    const record = item as Record<string, unknown>;
-    if (
-      typeof record.title !== "string" ||
-      typeof record.url !== "string" ||
-      typeof record.type !== "string"
-    ) {
-      continue;
-    }
-    resources.push({
-      title: record.title,
-      url: record.url,
-      type: record.type,
-    });
-  }
-  return resources;
+type RoadmapStepWithResources = RoadmapWithSteps["steps"][number];
+
+function publishedResources(step: RoadmapStepWithResources) {
+  return step.resources
+    .map((link) => link.resource)
+    .filter((resource) => resource.status === "published");
 }
 
 function progressMap(rows: UserStepProgress[]) {
@@ -217,7 +199,7 @@ function toDetail(
     isPrimary: boolean;
   } | null,
   progress: Map<string, UserStepProgress>,
-  bookmarkedUrls: Set<string>,
+  bookmarkedIds: Set<string>,
 ) {
   const summary = summarizeProgress(roadmap.steps, progress);
   return {
@@ -239,9 +221,12 @@ function toDetail(
         }
       : null,
     steps: roadmap.steps.map((step, index) => {
-      const resources = parseResources(step.resources).map((resource) => ({
-        ...resource,
-        bookmarked: bookmarkedUrls.has(`${step.id}::${resource.url}`),
+      const resources = publishedResources(step).map((resource) => ({
+        id: resource.id,
+        title: resource.title,
+        url: resource.url,
+        type: resource.type,
+        bookmarked: bookmarkedIds.has(resource.id),
       }));
       const previewStatuses = enrollment
         ? summary.statuses
@@ -301,17 +286,16 @@ export async function getRoadmapDetail(userId: string, slug: string) {
 
   const enrollment = await findUserRoadmap(userId, roadmap.id);
   const stepIds = roadmap.steps.map((step) => step.id);
-  const [progressRows, bookmarks] = await Promise.all([
+  const resourceIds = roadmap.steps.flatMap((step) =>
+    step.resources.map((link) => link.resourceId),
+  );
+  const [progressRows, bookmarkedIds] = await Promise.all([
     enrollment ? listStepProgressForRoadmap(userId, stepIds) : Promise.resolve([]),
-    enrollment ? listBookmarksForSteps(userId, stepIds) : Promise.resolve([]),
+    listBookmarkedResourceIds(userId, resourceIds),
   ]);
 
-  const bookmarkedUrls = new Set(
-    bookmarks.map((row) => `${row.stepId}::${row.url}`),
-  );
-
   return {
-    roadmap: toDetail(roadmap, enrollment, progressMap(progressRows), bookmarkedUrls),
+    roadmap: toDetail(roadmap, enrollment, progressMap(progressRows), bookmarkedIds),
   };
 }
 
@@ -487,7 +471,6 @@ export async function toggleResourceBookmark(
   const body = input as Record<string, unknown>;
   const stepSlug = typeof body.stepSlug === "string" ? body.stepSlug : "";
   const url = typeof body.url === "string" ? body.url : "";
-  const title = typeof body.title === "string" ? body.title : "";
   const remove = body.remove === true;
 
   if (!stepSlug || !url) {
@@ -504,25 +487,15 @@ export async function toggleResourceBookmark(
     throw new AppError(404, "step_missing", "That step could not be found.");
   }
 
-  const resources = parseResources(step.resources);
-  if (!resources.some((resource) => resource.url === url)) {
+  const resource = publishedResources(step).find((item) => item.url === url);
+  if (!resource) {
     throw new AppError(400, "invalid_bookmark", "That resource is not on this step.");
   }
 
-  let enrollment = await findUserRoadmap(userId, roadmap.id);
-  if (!enrollment) {
-    enrollment = await createUserRoadmap(userId, roadmap.id);
-  }
-
   if (remove) {
-    await deleteBookmark(userId, step.id, url);
+    await deleteBookmark(userId, resource.id);
   } else {
-    await upsertBookmark({
-      userId,
-      stepId: step.id,
-      url,
-      title: title || resources.find((resource) => resource.url === url)?.title || url,
-    });
+    await upsertBookmark(userId, resource.id);
   }
 
   return getRoadmapDetail(userId, slug);
