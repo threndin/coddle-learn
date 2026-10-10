@@ -18,6 +18,7 @@ import {
   reorderExercisesHandler,
   resetThumbnailHandler,
   restoreHandler,
+  saveAssessmentHandler,
   submitHandler,
   updateExerciseHandler,
   updateHandler,
@@ -107,4 +108,9 @@ studioRouter.delete(
   "/courses/:courseId/exercises/:exerciseId",
   ...write,
   asyncHandler(deleteExerciseHandler),
+);
+studioRouter.put(
+  "/courses/:courseId/assessment",
+  ...write,
+  asyncHandler(saveAssessmentHandler),
 );

@@ -2,10 +2,13 @@ import "dotenv/config";
 import {
   EXERCISE_LIMITS,
   SKILL_CATALOG,
+  STARTER_ASSESSMENTS,
   STARTER_COURSES,
   STARTER_EXERCISES,
   STARTER_RESOURCES,
   STARTER_ROADMAPS,
+  TRUE_FALSE_OPTIONS,
+  type AssessmentQuestionConfig,
   type CourseExerciseSeed,
   type ExerciseConfig,
 } from "@coddle/shared";
@@ -339,11 +342,65 @@ async function seedCourses() {
         data: { courseId: saved.id, skillId },
       });
     }
+
+    await seedAssessment(saved.id, course.slug);
   }
 
   console.log(
     `Seeded ${STARTER_COURSES.length} courses (creator: ${creator.email}).`,
   );
+}
+
+async function seedAssessment(courseId: string, courseSlug: string) {
+  const seed = STARTER_ASSESSMENTS[courseSlug];
+  if (!seed) return;
+
+  const assessment = await prisma.assessment.upsert({
+    where: { courseId },
+    create: {
+      courseId,
+      title: seed.title,
+      summary: seed.summary,
+      passPercent: seed.passPercent ?? EXERCISE_LIMITS.passPercentDefault,
+      timeLimitMinutes: seed.timeLimitMinutes ?? null,
+    },
+    update: {
+      title: seed.title,
+      summary: seed.summary,
+      passPercent: seed.passPercent ?? EXERCISE_LIMITS.passPercentDefault,
+      timeLimitMinutes: seed.timeLimitMinutes ?? null,
+    },
+  });
+
+  await prisma.assessmentQuestion.deleteMany({ where: { assessmentId: assessment.id } });
+  await prisma.assessmentQuestion.createMany({
+    data: seed.questions.map((question, index) => {
+      const config: AssessmentQuestionConfig =
+        question.kind === "short_answer"
+          ? {
+              options: [],
+              correctOptionId: null,
+              acceptedAnswers: [...(question.acceptedAnswers ?? [])],
+            }
+          : {
+              options:
+                question.kind === "true_false"
+                  ? TRUE_FALSE_OPTIONS.map((option) => ({ ...option }))
+                  : (question.options ?? []).map((option) => ({ ...option })),
+              correctOptionId: question.correctOptionId ?? null,
+              acceptedAnswers: [],
+            };
+      return {
+        assessmentId: assessment.id,
+        kind: question.kind,
+        prompt: question.prompt,
+        explanation: question.explanation ?? "",
+        points: question.points ?? 1,
+        sortOrder: index,
+        config,
+      };
+    }),
+  });
 }
 
 async function main() {

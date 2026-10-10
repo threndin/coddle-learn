@@ -1,27 +1,39 @@
 import { randomBytes } from "node:crypto";
 import {
+  ASSESSMENT_LIMITS,
   COURSE_IMAGE_TYPES,
   COURSE_LIMITS,
+  TRUE_FALSE_OPTIONS,
   courseChecklist,
   EDITABLE_COURSE_STATUSES,
   estimatedHoursFromMinutes,
   EXERCISE_LIMITS,
+  isAssessmentQuestionKind,
   isCourseAccent,
   isCourseStatus,
   isExerciseKind,
   isExperienceLevel,
   QUIZ_ID_PATTERN,
+  readAssessmentQuestionConfig,
   readExerciseConfig,
   slugify,
   uniqueSlug,
+  type AssessmentQuestionConfig,
   type CourseStatus,
   type ExerciseConfig,
   type ExerciseKind,
   type QuizQuestion,
 } from "@coddle/shared";
+import type { Prisma } from "@prisma/client";
 import { config, isR2Configured } from "../../config.js";
 import { AppError } from "../../shared/errors.js";
 import { imageExtension, storeGeneratedThumbnail, uploadToR2 } from "../../shared/r2.js";
+import {
+  findAssessmentByCourseId,
+  replaceQuestions,
+  upsertAssessment,
+} from "../assessments/assessments.repository.js";
+import { studioAssessmentPayload } from "../assessments/assessments.service.js";
 import { ratingSummaries, summaryFor } from "../courses/reviews.repository.js";
 import {
   applyOutline,
@@ -146,7 +158,10 @@ function slugsFrozen(course: { publishedAt: Date | null }) {
   return Boolean(course.publishedAt);
 }
 
-function checklistFor(course: StudioCourse) {
+function checklistFor(
+  course: StudioCourse,
+  assessment: Awaited<ReturnType<typeof findAssessmentByCourseId>>,
+) {
   return courseChecklist({
     title: course.title,
     summary: course.summary,
@@ -168,12 +183,30 @@ function checklistFor(course: StudioCourse) {
         }),
       })),
     })),
+    assessment: assessment
+      ? {
+          title: assessment.title,
+          questions: assessment.questions.map((question) => {
+            const config = readAssessmentQuestionConfig(question.config);
+            return {
+              kind: question.kind,
+              prompt: question.prompt,
+              options: config.options,
+              correctOptionId: config.correctOptionId,
+              acceptedAnswers: config.acceptedAnswers,
+            };
+          }),
+        }
+      : null,
   });
 }
 
-function permissionsFor(course: StudioCourse) {
+function permissionsFor(
+  course: StudioCourse,
+  assessment: Awaited<ReturnType<typeof findAssessmentByCourseId>>,
+) {
   const status = statusOf(course);
-  const ready = checklistFor(course).every((item) => item.done);
+  const ready = checklistFor(course, assessment).every((item) => item.done);
   return {
     canEdit: EDITABLE_COURSE_STATUSES.includes(status),
     canSubmit: (status === "draft" || status === "changes_requested") && ready,
@@ -218,9 +251,10 @@ function lessonPayload(lesson: StudioLessonRow) {
 }
 
 async function toStudioCourse(course: StudioCourse) {
-  const [ratings, completed] = await Promise.all([
+  const [ratings, completed, assessment] = await Promise.all([
     ratingSummaries([course.id]),
     completedCounts([course.id]),
+    findAssessmentByCourseId(course.id),
   ]);
   const rating = summaryFor(ratings, course.id);
   return {
@@ -254,14 +288,15 @@ async function toStudioCourse(course: StudioCourse) {
       summary: courseModule.summary,
       lessons: courseModule.lessons.map(lessonPayload),
     })),
+    assessment: studioAssessmentPayload(assessment),
     stats: {
       enrolledCount: course._count.enrollments,
       completedCount: completed.get(course.id) ?? 0,
       ratingAverage: rating.average,
       ratingCount: rating.count,
     },
-    checklist: checklistFor(course),
-    permissions: permissionsFor(course),
+    checklist: checklistFor(course, assessment),
+    permissions: permissionsFor(course, assessment),
   };
 }
 
@@ -452,7 +487,8 @@ export async function submitStudioCourse(userId: string, courseId: string) {
   if (status !== "draft" && status !== "changes_requested") {
     throw new AppError(409, "invalid_transition", "Only drafts can be submitted for review.");
   }
-  const missing = checklistFor(course).filter((item) => !item.done);
+  const assessment = await findAssessmentByCourseId(course.id);
+  const missing = checklistFor(course, assessment).filter((item) => !item.done);
   if (missing.length > 0) {
     throw new AppError(
       422,
@@ -1152,5 +1188,209 @@ export async function updateStudioOutline(userId: string, courseId: string, inpu
   });
 
   await applyOutline(plan);
+  return respond(userId, courseId);
+}
+
+/* -------------------------------- Assessment -------------------------------- */
+
+function readAssessmentQuestions(raw: unknown): Array<{
+  kind: string;
+  prompt: string;
+  explanation: string;
+  points: number;
+  sortOrder: number;
+  config: AssessmentQuestionConfig;
+}> {
+  if (!Array.isArray(raw)) {
+    throw new AppError(400, "invalid_field", "Questions must be a list.", { field: "questions" });
+  }
+  if (raw.length > ASSESSMENT_LIMITS.questionsMax) {
+    throw new AppError(
+      400,
+      "invalid_field",
+      `Assessments can have up to ${ASSESSMENT_LIMITS.questionsMax} questions.`,
+      { field: "questions" },
+    );
+  }
+
+  return raw.map((entry, index) => {
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
+      throw new AppError(400, "invalid_field", `Question ${index + 1} is invalid.`, {
+        field: "questions",
+      });
+    }
+    const body = entry as Record<string, unknown>;
+    const kind = typeof body.kind === "string" ? body.kind : "";
+    if (!isAssessmentQuestionKind(kind)) {
+      throw new AppError(400, "invalid_field", `Question ${index + 1} has an unsupported type.`, {
+        field: "questions",
+      });
+    }
+    const prompt = typeof body.prompt === "string" ? body.prompt.trim() : "";
+    if (!prompt || prompt.length > ASSESSMENT_LIMITS.promptMax) {
+      throw new AppError(
+        400,
+        "invalid_field",
+        `Question ${index + 1} needs a prompt up to ${ASSESSMENT_LIMITS.promptMax} characters.`,
+        { field: "questions" },
+      );
+    }
+    const explanation =
+      typeof body.explanation === "string"
+        ? body.explanation.trim().slice(0, ASSESSMENT_LIMITS.explanationMax)
+        : "";
+    const points = Number(body.points);
+    const safePoints =
+      Number.isInteger(points) &&
+      points >= ASSESSMENT_LIMITS.pointsMin &&
+      points <= ASSESSMENT_LIMITS.pointsMax
+        ? points
+        : 1;
+
+    if (kind === "short_answer") {
+      const accepted = Array.isArray(body.acceptedAnswers)
+        ? body.acceptedAnswers
+            .filter((item): item is string => typeof item === "string")
+            .map((item) => item.trim())
+            .filter(Boolean)
+            .slice(0, ASSESSMENT_LIMITS.acceptedAnswersMax)
+        : [];
+      if (accepted.length < ASSESSMENT_LIMITS.acceptedAnswersMin) {
+        throw new AppError(
+          400,
+          "invalid_field",
+          `Question ${index + 1} needs at least one accepted answer.`,
+          { field: "questions" },
+        );
+      }
+      return {
+        kind,
+        prompt,
+        explanation,
+        points: safePoints,
+        sortOrder: index,
+        config: { options: [], correctOptionId: null, acceptedAnswers: accepted },
+      };
+    }
+
+    const optionsRaw = Array.isArray(body.options) ? body.options : [];
+    let options = optionsRaw
+      .filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object")
+      .map((option) => ({
+        id:
+          typeof option.id === "string" && QUIZ_ID_PATTERN.test(option.id)
+            ? option.id
+            : quizId(),
+        text: typeof option.text === "string" ? option.text.trim() : "",
+      }))
+      .filter((option) => option.text)
+      .slice(0, ASSESSMENT_LIMITS.optionsMax);
+
+    if (kind === "true_false") {
+      options = TRUE_FALSE_OPTIONS.map((option) => ({ ...option }));
+    }
+
+    if (options.length < ASSESSMENT_LIMITS.optionsMin) {
+      throw new AppError(
+        400,
+        "invalid_field",
+        `Question ${index + 1} needs at least ${ASSESSMENT_LIMITS.optionsMin} options.`,
+        { field: "questions" },
+      );
+    }
+
+    const correctOptionId =
+      typeof body.correctOptionId === "string" &&
+      options.some((option) => option.id === body.correctOptionId)
+        ? body.correctOptionId
+        : null;
+    if (!correctOptionId) {
+      throw new AppError(
+        400,
+        "invalid_field",
+        `Question ${index + 1} needs a correct answer.`,
+        { field: "questions" },
+      );
+    }
+
+    return {
+      kind,
+      prompt,
+      explanation,
+      points: safePoints,
+      sortOrder: index,
+      config: { options, correctOptionId, acceptedAnswers: [] },
+    };
+  });
+}
+
+export async function saveStudioAssessment(userId: string, courseId: string, input: unknown) {
+  const course = await loadOwnedCourse(userId, courseId);
+  assertEditable(course);
+  const body = asBody(input);
+
+  const title = typeof body.title === "string" ? body.title.trim() : "";
+  if (
+    title.length < ASSESSMENT_LIMITS.titleMin ||
+    title.length > ASSESSMENT_LIMITS.titleMax
+  ) {
+    throw new AppError(
+      400,
+      "invalid_field",
+      `Title must be ${ASSESSMENT_LIMITS.titleMin}–${ASSESSMENT_LIMITS.titleMax} characters.`,
+      { field: "title" },
+    );
+  }
+  const summary =
+    typeof body.summary === "string"
+      ? body.summary.trim().slice(0, ASSESSMENT_LIMITS.summaryMax)
+      : "";
+  const passPercent = Number(body.passPercent);
+  if (
+    !Number.isInteger(passPercent) ||
+    passPercent < ASSESSMENT_LIMITS.passPercentMin ||
+    passPercent > ASSESSMENT_LIMITS.passPercentMax
+  ) {
+    throw new AppError(
+      400,
+      "invalid_field",
+      `Pass mark must be between ${ASSESSMENT_LIMITS.passPercentMin}% and ${ASSESSMENT_LIMITS.passPercentMax}%.`,
+      { field: "passPercent" },
+    );
+  }
+
+  let timeLimitMinutes: number | null = null;
+  if (body.timeLimitMinutes !== undefined && body.timeLimitMinutes !== null) {
+    const value = Number(body.timeLimitMinutes);
+    if (
+      !Number.isInteger(value) ||
+      value < ASSESSMENT_LIMITS.timeLimitMin ||
+      value > ASSESSMENT_LIMITS.timeLimitMax
+    ) {
+      throw new AppError(
+        400,
+        "invalid_field",
+        `Time limit must be ${ASSESSMENT_LIMITS.timeLimitMin}–${ASSESSMENT_LIMITS.timeLimitMax} minutes.`,
+        { field: "timeLimitMinutes" },
+      );
+    }
+    timeLimitMinutes = value;
+  }
+
+  const questions = readAssessmentQuestions(body.questions);
+  const assessment = await upsertAssessment(courseId, {
+    title,
+    summary,
+    passPercent,
+    timeLimitMinutes,
+  });
+  await replaceQuestions(
+    assessment.id,
+    questions.map((question) => ({
+      ...question,
+      config: question.config as unknown as Prisma.InputJsonValue,
+    })),
+  );
+
   return respond(userId, courseId);
 }
