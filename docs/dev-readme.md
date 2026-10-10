@@ -20,7 +20,13 @@ First visit after sign-in goes to **onboarding**. Every later visit goes to the 
 |---|---|---|
 | Landing | `/` | Built |
 | Sign in | `/login` | Built |
-| Dashboard | `/dashboard` | Shell only. Replace it when screen 4 is in progress. |
+| Onboarding | `/onboarding` | Built |
+| Dashboard | `/dashboard` | Built (continue learning + progress blocks) |
+| Roadmaps | `/roadmaps`, `/roadmaps/[slug]` | Built |
+| Courses | `/courses`, `/courses/[slug]` | Built (lessons + exercises) |
+| Resources | `/resources`, `/resources/[slug]`, `/saved` | Built |
+| Studio | `/studio/courses/*` | Built (including final assessment editor) |
+| Assessments | `/assessments`, `/assessments/[id]`, attempts | Built (course finals; MCQ / T-F / short answer) |
 
 ## Build order
 

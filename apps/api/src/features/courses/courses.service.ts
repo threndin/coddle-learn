@@ -9,6 +9,10 @@ import {
 } from "@coddle/shared";
 import type { CourseLesson, UserExerciseSubmission, UserLessonProgress } from "@prisma/client";
 import { AppError } from "../../shared/errors.js";
+import {
+  findAssessmentByCourseId,
+  hasPassedAssessment,
+} from "../assessments/assessments.repository.js";
 import { ratingSummaries, summaryFor, type RatingSummary } from "./reviews.repository.js";
 import {
   canViewCourse,
@@ -97,8 +101,13 @@ export function deriveLessonStatuses<T extends CourseLesson>(
 /**
  * Lessons and exercises both count toward progress. Once every lesson is done,
  * "next" points at the first lesson that still has an open exercise.
+ * When a final assessment exists, it adds one more step after lessons/exercises.
  */
-function summarizeProgress(lessons: FlatLesson[], state: ProgressState) {
+function summarizeProgress(
+  lessons: FlatLesson[],
+  state: ProgressState,
+  assessment?: { exists: boolean; passed: boolean } | null,
+) {
   const { statuses, nextLesson: currentLesson } = deriveLessonStatuses(lessons, state.lessons);
   const exerciseDone = (exercise: CourseExerciseRow) =>
     isExerciseDone(state.exercises.get(exercise.id)?.status);
@@ -111,8 +120,12 @@ function summarizeProgress(lessons: FlatLesson[], state: ProgressState) {
     currentLesson ??
     lessons.find((lesson) => lesson.exercises.some((exercise) => !exerciseDone(exercise))) ??
     null;
-  const doneCount = lessonsDone + exercisesDone;
-  const totalCount = lessons.length + exercises.length;
+  const contentDone = lessonsDone + exercisesDone;
+  const contentTotal = lessons.length + exercises.length;
+  const assessmentStep = assessment?.exists ? 1 : 0;
+  const assessmentDone = assessment?.passed ? 1 : 0;
+  const doneCount = contentDone + assessmentDone;
+  const totalCount = contentTotal + assessmentStep;
   return {
     statuses,
     nextLesson,
@@ -120,8 +133,17 @@ function summarizeProgress(lessons: FlatLesson[], state: ProgressState) {
     totalCount,
     exerciseCount: exercises.length,
     exercisesDone,
+    contentReady: contentTotal > 0 && contentDone >= contentTotal,
+    assessmentPassed: Boolean(assessment?.passed),
     progressPercent: courseProgressPercent(doneCount, totalCount),
   };
+}
+
+async function assessmentProgress(userId: string, courseId: string, enrolled: boolean) {
+  const assessment = await findAssessmentByCourseId(courseId);
+  if (!assessment) return { exists: false, passed: false, id: null as string | null, title: null as string | null };
+  const passed = enrolled ? await hasPassedAssessment(userId, assessment.id) : false;
+  return { exists: true, passed, id: assessment.id, title: assessment.title };
 }
 
 function nextLessonPayload(lesson: FlatLesson | null) {
@@ -192,9 +214,10 @@ function toCatalogItem(
   state: ProgressState,
   userSkillSlugs: string[],
   rating: RatingSummary,
+  assessment: { exists: boolean; passed: boolean; id: string | null },
 ) {
   const lessons = flattenLessons(course);
-  const summary = summarizeProgress(lessons, state);
+  const summary = summarizeProgress(lessons, state, assessment);
   const skillSlugs = skillsPayload(course).map((skill) => skill.slug);
 
   return {
@@ -213,6 +236,7 @@ function toCatalogItem(
     moduleCount: course.modules.length,
     lessonCount: lessons.length,
     exerciseCount: summary.exerciseCount,
+    hasAssessment: assessment.exists,
     enrolled: Boolean(enrollment),
     startedAt: enrollment?.startedAt.toISOString() ?? null,
     completedAt: enrollment?.completedAt?.toISOString() ?? null,
@@ -227,9 +251,10 @@ function toDetail(
   state: ProgressState,
   rating: RatingSummary,
   userId: string,
+  assessment: { exists: boolean; passed: boolean; id: string | null; title: string | null },
 ) {
   const lessons = flattenLessons(course);
-  const summary = summarizeProgress(lessons, state);
+  const summary = summarizeProgress(lessons, state, assessment);
   const statusByLessonId = new Map(
     lessons.map((lesson, index) => [lesson.id, summary.statuses[index]!]),
   );
@@ -261,6 +286,14 @@ function toDetail(
     exerciseCount: summary.exerciseCount,
     exercisesDone: enrollment ? summary.exercisesDone : 0,
     nextLesson: enrollment ? nextLessonPayload(summary.nextLesson) : null,
+    assessment: assessment.exists
+      ? {
+          id: assessment.id!,
+          title: assessment.title!,
+          passed: assessment.passed,
+          unlocked: Boolean(enrollment) && summary.contentReady,
+        }
+      : null,
     modules: course.modules.map((courseModule) => ({
       slug: courseModule.slug,
       title: courseModule.title,
@@ -295,15 +328,19 @@ export async function getCourseCatalog(userId: string) {
   const items = await Promise.all(
     courses.map(async (course) => {
       const enrollment = enrollmentByCourseId.get(course.id) ?? null;
-      const state = enrollment
-        ? await loadProgressState(userId, flattenLessons(course))
-        : EMPTY_PROGRESS;
+      const [state, assessment] = await Promise.all([
+        enrollment
+          ? loadProgressState(userId, flattenLessons(course))
+          : Promise.resolve(EMPTY_PROGRESS),
+        assessmentProgress(userId, course.id, Boolean(enrollment)),
+      ]);
       return toCatalogItem(
         course,
         enrollment,
         state,
         userSkillSlugs,
         summaryFor(ratings, course.id),
+        assessment,
       );
     }),
   );
@@ -341,6 +378,7 @@ export async function ensureEnrollment(
 /**
  * Recomputes completion after any progress change. Returns the bonus awarded
  * (0 when nothing changed or completion was undone).
+ * A course with a final assessment is complete only after that assessment is passed.
  */
 export async function syncCourseCompletion(
   userId: string,
@@ -348,7 +386,11 @@ export async function syncCourseCompletion(
   enrollment: Enrollment,
 ): Promise<number> {
   const lessons = flattenLessons(course);
-  const summary = summarizeProgress(lessons, await loadProgressState(userId, lessons));
+  const [state, assessment] = await Promise.all([
+    loadProgressState(userId, lessons),
+    assessmentProgress(userId, course.id, true),
+  ]);
+  const summary = summarizeProgress(lessons, state, assessment);
   const wasComplete = Boolean(enrollment.completedAt);
   const nowComplete = summary.totalCount > 0 && summary.doneCount >= summary.totalCount;
 
@@ -366,13 +408,21 @@ export async function syncCourseCompletion(
 
 export async function getCourseDetail(userId: string, slug: string) {
   const { course, enrollment } = await loadVisibleCourse(userId, slug);
-  const [state, ratings] = await Promise.all([
+  const [state, ratings, assessment] = await Promise.all([
     enrollment ? loadProgressState(userId, flattenLessons(course)) : Promise.resolve(EMPTY_PROGRESS),
     ratingSummaries([course.id]),
+    assessmentProgress(userId, course.id, Boolean(enrollment)),
   ]);
 
   return {
-    course: toDetail(course, enrollment, state, summaryFor(ratings, course.id), userId),
+    course: toDetail(
+      course,
+      enrollment,
+      state,
+      summaryFor(ratings, course.id),
+      userId,
+      assessment,
+    ),
   };
 }
 
@@ -489,8 +539,11 @@ export async function getContinueCourse(userId: string) {
     await Promise.all(
       enrollments.map(async (row) => {
         const lessons = flattenLessons(row.course);
-        const state = await loadProgressState(userId, lessons);
-        return [row.courseId, summarizeProgress(lessons, state)] as const;
+        const [state, assessment] = await Promise.all([
+          loadProgressState(userId, lessons),
+          assessmentProgress(userId, row.courseId, true),
+        ]);
+        return [row.courseId, summarizeProgress(lessons, state, assessment)] as const;
       }),
     ),
   );

@@ -1,4 +1,5 @@
 import type {
+  AssessmentQuestionKind,
   CourseChecklistItem,
   CourseStatus,
   ExerciseKind,
@@ -7,6 +8,27 @@ import type {
 } from "@coddle/shared";
 import { apiRequest } from "@/lib/api-client";
 import type { CourseSkill } from "@/lib/courses";
+
+export type StudioAssessmentQuestion = {
+  id: string;
+  kind: AssessmentQuestionKind;
+  prompt: string;
+  explanation: string;
+  points: number;
+  options: { id: string; text: string }[];
+  correctOptionId: string | null;
+  acceptedAnswers: string[];
+};
+
+export type StudioAssessment = {
+  id: string;
+  title: string;
+  summary: string;
+  passPercent: number;
+  timeLimitMinutes: number | null;
+  questions: StudioAssessmentQuestion[];
+  updatedAt: string;
+};
 
 export type StudioExercise = {
   id: string;
@@ -76,6 +98,7 @@ export type StudioCourse = {
   uploadsEnabled: boolean;
   skills: CourseSkill[];
   modules: StudioModule[];
+  assessment: StudioAssessment | null;
   stats: {
     enrolledCount: number;
     completedCount: number;
@@ -269,5 +292,29 @@ export function reorderExercises(courseId: string, lessonId: string, exerciseIds
 export function deleteLesson(courseId: string, lessonId: string) {
   return apiRequest<CourseResponse>(`${base(courseId)}/lessons/${encodeURIComponent(lessonId)}`, {
     method: "DELETE",
+  });
+}
+
+export function saveAssessment(
+  courseId: string,
+  input: {
+    title: string;
+    summary: string;
+    passPercent: number;
+    timeLimitMinutes: number | null;
+    questions: Array<{
+      kind: AssessmentQuestionKind;
+      prompt: string;
+      explanation?: string;
+      points?: number;
+      options?: { id: string; text: string }[];
+      correctOptionId?: string | null;
+      acceptedAnswers?: string[];
+    }>;
+  },
+) {
+  return apiRequest<CourseResponse>(`${base(courseId)}/assessment`, {
+    method: "PUT",
+    json: input,
   });
 }

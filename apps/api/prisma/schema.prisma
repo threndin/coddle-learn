@@ -35,6 +35,7 @@ model User {
   lessonProgress        UserLessonProgress[]
   exerciseSubmissions   UserExerciseSubmission[]
   courseReviews         CourseReview[]
+  assessmentAttempts    AssessmentAttempt[]
 
   @@map("users")
 }
@@ -247,11 +248,70 @@ model Course {
   skills           CourseSkill[]
   enrollments      UserCourse[]
   reviews          CourseReview[]
+  assessment       Assessment?
 
   @@index([createdByUserId])
   @@index([status, sortOrder])
   @@index([sortOrder])
   @@map("courses")
+}
+
+/// One final assessment per course. Questions live in `AssessmentQuestion`.
+model Assessment {
+  id               String               @id @default(cuid())
+  courseId         String               @unique @map("course_id")
+  course           Course               @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title            String
+  summary          String               @default("")
+  passPercent      Int                  @default(80) @map("pass_percent")
+  timeLimitMinutes Int?                 @map("time_limit_minutes")
+  createdAt        DateTime             @default(now()) @map("created_at")
+  updatedAt        DateTime             @updatedAt @map("updated_at")
+  questions        AssessmentQuestion[]
+  attempts         AssessmentAttempt[]
+
+  @@map("assessments")
+}
+
+/// `kind`: multiple_choice | true_false | short_answer. `config` holds options / answers.
+model AssessmentQuestion {
+  id           String     @id @default(cuid())
+  assessmentId String     @map("assessment_id")
+  assessment   Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  kind         String
+  prompt       String
+  explanation  String     @default("")
+  points       Int        @default(1)
+  sortOrder    Int        @map("sort_order")
+  config       Json       @default("{}")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+
+  @@index([assessmentId, sortOrder])
+  @@map("assessment_questions")
+}
+
+/// Append-only attempts. `status`: in_progress | submitted.
+model AssessmentAttempt {
+  id           String     @id @default(cuid())
+  userId       String     @map("user_id")
+  assessmentId String     @map("assessment_id")
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assessment   Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  status       String
+  score        Int?
+  passed       Boolean?
+  answers      Json       @default("{}")
+  results      Json?
+  pointsEarned Int        @default(0) @map("points_earned")
+  startedAt    DateTime   @default(now()) @map("started_at")
+  submittedAt  DateTime?  @map("submitted_at")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+
+  @@index([userId, assessmentId])
+  @@index([assessmentId])
+  @@map("assessment_attempts")
 }
 
 model CourseReview {

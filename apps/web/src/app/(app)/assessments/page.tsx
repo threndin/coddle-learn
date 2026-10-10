@@ -1,10 +1,7 @@
-import { ComingSoon } from "@/components/app/coming-soon";
+import { AssessmentsCatalog } from "@/components/assessments/assessments-catalog";
+import { loadAssessmentCatalog } from "@/lib/assessments-server";
 
-export default function AssessmentsPage() {
-  return (
-    <ComingSoon
-      title="Assessments"
-      description="Quizzes, challenges, and project checks so you know what you have actually learned."
-    />
-  );
+export default async function AssessmentsPage() {
+  const assessments = await loadAssessmentCatalog();
+  return <AssessmentsCatalog initialAssessments={assessments} />;
 }
