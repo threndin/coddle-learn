@@ -4,6 +4,7 @@ import express, { type Express } from "express";
 import helmet from "helmet";
 import morgan from "morgan";
 import { config } from "./config.js";
+import { assessmentsRouter } from "./features/assessments/assessments.routes.js";
 import { authRouter } from "./features/auth/auth.routes.js";
 import { coursesRouter } from "./features/courses/courses.routes.js";
 import { healthRouter } from "./features/health/health.routes.js";
@@ -36,6 +37,7 @@ export function createApp(): Express {
   app.use("/roadmaps", roadmapsRouter);
   app.use("/courses", coursesRouter);
   app.use("/resources", resourcesRouter);
+  app.use("/assessments", assessmentsRouter);
   app.use("/studio", studioRouter);
 
   app.use(errorHandler);

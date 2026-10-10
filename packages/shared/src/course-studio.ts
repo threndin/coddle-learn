@@ -1,3 +1,4 @@
+import { assessmentIssues, type AssessmentQuestionReadiness } from "./assessments.js";
 import { exerciseIssues, type ExerciseReadinessInput } from "./exercises.js";
 
 export const COURSE_STATUSES = [
@@ -149,6 +150,10 @@ export type CourseChecklistInput = {
       exercises: readonly ExerciseReadinessInput[];
     }[];
   }[];
+  assessment?: {
+    title: string;
+    questions: readonly AssessmentQuestionReadiness[];
+  } | null;
 };
 
 export type CourseChecklistItem = {
@@ -165,6 +170,7 @@ export function courseChecklist(input: CourseChecklistInput): CourseChecklistIte
   );
   const exercises = lessons.flatMap((lesson) => lesson.exercises);
   const unfinishedExercises = exercises.filter((exercise) => exerciseIssues(exercise).length > 0);
+  const assessmentProblems = assessmentIssues(input.assessment);
   return [
     {
       id: "title",
@@ -217,6 +223,14 @@ export function courseChecklist(input: CourseChecklistInput): CourseChecklistIte
           ? `Every exercise is ready (${unfinishedExercises.length} still need work)`
           : "Every exercise is ready",
       done: exercises.length > 0 && unfinishedExercises.length === 0,
+    },
+    {
+      id: "assessment",
+      label:
+        assessmentProblems.length > 0
+          ? `Final assessment is ready (${assessmentProblems[0]})`
+          : "Final assessment is ready",
+      done: assessmentProblems.length === 0,
     },
   ];
 }

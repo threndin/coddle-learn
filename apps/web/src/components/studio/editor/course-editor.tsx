@@ -30,6 +30,7 @@ import {
   reorderExercises,
   resetThumbnail,
   runLifecycleAction,
+  saveAssessment,
   saveOutline,
   updateExercise,
   updateLesson,
@@ -39,10 +40,12 @@ import {
   uploadThumbnail,
   type ExercisePatch,
   type LifecycleAction,
+  type StudioAssessmentQuestion,
   type StudioCourse,
   type StudioExercise,
   type StudioModule,
 } from "@/lib/studio";
+import { AssessmentPane } from "./assessment-pane";
 import { LessonPane, type LessonPatch } from "./lesson-pane";
 import { ModulePane } from "./module-pane";
 import { OutlinePanel } from "./outline-panel";
@@ -128,8 +131,20 @@ export function CourseEditor({
         summary: course.summary,
         skillCount: course.skills.length,
         modules: course.modules,
+        assessment: course.assessment
+          ? {
+              title: course.assessment.title,
+              questions: course.assessment.questions.map((question) => ({
+                kind: question.kind,
+                prompt: question.prompt,
+                options: question.options,
+                correctOptionId: question.correctOptionId,
+                acceptedAnswers: question.acceptedAnswers,
+              })),
+            }
+          : null,
       }),
-    [course.title, course.summary, course.skills.length, course.modules],
+    [course.title, course.summary, course.skills.length, course.modules, course.assessment],
   );
   const ready = checklist.every((item) => item.done);
   const totalMinutes = course.modules.reduce(
@@ -510,6 +525,26 @@ export function CourseEditor({
         />
       );
     }
+  } else if (selection.kind === "assessment") {
+    pane = (
+      <AssessmentPane
+        assessment={course.assessment}
+        readOnly={readOnly}
+        onSave={async (input) => {
+          try {
+            const data = await saveAssessment(courseId, {
+              ...input,
+              questions: input.questions as StudioAssessmentQuestion[],
+            });
+            applyServer(data.course);
+            pushToast("Assessment saved", "success");
+          } catch (err) {
+            pushToast(errorMessage(err), "error");
+            throw err;
+          }
+        }}
+      />
+    );
   }
 
   if (!pane) {
