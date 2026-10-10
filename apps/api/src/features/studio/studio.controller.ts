@@ -16,6 +16,7 @@ import {
   reorderStudioExercises,
   resetCourseThumbnail,
   restoreStudioCourse,
+  saveStudioAssessment,
   submitStudioCourse,
   updateStudioCourse,
   updateStudioExercise,
@@ -200,5 +201,11 @@ export async function deleteExerciseHandler(req: Request, res: Response) {
 export async function outlineHandler(req: Request, res: Response) {
   res.json({
     data: await updateStudioOutline(requireUserId(req), param(req, "courseId"), req.body),
+  });
+}
+
+export async function saveAssessmentHandler(req: Request, res: Response) {
+  res.json({
+    data: await saveStudioAssessment(requireUserId(req), param(req, "courseId"), req.body),
   });
 }

@@ -43,6 +43,7 @@ export type CourseCatalogItem = {
   moduleCount: number;
   lessonCount: number;
   exerciseCount: number;
+  hasAssessment?: boolean;
   enrolled: boolean;
   startedAt: string | null;
   completedAt: string | null;
@@ -140,6 +141,12 @@ export type CourseDetail = {
     slug: string;
     title: string;
     moduleSlug?: string;
+  } | null;
+  assessment: {
+    id: string;
+    title: string;
+    passed: boolean;
+    unlocked: boolean;
   } | null;
   modules: CourseModuleDetail[];
 };

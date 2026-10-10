@@ -208,6 +208,19 @@ export function OutlinePanel({
           <span className="flex-1 text-sm font-semibold">Course details</span>
           <ChecklistRing done={checklistDone} total={checklistTotal} />
         </button>
+        <button
+          type="button"
+          onClick={() => onSelect({ kind: "assessment" })}
+          className={[
+            "mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition",
+            selection.kind === "assessment"
+              ? "bg-brand-soft text-brand"
+              : "text-ink hover:bg-surface-subtle",
+          ].join(" ")}
+        >
+          <Icon name="target" className="h-4 w-4 shrink-0" />
+          <span className="flex-1 text-sm font-semibold">Final assessment</span>
+        </button>
       </div>
 
       <div className="flex shrink-0 items-center justify-between px-5 pb-2">

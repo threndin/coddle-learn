@@ -75,7 +75,18 @@ Each lesson can have ordered exercises (`CourseExercise`), shown under the lesso
 
 `config` (JSON) holds requirements, quiz questions, and the pass mark. Answer keys and reference solutions are only sent once the learner is done. Submissions live in `UserExerciseSubmission` (one row per learner and exercise; resubmitting overwrites it). There's no review step yet: submitting counts as done.
 
-Course progress counts lessons and exercises together. A course completes only when every lesson is done or skipped **and** every exercise is done. Skipping a lesson doesn't skip its exercises. Modules still unlock on lessons alone.
+Course progress counts lessons and exercises together, plus the final assessment when one exists. A course completes only when every lesson is done or skipped, every exercise is done, **and** the final assessment is passed (if the course has one). Skipping a lesson doesn't skip its exercises. Modules still unlock on lessons alone. The assessment unlocks only after all lessons and exercises are done.
+
+### Assessments
+
+Each published course can have one final assessment. Question kinds: `multiple_choice`, `true_false`, `short_answer`. Attempts are append-only (`in_progress` → `submitted`). Answer keys are withheld until submit. Passing awards points and can complete the course.
+
+- `GET /assessments` — catalog for published course finals
+- `GET /assessments/:id` — meta + attempt history
+- `POST /assessments/:id/attempts` — start or resume
+- `POST /assessments/:id/attempts/:attemptId/submit` — grade
+- `GET /assessments/:id/attempts/:attemptId` — result (keys after submit)
+- Studio: `PUT /studio/courses/:id/assessment`
 
 - `POST /courses/:slug/exercises/:exerciseId/submission` — submit or resubmit
 - `DELETE /courses/:slug/exercises/:exerciseId/submission` — reopen (refunds points)
@@ -140,5 +151,7 @@ Locally, Learn web defaults to port `3002` so Coddle can stay on `3000`. Point `
 - Roadmap catalog seed + interactive `/roadmaps` and `/roadmaps/[slug]` (in-page step panel)
 - Course catalog seed + interactive `/courses` and `/courses/[slug]` (modules, markdown lessons, R2 thumbnails, creator, linked skills)
 - Lesson exercises (task, link, written answer, quiz) authored in Studio and submitted under each lesson
+- Course final assessments (`Assessment`, `AssessmentQuestion`, `AssessmentAttempt`) with MCQ, true/false, and short answer; gated until lessons and exercises are done; required for course completion when present
+- Studio assessment authoring (`PUT /studio/courses/:id/assessment`) and learner routes `/assessments`, `/assessments/:id`, `/assessments/:id/attempts/:attemptId`
 - Learn `/login`, `/onboarding`, and `/dashboard`
 - Coddle `/sso/learn` bridge page

@@ -15,6 +15,8 @@ export * from "./courses.js";
 export * from "./course-studio.js";
 export * from "./exercises.js";
 export * from "./starter-exercises.js";
+export * from "./assessments.js";
+export * from "./starter-assessments.js";
 
 /** Public repository URL. Empty until the remote exists. */
 export const GITHUB_URL = "https://github.com/threndin/coddle-learn";

@@ -334,6 +334,35 @@ export function CourseDetailView({
           </div>
         ))}
       </div>
+      {course.assessment ? (
+        <div className="mt-4 shrink-0 border-t border-border pt-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-muted">
+            Final assessment
+          </p>
+          {course.assessment.passed ? (
+            <p className="mt-2 text-sm font-medium text-emerald-700 dark:text-emerald-300">
+              Passed ·{" "}
+              <Link
+                href={`/assessments/${course.assessment.id}`}
+                className="underline underline-offset-2"
+              >
+                View results
+              </Link>
+            </p>
+          ) : course.assessment.unlocked ? (
+            <Link
+              href={`/assessments/${course.assessment.id}`}
+              className="mt-2 inline-flex w-full items-center justify-center rounded-xl bg-brand px-3 py-2 text-sm font-semibold text-white"
+            >
+              Take assessment
+            </Link>
+          ) : (
+            <p className="mt-2 text-xs text-ink-muted">
+              Finish every lesson and exercise to unlock.
+            </p>
+          )}
+        </div>
+      ) : null}
     </aside>
   );
 
@@ -428,6 +457,14 @@ export function CourseDetailView({
               >
                 Start course
               </button>
+            ) : null}
+            {course.assessment?.unlocked && !course.assessment.passed ? (
+              <Link
+                href={`/assessments/${course.assessment.id}`}
+                className="inline-flex rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-white"
+              >
+                Take final assessment
+              </Link>
             ) : null}
             {editHref ? (
               <Link
