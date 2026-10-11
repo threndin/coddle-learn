@@ -36,6 +36,9 @@ model User {
   exerciseSubmissions   UserExerciseSubmission[]
   courseReviews         CourseReview[]
   assessmentAttempts    AssessmentAttempt[]
+  createdProjects       Project[]                @relation("ProjectCreator")
+  reviewedProjects      Project[]                @relation("ProjectReviewer")
+  projectSubmissions    ProjectSubmission[]
 
   @@map("users")
 }
@@ -49,6 +52,7 @@ model Skill {
   users     UserSkill[]
   courses   CourseSkill[]
   resources ResourceSkill[]
+  projects  ProjectSkill[]
 
   @@map("skills")
 }
@@ -78,6 +82,7 @@ model Roadmap {
   updatedAt   DateTime      @updatedAt @map("updated_at")
   steps       RoadmapStep[]
   enrollments UserRoadmap[]
+  projects    Project[]
 
   @@map("roadmaps")
 }
@@ -98,6 +103,7 @@ model RoadmapStep {
   updatedAt        DateTime               @updatedAt @map("updated_at")
   progress         UserStepProgress[]
   resources        RoadmapStepResource[]
+  projects         Project[]
 
   @@unique([roadmapId, slug])
   @@index([roadmapId, sortOrder])
@@ -249,6 +255,7 @@ model Course {
   enrollments      UserCourse[]
   reviews          CourseReview[]
   assessment       Assessment?
+  projects         Project[]
 
   @@index([createdByUserId])
   @@index([status, sortOrder])
@@ -449,4 +456,81 @@ model UserLessonProgress {
   @@unique([userId, lessonId])
   @@index([lessonId])
   @@map("user_lesson_progress")
+}
+
+/// Lifecycle: draft -> in_review -> (changes_requested -> in_review)* -> published <-> archived.
+/// Scoped to a roadmap (learning path). Optional step/course links are soft guides, not gates.
+model Project {
+  id               String              @id @default(cuid())
+  slug             String              @unique
+  title            String
+  summary          String
+  body             String              @default("")
+  level            String
+  checklist        String[]            @default([])
+  exampleImageUrl  String?             @map("example_image_url")
+  primarySkillSlug String              @map("primary_skill_slug")
+  estimatedHours   Int                 @default(2) @map("estimated_hours")
+  status           String              @default("draft")
+  sortOrder        Int                 @default(100) @map("sort_order")
+  roadmapId        String              @map("roadmap_id")
+  roadmap          Roadmap             @relation(fields: [roadmapId], references: [id], onDelete: Restrict)
+  roadmapStepId    String?             @map("roadmap_step_id")
+  roadmapStep      RoadmapStep?        @relation(fields: [roadmapStepId], references: [id], onDelete: SetNull)
+  courseId         String?             @map("course_id")
+  course           Course?             @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  submittedAt      DateTime?           @map("submitted_at")
+  reviewedAt       DateTime?           @map("reviewed_at")
+  reviewedByUserId String?             @map("reviewed_by_user_id")
+  reviewedBy       User?               @relation("ProjectReviewer", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+  reviewNote       String?             @map("review_note")
+  publishedAt      DateTime?           @map("published_at")
+  createdByUserId  String              @map("created_by_user_id")
+  createdBy        User                @relation("ProjectCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  createdAt        DateTime            @default(now()) @map("created_at")
+  updatedAt        DateTime            @updatedAt @map("updated_at")
+  skills           ProjectSkill[]
+  submissions      ProjectSubmission[]
+
+  @@index([createdByUserId])
+  @@index([roadmapId, status, sortOrder])
+  @@index([status, sortOrder])
+  @@index([roadmapStepId])
+  @@index([courseId])
+  @@map("projects")
+}
+
+model ProjectSkill {
+  projectId String   @map("project_id")
+  skillId   String   @map("skill_id")
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  skill     Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@id([projectId, skillId])
+  @@index([skillId])
+  @@map("project_skills")
+}
+
+/// `status`: started | submitted. One row per learner per project brief.
+model ProjectSubmission {
+  id            String    @id @default(cuid())
+  projectId     String    @map("project_id")
+  userId        String    @map("user_id")
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status        String
+  repoUrl       String?   @map("repo_url")
+  liveUrl       String?   @map("live_url")
+  notes         String    @default("")
+  pointsAwarded Int       @default(0) @map("points_awarded")
+  startedAt     DateTime  @default(now()) @map("started_at")
+  submittedAt   DateTime? @map("submitted_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  @@unique([userId, projectId])
+  @@index([projectId, status])
+  @@index([userId, status, updatedAt])
+  @@map("project_submissions")
 }
