@@ -1,10 +1,7 @@
-import { ComingSoon } from "@/components/app/coming-soon";
+import { ProjectsCatalog } from "@/components/projects/projects-catalog";
+import { loadProjectCatalog } from "@/lib/projects-server";
 
-export default function ProjectsPage() {
-  return (
-    <ComingSoon
-      title="Projects"
-      description="Practical builds tied to your path, with a public showcase for repos and live URLs."
-    />
-  );
+export default async function ProjectsPage() {
+  const projects = await loadProjectCatalog();
+  return <ProjectsCatalog initialProjects={projects} />;
 }

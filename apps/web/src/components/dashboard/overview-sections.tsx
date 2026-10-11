@@ -16,6 +16,7 @@ import {
   type ContinueLearning,
   type EnrolledRoadmapSummary,
 } from "@/lib/roadmaps";
+import { fetchMyProjects, type ProjectActivityItem } from "@/lib/projects";
 import { useToast } from "@/components/app/toast";
 
 type ContinueCourse = {
@@ -37,6 +38,7 @@ export function OverviewSections({ user }: { user: PublicUser }) {
   );
   const [enrolled, setEnrolled] = useState<EnrolledRoadmapSummary[]>([]);
   const [continueCourse, setContinueCourse] = useState<ContinueCourse | null>(null);
+  const [projectActivity, setProjectActivity] = useState<ProjectActivityItem[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [busyPrimary, setBusyPrimary] = useState<string | null>(null);
 
@@ -44,16 +46,18 @@ export function OverviewSections({ user }: { user: PublicUser }) {
     let cancelled = false;
     void (async () => {
       try {
-        const [roadmapValue, courseRes] = await Promise.all([
+        const [roadmapValue, courseRes, projectsValue] = await Promise.all([
           fetchContinueLearning(),
           fetch("/api/courses/continue", {
             credentials: "include",
             cache: "no-store",
           }),
+          fetchMyProjects().catch(() => ({ submissions: [] as ProjectActivityItem[] })),
         ]);
         if (cancelled) return;
         setContinueLearning(roadmapValue.continue);
         setEnrolled(roadmapValue.enrolled);
+        setProjectActivity(projectsValue.submissions.slice(0, 3));
         if (courseRes.ok) {
           const body = (await courseRes.json()) as {
             data: { continue: ContinueCourse | null };
@@ -67,6 +71,7 @@ export function OverviewSections({ user }: { user: PublicUser }) {
           setContinueLearning(null);
           setEnrolled([]);
           setContinueCourse(null);
+          setProjectActivity([]);
         }
       } finally {
         if (!cancelled) setLoaded(true);
@@ -288,12 +293,43 @@ export function OverviewSections({ user }: { user: PublicUser }) {
           href="/resources"
           cta="Find resources"
         />
-        <EmptyPanel
-          title="Projects"
-          body="Ship work from your path and showcase it."
-          href="/projects"
-          cta="See projects"
-        />
+        {projectActivity.length > 0 ? (
+          <article className="rounded-2xl border border-border bg-surface p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-ink-muted">
+              Projects
+            </p>
+            <ul className="mt-3 space-y-3">
+              {projectActivity.map((item) => (
+                <li key={item.id}>
+                  <Link
+                    href={`/projects/${item.project.slug}`}
+                    className="block rounded-xl transition hover:bg-surface-subtle"
+                  >
+                    <p className="text-sm font-semibold text-ink">{item.project.title}</p>
+                    <p className="mt-0.5 text-xs text-ink-muted">
+                      {item.status === "submitted" ? "Submitted" : "In progress"}
+                      {" · "}
+                      {item.project.path.label}
+                    </p>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <Link
+              href="/projects"
+              className="mt-4 inline-flex rounded-xl bg-brand px-3 py-2 text-xs font-semibold text-white"
+            >
+              All projects
+            </Link>
+          </article>
+        ) : (
+          <EmptyPanel
+            title="Projects"
+            body="Ship work from your path and showcase it."
+            href="/projects"
+            cta="See projects"
+          />
+        )}
         <EmptyPanel
           title="Credentials"
           body="Verifiable proof from assessments and builds."
