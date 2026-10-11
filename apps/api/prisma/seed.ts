@@ -5,6 +5,7 @@ import {
   STARTER_ASSESSMENTS,
   STARTER_COURSES,
   STARTER_EXERCISES,
+  STARTER_PROJECTS,
   STARTER_RESOURCES,
   STARTER_ROADMAPS,
   TRUE_FALSE_OPTIONS,
@@ -403,6 +404,89 @@ async function seedAssessment(courseId: string, courseSlug: string) {
   });
 }
 
+async function seedProjects() {
+  const creator = await resolveCourseCreator();
+  const skills = await prisma.skill.findMany();
+  const skillIdBySlug = new Map(skills.map((skill) => [skill.slug, skill.id]));
+  const roadmaps = await prisma.roadmap.findMany({
+    include: { steps: { select: { id: true, slug: true } } },
+  });
+  const roadmapBySlug = new Map(roadmaps.map((roadmap) => [roadmap.slug, roadmap]));
+  const courses = await prisma.course.findMany({ select: { id: true, slug: true } });
+  const courseIdBySlug = new Map(courses.map((course) => [course.slug, course.id]));
+
+  for (const [index, project] of STARTER_PROJECTS.entries()) {
+    const roadmap = roadmapBySlug.get(project.roadmapSlug);
+    if (!roadmap) {
+      throw new Error(`Missing roadmap for project seed: ${project.roadmapSlug}`);
+    }
+    const step = project.roadmapStepSlug
+      ? roadmap.steps.find((item) => item.slug === project.roadmapStepSlug)
+      : null;
+    if (project.roadmapStepSlug && !step) {
+      throw new Error(
+        `Missing roadmap step for project seed: ${project.roadmapSlug}/${project.roadmapStepSlug}`,
+      );
+    }
+    const courseId = project.courseSlug ? courseIdBySlug.get(project.courseSlug) ?? null : null;
+
+    const now = new Date();
+    const saved = await prisma.project.upsert({
+      where: { slug: project.slug },
+      create: {
+        slug: project.slug,
+        title: project.title,
+        summary: project.summary,
+        body: project.body,
+        level: project.level,
+        checklist: [...project.checklist],
+        exampleImageUrl: project.exampleImageUrl,
+        primarySkillSlug: project.primarySkillSlug,
+        estimatedHours: project.estimatedHours,
+        status: "published",
+        sortOrder: index,
+        roadmapId: roadmap.id,
+        roadmapStepId: step?.id ?? null,
+        courseId,
+        submittedAt: now,
+        reviewedAt: now,
+        publishedAt: now,
+        createdByUserId: creator.id,
+      },
+      update: {
+        title: project.title,
+        summary: project.summary,
+        body: project.body,
+        level: project.level,
+        checklist: [...project.checklist],
+        exampleImageUrl: project.exampleImageUrl,
+        primarySkillSlug: project.primarySkillSlug,
+        estimatedHours: project.estimatedHours,
+        status: "published",
+        sortOrder: index,
+        roadmapId: roadmap.id,
+        roadmapStepId: step?.id ?? null,
+        courseId,
+        createdByUserId: creator.id,
+        publishedAt: now,
+      },
+    });
+
+    await prisma.projectSkill.deleteMany({ where: { projectId: saved.id } });
+    for (const skillSlug of project.skillSlugs) {
+      const skillId = skillIdBySlug.get(skillSlug);
+      if (!skillId) {
+        throw new Error(`Missing skill slug for project seed: ${skillSlug}`);
+      }
+      await prisma.projectSkill.create({
+        data: { projectId: saved.id, skillId },
+      });
+    }
+  }
+
+  console.log(`Seeded ${STARTER_PROJECTS.length} projects (creator: ${creator.email}).`);
+}
+
 async function main() {
   await seedSkills();
   const resourceIdByUrl = await seedResources();
@@ -410,6 +494,7 @@ async function main() {
   await seedRoadmaps(resourceIdByUrl);
   console.log(`Seeded ${STARTER_ROADMAPS.length} roadmaps.`);
   await seedCourses();
+  await seedProjects();
 }
 
 main()

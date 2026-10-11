@@ -55,13 +55,20 @@ export function LevelPicker({
   value,
   onChange,
   disabled,
+  /** Use in narrow sidebars so the three cards don’t squash side-by-side. */
+  stacked = false,
 }: {
   value: string;
   onChange: (level: string) => void;
   disabled?: boolean;
+  stacked?: boolean;
 }) {
   return (
-    <div role="radiogroup" aria-label="Level" className="grid gap-2 sm:grid-cols-3">
+    <div
+      role="radiogroup"
+      aria-label="Level"
+      className={stacked ? "grid gap-2" : "grid gap-2 sm:grid-cols-3"}
+    >
       {EXPERIENCE_LEVELS.map((level, index) => {
         const active = value === level.id;
         return (
@@ -79,11 +86,11 @@ export function LevelPicker({
                 : "border-border bg-surface hover:border-border-strong",
             ].join(" ")}
           >
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-3">
               <span className={`text-sm font-semibold ${active ? "text-brand" : "text-ink"}`}>
                 {level.label}
               </span>
-              <span className="flex items-end gap-0.5" aria-hidden>
+              <span className="flex shrink-0 items-end gap-0.5" aria-hidden>
                 {[0, 1, 2].map((bar) => (
                   <span
                     key={bar}

@@ -27,6 +27,7 @@ First visit after sign-in goes to **onboarding**. Every later visit goes to the 
 | Resources | `/resources`, `/resources/[slug]`, `/saved` | Built |
 | Studio | `/studio/courses/*` | Built (including final assessment editor) |
 | Assessments | `/assessments`, `/assessments/[id]`, attempts | Built (course finals; MCQ / T-F / short answer) |
+| Projects | `/projects`, `/projects/[slug]`, Studio `/studio/projects/*` | Built (path + level catalog, briefs, start/submit, contributor editor) |
 
 ## Build order
 

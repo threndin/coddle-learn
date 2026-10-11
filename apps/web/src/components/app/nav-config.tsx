@@ -91,7 +91,7 @@ export const APP_NAV: AppNavItem[] = [
     icon: "notifications",
   },
   {
-    href: "/studio/courses",
+    href: "/studio",
     label: "Studio",
     description: "Create and manage your courses",
     icon: "studio",

@@ -9,6 +9,8 @@ import { authRouter } from "./features/auth/auth.routes.js";
 import { coursesRouter } from "./features/courses/courses.routes.js";
 import { healthRouter } from "./features/health/health.routes.js";
 import { onboardingRouter } from "./features/onboarding/onboarding.routes.js";
+import { projectsRouter } from "./features/projects/projects.routes.js";
+import { studioProjectsRouter } from "./features/projects/studio-projects.routes.js";
 import { resourcesRouter } from "./features/resources/resources.routes.js";
 import { roadmapsRouter } from "./features/roadmaps/roadmaps.routes.js";
 import { studioRouter } from "./features/studio/studio.routes.js";
@@ -38,6 +40,8 @@ export function createApp(): Express {
   app.use("/courses", coursesRouter);
   app.use("/resources", resourcesRouter);
   app.use("/assessments", assessmentsRouter);
+  app.use("/projects", projectsRouter);
+  app.use("/studio/projects", studioProjectsRouter);
   app.use("/studio", studioRouter);
 
   app.use(errorHandler);

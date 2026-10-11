@@ -127,6 +127,18 @@ export function StudioCourses({ initial }: { initial: StudioCourseList | null })
         </Link>
       </div>
 
+      <div className="mt-6 flex flex-wrap gap-2 text-sm">
+        <Link href="/studio" className="text-ink-muted hover:text-ink">
+          Studio home
+        </Link>
+        <span className="text-ink-muted">/</span>
+        <span className="font-semibold text-ink">Courses</span>
+        <span className="text-ink-muted">·</span>
+        <Link href="/studio/projects" className="text-brand hover:underline">
+          Projects
+        </Link>
+      </div>
+
       {initial === null ? (
         <p className="mt-8 rounded-2xl border border-border bg-surface p-5 text-sm text-ink-muted">
           Could not load your courses. Refresh to try again.
