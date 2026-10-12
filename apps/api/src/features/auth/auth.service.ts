@@ -7,7 +7,10 @@ import {
   consumeOAuthState,
   createOAuthState,
   createSession,
+  refreshSession,
   revokeSession,
+  revokeSessionByRefreshToken,
+  type SessionTokens,
 } from "./session.js";
 
 export function finishUrl() {
@@ -29,13 +32,13 @@ export async function completeCoddleSignIn(code: string, state: string | undefin
 
   const profile = await exchangeCoddleSsoCode(code, finishUrl());
   const user = await upsertFromCoddle(profile);
-  const token = await createSession({
+  const tokens = await createSession({
     sub: user.id,
     email: user.email,
     coddleUserId: user.coddleUserId,
   });
 
-  return { user: toPublicUser(user), token };
+  return { user: toPublicUser(user), tokens };
 }
 
 export async function getCurrentUser(req: AuthedRequest) {
@@ -49,8 +52,20 @@ export async function getCurrentUser(req: AuthedRequest) {
   return toPublicUser(user);
 }
 
-export async function logoutSession(jti: string | undefined) {
-  if (jti) {
-    await revokeSession(jti);
+export async function rotateRefreshToken(refreshToken: string): Promise<SessionTokens> {
+  const { tokens } = await refreshSession(refreshToken);
+  return tokens;
+}
+
+export async function logoutSession(options: {
+  jti?: string;
+  refreshToken?: string | null;
+}) {
+  if (options.jti) {
+    await revokeSession(options.jti);
+    return;
+  }
+  if (options.refreshToken) {
+    await revokeSessionByRefreshToken(options.refreshToken);
   }
 }

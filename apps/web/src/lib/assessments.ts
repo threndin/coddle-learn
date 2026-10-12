@@ -98,6 +98,7 @@ export function submitAssessmentAttempt(
     assessment: AssessmentMeta;
     pointsAwarded: number;
     courseCompleteBonus: number;
+    credential: { id: string; title: string } | null;
   }>(`/assessments/${encodeURIComponent(id)}/attempts/${encodeURIComponent(attemptId)}/submit`, {
     method: "POST",
     json: { answers },

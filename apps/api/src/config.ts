@@ -16,7 +16,15 @@ export const config = {
     "postgresql://coddle:coddle@localhost:5432/coddle_learn",
   ),
   jwtSecret: required("JWT_SECRET", "dev-learn-jwt-secret-change-me"),
-  jwtExpiryHours: Number(process.env.JWT_EXPIRY_HOURS ?? 24),
+  /** Short-lived access JWT lifetime (minutes). */
+  jwtAccessExpiryMinutes: Number(
+    process.env.JWT_ACCESS_EXPIRY_MINUTES ??
+      (process.env.JWT_EXPIRY_HOURS
+        ? String(Number(process.env.JWT_EXPIRY_HOURS) * 60)
+        : "15"),
+  ),
+  /** Sliding refresh-token lifetime (days). */
+  jwtRefreshExpiryDays: Number(process.env.JWT_REFRESH_EXPIRY_DAYS ?? 30),
   coddleAppUrl: (process.env.CODDLE_APP_URL ?? "http://localhost:3000").replace(
     /\/$/,
     "",
@@ -80,5 +88,6 @@ if (
 
 export const COOKIE = {
   session: "learn_session",
+  refresh: "learn_refresh",
   csrf: "learn_csrf",
 } as const;

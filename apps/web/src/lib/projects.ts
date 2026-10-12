@@ -92,10 +92,14 @@ export function submitProjectSolution(
   slug: string,
   input: { repoUrl?: string | null; liveUrl?: string | null; notes?: string },
 ) {
-  return apiRequest<{ project: ProjectDetail; pointsAwarded: number }>(
-    `/projects/${encodeURIComponent(slug)}/submit`,
-    { method: "POST", json: input },
-  );
+  return apiRequest<{
+    project: ProjectDetail;
+    pointsAwarded: number;
+    credential: { id: string; title: string } | null;
+  }>(`/projects/${encodeURIComponent(slug)}/submit`, {
+    method: "POST",
+    json: input,
+  });
 }
 
 export function fetchMyProjects() {

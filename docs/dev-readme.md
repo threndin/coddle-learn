@@ -28,6 +28,7 @@ First visit after sign-in goes to **onboarding**. Every later visit goes to the 
 | Studio | `/studio/courses/*` | Built (including final assessment editor) |
 | Assessments | `/assessments`, `/assessments/[id]`, attempts | Built (course finals; MCQ / T-F / short answer) |
 | Projects | `/projects`, `/projects/[slug]`, Studio `/studio/projects/*` | Built (path + level catalog, briefs, start/submit, contributor editor) |
+| Credentials | `/credentials`, `/credentials/[id]`, `/verify/[code]` | Built (issued on assessment pass + first project submit; public verify) |
 
 ## Build order
 
@@ -147,10 +148,10 @@ The showcase entry: name, description, screenshots, GitHub repo, live URL, techn
 ### Credentials, badges, and skills
 
 **23. Credential** — `/credentials/[id]`  
-Issued for a passed assessment, a published project, or a completed skill. Shows the achievement and a public verification URL. Credentials are free.
+Issued for a passed assessment or a first project submit (skill credentials wait on the skill graph). Shows the achievement and a public verification URL. Credentials are free. List at `/credentials`.
 
 **24. Verify credential** — `/verify/[code]`  
-Public. No sign-in. Confirms the credential and what it was issued for.
+Public. No sign-in. Confirms the credential and what it was issued for. Built with credentials v1.
 
 **25. Badges** — `/badges`  
 Smaller achievements: first course, first project, streak, open-source contributor, roadmap completed, mentor, course creator, resource reviewer. Earned badges also show on the public profile and the dashboard.

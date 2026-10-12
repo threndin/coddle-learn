@@ -37,6 +37,7 @@ export function AssessmentAttemptView({
   const tileRefs = useRef<Map<number, HTMLButtonElement>>(new Map());
   const [assessment] = useState(initialAssessment);
   const [attempt, setAttempt] = useState(initialAttempt);
+  const [issuedCredentialId, setIssuedCredentialId] = useState<string | null>(null);
   const submitted = attempt?.status === "submitted";
   const questions = attempt?.questions ?? [];
   const overviewIndex = questions.length;
@@ -139,6 +140,7 @@ export function AssessmentAttemptView({
     try {
       const data = await submitAssessmentAttempt(assessment.id, attempt.id, answers);
       setAttempt(data.attempt);
+      setIssuedCredentialId(data.credential?.id ?? null);
       setDirection(1);
       setIndex(data.attempt.questions.length);
       await refreshUser();
@@ -147,6 +149,7 @@ export function AssessmentAttemptView({
       if (data.courseCompleteBonus) {
         bits.push(`course complete +${COURSE_COMPLETE_POINTS}`);
       }
+      if (data.credential) bits.push("credential earned");
       pushToast(
         [
           data.attempt.passed
@@ -200,7 +203,7 @@ export function AssessmentAttemptView({
               <Icon name="arrowLeft" className="h-3.5 w-3.5" />
               Overview
             </Link>
-            <h1 className="mt-1 truncate font-display text-lg font-extrabold tracking-tight text-ink sm:text-2xl">
+            <h1 className="mt-1 truncate font-display text-lg font-bold tracking-tight text-ink sm:text-2xl">
               {assessment.title}
             </h1>
             <p className="mt-1 truncate text-xs text-ink-muted sm:text-sm">
@@ -219,7 +222,7 @@ export function AssessmentAttemptView({
                   : "bg-rose-500/15 text-rose-900 dark:text-rose-100",
               ].join(" ")}
             >
-              <p className="font-display text-xl font-extrabold tabular-nums sm:text-2xl">
+              <p className="font-display text-xl font-bold tabular-nums sm:text-2xl">
                 {attempt.score}%
               </p>
               <p className="text-[11px] font-semibold sm:text-xs">
@@ -339,6 +342,7 @@ export function AssessmentAttemptView({
                   correctCount={resultStats.correct}
                   wrongCount={resultStats.wrong}
                   busy={busy}
+                  credentialId={issuedCredentialId}
                   onReviewQuestion={(questionIndex) => goTo(questionIndex, -1)}
                   onRetry={() => void handleRetry()}
                 />
@@ -431,6 +435,7 @@ function ResultsOverview({
   correctCount,
   wrongCount,
   busy,
+  credentialId,
   onReviewQuestion,
   onRetry,
 }: {
@@ -439,6 +444,7 @@ function ResultsOverview({
   correctCount: number;
   wrongCount: number;
   busy: boolean;
+  credentialId: string | null;
   onReviewQuestion: (index: number) => void;
   onRetry: () => void;
 }) {
@@ -458,7 +464,7 @@ function ResultsOverview({
             : "border-rose-200 bg-rose-50 text-rose-950 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-50",
         ].join(" ")}
       >
-        <p className="font-display text-4xl font-extrabold tabular-nums sm:text-5xl">
+        <p className="font-display text-4xl font-bold tabular-nums sm:text-5xl">
           {attempt.score}%
         </p>
         <p className="mt-2 text-base font-semibold sm:text-lg">
@@ -528,12 +534,15 @@ function ResultsOverview({
         >
           Back to assessment
         </Link>
-        <Link
-          href={`/courses/${assessment.course.slug}`}
-          className="inline-flex items-center justify-center gap-2 rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-ink transition hover:bg-surface-subtle"
-        >
-          Back to course
-        </Link>
+        {credentialId ? (
+          <Link
+            href={`/credentials/${credentialId}`}
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-ink transition hover:bg-surface-subtle"
+          >
+            View credential
+          </Link>
+        ) : null}
+       
         {!passed ? (
           <button
             type="button"
@@ -561,7 +570,7 @@ function OverviewStat({ label, value }: { label: string; value: string }) {
       <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-muted">
         {label}
       </dt>
-      <dd className="mt-0.5 font-display text-xl font-extrabold tabular-nums text-ink">
+      <dd className="mt-0.5 font-display text-xl font-bold tabular-nums text-ink">
         {value}
       </dd>
     </div>
