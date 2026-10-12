@@ -16,19 +16,22 @@ function safeEqual(a: string, b: string): boolean {
   return timingSafeEqual(left, right);
 }
 
+function readAccessToken(req: Request): string | null {
+  const header = req.headers.authorization;
+  const bearer =
+    typeof header === "string" && header.startsWith("Bearer ")
+      ? header.slice("Bearer ".length).trim()
+      : null;
+  const cookieToken =
+    typeof req.cookies?.[COOKIE.session] === "string"
+      ? (req.cookies[COOKIE.session] as string)
+      : null;
+  return bearer || cookieToken;
+}
+
 export async function requireAuth(req: AuthedRequest, _res: Response, next: NextFunction) {
   try {
-    const header = req.headers.authorization;
-    const bearer =
-      typeof header === "string" && header.startsWith("Bearer ")
-        ? header.slice("Bearer ".length).trim()
-        : null;
-    const cookieToken =
-      typeof req.cookies?.[COOKIE.session] === "string"
-        ? (req.cookies[COOKIE.session] as string)
-        : null;
-    const token = bearer || cookieToken;
-
+    const token = readAccessToken(req);
     if (!token) {
       throw new AppError(401, "unauthenticated", "Sign in with your Coddle account to continue");
     }
@@ -42,6 +45,19 @@ export async function requireAuth(req: AuthedRequest, _res: Response, next: Next
     }
     next(new AppError(401, "invalid_session", "Session expired. Sign in again."));
   }
+}
+
+/** Attaches session when a valid access token is present; otherwise continues. */
+export async function optionalAuth(req: AuthedRequest, _res: Response, next: NextFunction) {
+  try {
+    const token = readAccessToken(req);
+    if (token) {
+      req.session = await verifySession(token);
+    }
+  } catch {
+    // Access may already be expired; refresh cookie can still revoke on logout.
+  }
+  next();
 }
 
 export function requireCsrf(req: Request, _res: Response, next: NextFunction) {

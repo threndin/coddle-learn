@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CREDENTIAL_KIND_LABELS, isCredentialKind } from "@coddle/shared";
 import { useToast } from "@/components/app/toast";
 import { DownloadableCertificate } from "@/components/credentials/credential-certificate";
 import { CredentialNotFound } from "@/components/credentials/credential-not-found";
-import type { CredentialDetail } from "@/lib/credentials";
+import { fetchCredential, type CredentialDetail } from "@/lib/credentials";
 
 function kindLabel(kind: string) {
   return isCredentialKind(kind) ? CREDENTIAL_KIND_LABELS[kind] : kind;
@@ -49,14 +49,44 @@ function sourceLabel(credential: CredentialDetail) {
 }
 
 export function CredentialDetailView({
+  credentialId,
   initialCredential,
 }: {
+  credentialId: string;
   initialCredential: CredentialDetail | null;
 }) {
   const { pushToast } = useToast();
   const [copied, setCopied] = useState(false);
+  const [credential, setCredential] = useState(initialCredential);
+  const [loading, setLoading] = useState(initialCredential === null);
 
-  if (!initialCredential) {
+  useEffect(() => {
+    if (initialCredential !== null) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const data = await fetchCredential(credentialId);
+        if (!cancelled) setCredential(data.credential);
+      } catch {
+        if (!cancelled) setCredential(null);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [credentialId, initialCredential]);
+
+  if (loading) {
+    return (
+      <div className="mx-auto w-full max-w-4xl px-5 py-10 sm:px-8">
+        <p className="text-sm text-ink-muted">Loading credential…</p>
+      </div>
+    );
+  }
+
+  if (!credential) {
     return (
       <div className="mx-auto w-full max-w-4xl px-5 py-10 sm:px-8">
         <CredentialNotFound context="detail" />
@@ -64,7 +94,6 @@ export function CredentialDetailView({
     );
   }
 
-  const credential = initialCredential;
   const href = sourceHref(credential);
 
   async function copyVerifyUrl() {
