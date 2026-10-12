@@ -7,6 +7,10 @@ import {
 } from "@coddle/shared";
 import { AppError } from "../../shared/errors.js";
 import {
+  issueProjectCredential,
+  type IssuedCredential,
+} from "../credentials/credentials.service.js";
+import {
   findPublishedProjectBySlug,
   findSubmission,
   incrementUserPoints,
@@ -221,9 +225,22 @@ export async function submitProject(userId: string, slug: string, input: unknown
     pointsAwarded,
   });
 
+  let credential: IssuedCredential | null = null;
+  if (firstSubmit) {
+    credential = await issueProjectCredential({
+      userId,
+      projectId: project.id,
+      projectSubmissionId: saved.id,
+      projectTitle: project.title,
+      pathLabel: pathLabelForRoadmapSlug(project.roadmap.slug),
+      summary: project.summary,
+    });
+  }
+
   return {
     project: detailPayload(project, saved),
     pointsAwarded: firstSubmit ? pointsAwarded : 0,
+    credential,
   };
 }
 

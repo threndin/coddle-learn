@@ -27,6 +27,7 @@ The Learn API is organized by feature under `apps/api/src`. Each feature uses th
 | `features/onboarding/` | `POST /onboarding` |
 | `features/roadmaps/` | Catalog, detail, start, step progress (`/roadmaps/*`) |
 | `features/courses/` | Catalog, detail, start, lesson progress, exercise submissions (`/courses/*`) |
+| `features/credentials/` | Issue, list, detail, public verify (`/credentials/*`, `/verify/:code`) |
 
 | Layer | Responsibility |
 |---|---|
@@ -79,7 +80,7 @@ Course progress counts lessons and exercises together, plus the final assessment
 
 ### Assessments
 
-Each published course can have one final assessment. Question kinds: `multiple_choice`, `true_false`, `short_answer`. Attempts are append-only (`in_progress` → `submitted`). Answer keys are withheld until submit. Passing awards points and can complete the course.
+Each published course can have one final assessment. Question kinds: `multiple_choice`, `true_false`, `short_answer`. Attempts are append-only (`in_progress` → `submitted`). Answer keys are withheld until submit. Passing awards points, can complete the course, and mints a credential on the first pass.
 
 - `GET /assessments` — catalog for published course finals
 - `GET /assessments/:id` — meta + attempt history
@@ -87,6 +88,16 @@ Each published course can have one final assessment. Question kinds: `multiple_c
 - `POST /assessments/:id/attempts/:attemptId/submit` — grade
 - `GET /assessments/:id/attempts/:attemptId` — result (keys after submit)
 - Studio: `PUT /studio/courses/:id/assessment`
+
+### Credentials
+
+Free, verifiable credentials owned by Learn. Minted on first assessment pass and first project submit (one row per user + assessment or user + project). Skill credentials are deferred until the skill graph exists.
+
+- `GET /credentials` — authenticated list for the signed-in learner
+- `GET /credentials/:id` — authenticated owner detail (includes public `verifyUrl`)
+- `GET /verify/:code` — public verification (name + avatar only; no email)
+
+Public UI lives at `/verify/[code]` outside the authenticated app shell.
 
 - `POST /courses/:slug/exercises/:exerciseId/submission` — submit or resubmit
 - `DELETE /courses/:slug/exercises/:exerciseId/submission` — reopen (refunds points)
@@ -153,5 +164,6 @@ Locally, Learn web defaults to port `3002` so Coddle can stay on `3000`. Point `
 - Lesson exercises (task, link, written answer, quiz) authored in Studio and submitted under each lesson
 - Course final assessments (`Assessment`, `AssessmentQuestion`, `AssessmentAttempt`) with MCQ, true/false, and short answer; gated until lessons and exercises are done; required for course completion when present
 - Studio assessment authoring (`PUT /studio/courses/:id/assessment`) and learner routes `/assessments`, `/assessments/:id`, `/assessments/:id/attempts/:attemptId`
+- Credentials (`Credential`) issued on assessment pass and project submit; `/credentials`, `/credentials/:id`, public `/verify/:code`
 - Learn `/login`, `/onboarding`, and `/dashboard`
 - Coddle `/sso/learn` bridge page

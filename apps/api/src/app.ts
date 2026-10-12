@@ -6,6 +6,10 @@ import morgan from "morgan";
 import { config } from "./config.js";
 import { assessmentsRouter } from "./features/assessments/assessments.routes.js";
 import { authRouter } from "./features/auth/auth.routes.js";
+import {
+  credentialsRouter,
+  verifyRouter,
+} from "./features/credentials/credentials.routes.js";
 import { coursesRouter } from "./features/courses/courses.routes.js";
 import { healthRouter } from "./features/health/health.routes.js";
 import { onboardingRouter } from "./features/onboarding/onboarding.routes.js";
@@ -41,6 +45,8 @@ export function createApp(): Express {
   app.use("/resources", resourcesRouter);
   app.use("/assessments", assessmentsRouter);
   app.use("/projects", projectsRouter);
+  app.use("/credentials", credentialsRouter);
+  app.use("/verify", verifyRouter);
   app.use("/studio/projects", studioProjectsRouter);
   app.use("/studio", studioRouter);
 

@@ -16,6 +16,7 @@ import {
   type ContinueLearning,
   type EnrolledRoadmapSummary,
 } from "@/lib/roadmaps";
+import { fetchCredentials, type CredentialSummary } from "@/lib/credentials";
 import { fetchMyProjects, type ProjectActivityItem } from "@/lib/projects";
 import { useToast } from "@/components/app/toast";
 
@@ -39,6 +40,7 @@ export function OverviewSections({ user }: { user: PublicUser }) {
   const [enrolled, setEnrolled] = useState<EnrolledRoadmapSummary[]>([]);
   const [continueCourse, setContinueCourse] = useState<ContinueCourse | null>(null);
   const [projectActivity, setProjectActivity] = useState<ProjectActivityItem[]>([]);
+  const [credentials, setCredentials] = useState<CredentialSummary[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [busyPrimary, setBusyPrimary] = useState<string | null>(null);
 
@@ -46,18 +48,20 @@ export function OverviewSections({ user }: { user: PublicUser }) {
     let cancelled = false;
     void (async () => {
       try {
-        const [roadmapValue, courseRes, projectsValue] = await Promise.all([
+        const [roadmapValue, courseRes, projectsValue, credentialsValue] = await Promise.all([
           fetchContinueLearning(),
           fetch("/api/courses/continue", {
             credentials: "include",
             cache: "no-store",
           }),
           fetchMyProjects().catch(() => ({ submissions: [] as ProjectActivityItem[] })),
+          fetchCredentials().catch(() => ({ credentials: [] as CredentialSummary[] })),
         ]);
         if (cancelled) return;
         setContinueLearning(roadmapValue.continue);
         setEnrolled(roadmapValue.enrolled);
         setProjectActivity(projectsValue.submissions.slice(0, 3));
+        setCredentials(credentialsValue.credentials.slice(0, 3));
         if (courseRes.ok) {
           const body = (await courseRes.json()) as {
             data: { continue: ContinueCourse | null };
@@ -72,6 +76,7 @@ export function OverviewSections({ user }: { user: PublicUser }) {
           setEnrolled([]);
           setContinueCourse(null);
           setProjectActivity([]);
+          setCredentials([]);
         }
       } finally {
         if (!cancelled) setLoaded(true);
@@ -330,12 +335,41 @@ export function OverviewSections({ user }: { user: PublicUser }) {
             cta="See projects"
           />
         )}
-        <EmptyPanel
-          title="Credentials"
-          body="Verifiable proof from assessments and builds."
-          href="/credentials"
-          cta="View credentials"
-        />
+        {credentials.length > 0 ? (
+          <article className="rounded-2xl border border-border bg-surface p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-ink-muted">
+              Credentials
+            </p>
+            <ul className="mt-3 space-y-3">
+              {credentials.map((item) => (
+                <li key={item.id}>
+                  <Link
+                    href={`/credentials/${item.id}`}
+                    className="block rounded-xl transition hover:bg-surface-subtle"
+                  >
+                    <p className="text-sm font-semibold text-ink">{item.title}</p>
+                    <p className="mt-0.5 text-xs text-ink-muted">
+                      {item.kind === "assessment" ? "Assessment" : "Project"}
+                    </p>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <Link
+              href="/credentials"
+              className="mt-4 inline-flex rounded-xl bg-brand px-3 py-2 text-xs font-semibold text-white"
+            >
+              All credentials
+            </Link>
+          </article>
+        ) : (
+          <EmptyPanel
+            title="Credentials"
+            body="Verifiable proof from assessments and builds."
+            href="/credentials"
+            cta="View credentials"
+          />
+        )}
       </div>
 
       <article className="rounded-2xl border border-border bg-surface p-5">
