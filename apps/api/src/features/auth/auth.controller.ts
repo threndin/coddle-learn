@@ -6,13 +6,14 @@ import {
   completeCoddleSignIn,
   getCurrentUser,
   logoutSession,
+  rotateRefreshToken,
   startCoddleSignIn,
 } from "./auth.service.js";
 import {
-  clearCsrfCookie,
-  clearSessionCookie,
+  clearAuthCookies,
+  readRefreshCookie,
+  setAuthCookies,
   setCsrfCookie,
-  setSessionCookie,
 } from "./cookies.js";
 
 export async function startCoddle(_req: Request, res: Response) {
@@ -29,8 +30,8 @@ export async function finishCoddle(req: Request, res: Response) {
       throw new AppError(400, "missing_code", "Missing SSO code");
     }
 
-    const { user, token } = await completeCoddleSignIn(code, state);
-    setSessionCookie(res, token);
+    const { user, tokens } = await completeCoddleSignIn(code, state);
+    setAuthCookies(res, tokens);
     setCsrfCookie(res);
     const nextPath = user.onboardingCompletedAt ? "/dashboard" : "/onboarding";
     res.redirect(302, `${config.webOrigin}${nextPath}`);
@@ -46,9 +47,23 @@ export async function me(req: Request, res: Response) {
   res.json({ data: { user, csrf } });
 }
 
+export async function refresh(req: Request, res: Response) {
+  const refreshToken = readRefreshCookie(req);
+  if (!refreshToken) {
+    throw new AppError(401, "invalid_refresh", "Session expired. Sign in again.");
+  }
+
+  const tokens = await rotateRefreshToken(refreshToken);
+  setAuthCookies(res, tokens);
+  const csrf = setCsrfCookie(res);
+  res.json({ data: { ok: true, csrf } });
+}
+
 export async function logout(req: Request, res: Response) {
-  await logoutSession((req as AuthedRequest).session?.jti);
-  clearSessionCookie(res);
-  clearCsrfCookie(res);
+  await logoutSession({
+    jti: (req as AuthedRequest).session?.jti,
+    refreshToken: readRefreshCookie(req),
+  });
+  clearAuthCookies(res);
   res.json({ data: { ok: true } });
 }

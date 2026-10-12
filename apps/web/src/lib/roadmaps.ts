@@ -1,4 +1,5 @@
 import type { ExperienceLevel, StepProgressStatus } from "@coddle/shared";
+import { apiFetch, csrfHeaders } from "@/lib/api-client";
 
 export type RoadmapResource = {
   id: string;
@@ -79,20 +80,6 @@ export type EnrolledRoadmapSummary = {
   nextStep: { slug: string; title: string } | null;
 };
 
-function readCookie(name: string): string | null {
-  if (typeof document === "undefined") return null;
-  const match = document.cookie
-    .split("; ")
-    .find((row) => row.startsWith(`${name}=`));
-  if (!match) return null;
-  return decodeURIComponent(match.slice(name.length + 1));
-}
-
-function csrfHeaders(): HeadersInit {
-  const csrf = readCookie("learn_csrf");
-  return csrf ? { "x-csrf-token": csrf } : {};
-}
-
 async function parseError(res: Response): Promise<string> {
   const body = (await res.json().catch(() => null)) as {
     error?: { message?: string };
@@ -101,10 +88,7 @@ async function parseError(res: Response): Promise<string> {
 }
 
 export async function fetchRoadmaps(): Promise<RoadmapCatalogItem[]> {
-  const res = await fetch("/api/roadmaps", {
-    credentials: "include",
-    cache: "no-store",
-  });
+  const res = await apiFetch("/api/roadmaps");
   if (res.status === 401) throw new Error("UNAUTHENTICATED");
   if (!res.ok) throw new Error(await parseError(res));
   const body = (await res.json()) as { data: { roadmaps: RoadmapCatalogItem[] } };
@@ -112,10 +96,7 @@ export async function fetchRoadmaps(): Promise<RoadmapCatalogItem[]> {
 }
 
 export async function fetchRoadmap(slug: string): Promise<RoadmapDetail> {
-  const res = await fetch(`/api/roadmaps/${encodeURIComponent(slug)}`, {
-    credentials: "include",
-    cache: "no-store",
-  });
+  const res = await apiFetch(`/api/roadmaps/${encodeURIComponent(slug)}`);
   if (res.status === 401) throw new Error("UNAUTHENTICATED");
   if (res.status === 404) throw new Error("NOT_FOUND");
   if (!res.ok) throw new Error(await parseError(res));
@@ -127,9 +108,8 @@ export async function startRoadmap(
   slug: string,
   options?: { makePrimary?: boolean },
 ): Promise<RoadmapDetail> {
-  const res = await fetch(`/api/roadmaps/${encodeURIComponent(slug)}/start`, {
+  const res = await apiFetch(`/api/roadmaps/${encodeURIComponent(slug)}/start`, {
     method: "POST",
-    credentials: "include",
     headers: {
       "Content-Type": "application/json",
       ...csrfHeaders(),
@@ -143,9 +123,8 @@ export async function startRoadmap(
 }
 
 export async function setPrimaryRoadmap(slug: string): Promise<RoadmapDetail> {
-  const res = await fetch(`/api/roadmaps/${encodeURIComponent(slug)}/primary`, {
+  const res = await apiFetch(`/api/roadmaps/${encodeURIComponent(slug)}/primary`, {
     method: "POST",
-    credentials: "include",
     headers: csrfHeaders(),
   });
   if (res.status === 401) throw new Error("UNAUTHENTICATED");
@@ -159,9 +138,8 @@ export async function updateRoadmapProgress(
   stepSlug: string,
   status: StepProgressStatus | "incomplete",
 ): Promise<RoadmapDetail> {
-  const res = await fetch(`/api/roadmaps/${encodeURIComponent(slug)}/progress`, {
+  const res = await apiFetch(`/api/roadmaps/${encodeURIComponent(slug)}/progress`, {
     method: "POST",
-    credentials: "include",
     headers: {
       "Content-Type": "application/json",
       ...csrfHeaders(),
@@ -178,9 +156,8 @@ export async function toggleBookmark(
   slug: string,
   input: { stepSlug: string; url: string; remove?: boolean },
 ): Promise<RoadmapDetail> {
-  const res = await fetch(`/api/roadmaps/${encodeURIComponent(slug)}/bookmarks`, {
+  const res = await apiFetch(`/api/roadmaps/${encodeURIComponent(slug)}/bookmarks`, {
     method: "POST",
-    credentials: "include",
     headers: {
       "Content-Type": "application/json",
       ...csrfHeaders(),
@@ -197,10 +174,7 @@ export async function fetchContinueLearning(): Promise<{
   continue: ContinueLearning | null;
   enrolled: EnrolledRoadmapSummary[];
 }> {
-  const res = await fetch("/api/roadmaps/continue", {
-    credentials: "include",
-    cache: "no-store",
-  });
+  const res = await apiFetch("/api/roadmaps/continue");
   if (res.status === 401) throw new Error("UNAUTHENTICATED");
   if (!res.ok) throw new Error(await parseError(res));
   const body = (await res.json()) as {

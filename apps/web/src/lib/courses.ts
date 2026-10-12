@@ -6,7 +6,7 @@ import type {
   LessonProgressStatus,
   ReviewSort,
 } from "@coddle/shared";
-import { apiRequest } from "@/lib/api-client";
+import { apiFetch, apiRequest, csrfHeaders } from "@/lib/api-client";
 
 export type CourseCreator = {
   id: string;
@@ -151,20 +151,6 @@ export type CourseDetail = {
   modules: CourseModuleDetail[];
 };
 
-function readCookie(name: string): string | null {
-  if (typeof document === "undefined") return null;
-  const match = document.cookie
-    .split("; ")
-    .find((row) => row.startsWith(`${name}=`));
-  if (!match) return null;
-  return decodeURIComponent(match.slice(name.length + 1));
-}
-
-function csrfHeaders(): HeadersInit {
-  const csrf = readCookie("learn_csrf");
-  return csrf ? { "x-csrf-token": csrf } : {};
-}
-
 async function parseError(res: Response): Promise<string> {
   const body = (await res.json().catch(() => null)) as {
     error?: { message?: string };
@@ -173,10 +159,7 @@ async function parseError(res: Response): Promise<string> {
 }
 
 export async function fetchCourses(): Promise<CourseCatalogItem[]> {
-  const res = await fetch("/api/courses", {
-    credentials: "include",
-    cache: "no-store",
-  });
+  const res = await apiFetch("/api/courses");
   if (res.status === 401) throw new Error("UNAUTHENTICATED");
   if (!res.ok) throw new Error(await parseError(res));
   const body = (await res.json()) as { data: { courses: CourseCatalogItem[] } };
@@ -184,10 +167,7 @@ export async function fetchCourses(): Promise<CourseCatalogItem[]> {
 }
 
 export async function fetchCourse(slug: string): Promise<CourseDetail> {
-  const res = await fetch(`/api/courses/${encodeURIComponent(slug)}`, {
-    credentials: "include",
-    cache: "no-store",
-  });
+  const res = await apiFetch(`/api/courses/${encodeURIComponent(slug)}`);
   if (res.status === 401) throw new Error("UNAUTHENTICATED");
   if (res.status === 404) throw new Error("NOT_FOUND");
   if (!res.ok) throw new Error(await parseError(res));
@@ -196,9 +176,8 @@ export async function fetchCourse(slug: string): Promise<CourseDetail> {
 }
 
 export async function startCourse(slug: string): Promise<CourseDetail> {
-  const res = await fetch(`/api/courses/${encodeURIComponent(slug)}/start`, {
+  const res = await apiFetch(`/api/courses/${encodeURIComponent(slug)}/start`, {
     method: "POST",
-    credentials: "include",
     headers: csrfHeaders(),
   });
   if (res.status === 401) throw new Error("UNAUTHENTICATED");
@@ -217,9 +196,8 @@ export async function updateCourseProgress(
   pointsAwarded: number;
   courseCompleteBonus: number;
 }> {
-  const res = await fetch(`/api/courses/${encodeURIComponent(slug)}/progress`, {
+  const res = await apiFetch(`/api/courses/${encodeURIComponent(slug)}/progress`, {
     method: "POST",
-    credentials: "include",
     headers: {
       "Content-Type": "application/json",
       ...csrfHeaders(),

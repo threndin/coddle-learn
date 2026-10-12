@@ -115,10 +115,12 @@ Learn /login
        → POST Coddle /auth/sso/code  (one-time code; access token stays on Coddle)
   → POST Learn /api/auth/coddle/finish  (code + state)
   → Learn exchanges code server-to-server via Coddle /auth/sso/exchange
-  → Upsert User, create revocable Session (JWT jti)
-  → Set httpOnly session cookie + CSRF cookie
+  → Upsert User, create revocable Session (JWT jti + hashed refresh token)
+  → Set httpOnly access + refresh cookies + CSRF cookie
   → Redirect /dashboard
 ```
+
+Access JWT is short-lived (`JWT_ACCESS_EXPIRY_MINUTES`, default 15m). The refresh cookie (`learn_refresh`) lasts `JWT_REFRESH_EXPIRY_DAYS` (default 30d, sliding). `POST /auth/refresh` rotates the refresh token and issues a new access JWT; the web client retries once on 401 after refreshing.
 
 | Concern | Owner |
 |---|---|
@@ -132,6 +134,8 @@ Learn /login
 |---|---|---|
 | `DATABASE_URL` | `apps/api` | Postgres |
 | `JWT_SECRET` | `apps/api` | Learn session signing |
+| `JWT_ACCESS_EXPIRY_MINUTES` | `apps/api` | Access JWT lifetime (default 15) |
+| `JWT_REFRESH_EXPIRY_DAYS` | `apps/api` | Sliding refresh-token lifetime (default 30) |
 | `LEARN_SSO_CLIENT_ID` / `LEARN_SSO_CLIENT_SECRET` | `apps/api` | Server-to-server SSO exchange with Coddle |
 | `CODDLE_APP_URL` | `apps/api` | Coddle web (login + SSO bridge) |
 | `CODDLE_API_URL` | `apps/api` | Coddle API including `/api/v1` |

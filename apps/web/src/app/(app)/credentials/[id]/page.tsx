@@ -8,5 +8,5 @@ export default async function CredentialPage({
 }) {
   const { id } = await params;
   const credential = await loadCredential(id);
-  return <CredentialDetailView initialCredential={credential} />;
+  return <CredentialDetailView credentialId={id} initialCredential={credential} />;
 }

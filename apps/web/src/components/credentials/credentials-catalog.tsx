@@ -1,12 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { CREDENTIAL_KIND_LABELS, isCredentialKind } from "@coddle/shared";
 import { useAppUser } from "@/components/app/app-user-context";
 import { CredentialCertificate } from "@/components/credentials/credential-certificate";
 import { Icon } from "@/components/ui/icon";
-import type { CredentialSummary } from "@/lib/credentials";
+import { fetchCredentials, type CredentialSummary } from "@/lib/credentials";
 
 type KindFilter = "all" | "assessment" | "project";
 
@@ -101,10 +101,31 @@ export function CredentialsCatalog({
   initialCredentials: CredentialSummary[] | null;
 }) {
   const user = useAppUser();
-  const [credentials] = useState(initialCredentials);
+  const [credentials, setCredentials] = useState(initialCredentials);
   const [kind, setKind] = useState<KindFilter>("all");
   const [query, setQuery] = useState("");
-  const [error] = useState(initialCredentials ? null : "Could not load credentials");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(initialCredentials === null);
+
+  useEffect(() => {
+    if (initialCredentials !== null) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const data = await fetchCredentials();
+        if (cancelled) return;
+        setCredentials(data.credentials);
+        setError(null);
+      } catch {
+        if (!cancelled) setError("Could not load credentials");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [initialCredentials]);
 
   const filtered = useMemo(() => {
     if (!credentials) return [];
@@ -122,7 +143,7 @@ export function CredentialsCatalog({
   const emptyCatalog = Boolean(credentials && credentials.length === 0);
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-5 py-10 sm:px-8">
+    <div className="mx-auto w-full max-w-7xl px-5 py-8 sm:px-8">
       <div className="max-w-3xl">
         <p className="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-brand">
           Credentials
@@ -130,13 +151,13 @@ export function CredentialsCatalog({
         <h1 className="mt-3 font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">
           Proof you can share
         </h1>
-        <p className="mt-3 text-base leading-relaxed text-ink-muted">
+        <p className="mt-1 text-base leading-relaxed text-ink-muted">
           Free credentials from passed assessments and submitted projects, each with a public
           verification link.
         </p>
       </div>
 
-      <div className="mt-6 flex flex-col gap-3 sm:mt-8 sm:flex-row sm:flex-wrap sm:items-center">
+      <div className="mt-6 flex flex-col gap-3 sm:mt-4 sm:flex-row sm:flex-wrap sm:items-center">
         <label className="relative w-full flex-1 sm:min-w-56 sm:max-w-sm">
           <span className="sr-only">Search credentials</span>
           <Icon
@@ -173,7 +194,9 @@ export function CredentialsCatalog({
         </div>
       </div>
 
-      {error ? (
+      {loading ? (
+        <p className="mt-10 text-sm text-ink-muted">Loading credentials…</p>
+      ) : error ? (
         <p className="mt-10 text-sm text-rose-600">{error}</p>
       ) : filtered.length === 0 ? (
         <div className="mt-8 flex flex-col items-center rounded-2xl border border-dashed border-border px-4 py-14 text-center sm:py-16">

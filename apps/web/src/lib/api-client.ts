@@ -33,7 +33,70 @@ type RequestOptions = {
   contentType?: string;
   signal?: AbortSignal;
   keepalive?: boolean;
+  /** Skip access-token refresh + retry (used by the refresh call itself). */
+  skipRefresh?: boolean;
 };
+
+let refreshInFlight: Promise<boolean> | null = null;
+
+/** Exchange the refresh cookie for a new access session. Returns false if refresh failed. */
+export async function refreshSession(): Promise<boolean> {
+  if (refreshInFlight) return refreshInFlight;
+
+  refreshInFlight = (async () => {
+    try {
+      const res = await fetch("/api/auth/refresh", {
+        method: "POST",
+        credentials: "include",
+        headers: csrfHeaders(),
+        cache: "no-store",
+      });
+      return res.ok;
+    } catch {
+      return false;
+    } finally {
+      refreshInFlight = null;
+    }
+  })();
+
+  return refreshInFlight;
+}
+
+/**
+ * Browser fetch through the `/api` rewrite. On 401, tries one refresh then retries.
+ * Pass `skipRefresh` for the refresh endpoint itself.
+ */
+export async function apiFetch(
+  path: string,
+  init: RequestInit & { skipRefresh?: boolean } = {},
+): Promise<Response> {
+  const { skipRefresh, ...fetchInit } = init;
+  const url = path.startsWith("/api") || path.startsWith("http") ? path : `/api${path}`;
+
+  const res = await fetch(url, {
+    ...fetchInit,
+    credentials: fetchInit.credentials ?? "include",
+    cache: fetchInit.cache ?? "no-store",
+  });
+
+  if (res.status !== 401 || skipRefresh || url.includes("/auth/refresh")) {
+    return res;
+  }
+
+  const refreshed = await refreshSession();
+  if (!refreshed) return res;
+
+  const headers = new Headers(fetchInit.headers);
+  const csrf = readCookie("learn_csrf");
+  if (csrf) headers.set("x-csrf-token", csrf);
+
+  return fetch(url, {
+    ...fetchInit,
+    headers,
+    credentials: fetchInit.credentials ?? "include",
+    cache: fetchInit.cache ?? "no-store",
+  });
+}
 
 /** Browser-side call to the Learn API through the `/api` rewrite. Returns `data`. */
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
@@ -48,14 +111,13 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     headers["Content-Type"] = options.contentType;
   }
 
-  const res = await fetch(`/api${path}`, {
+  const res = await apiFetch(path, {
     method,
     headers,
     body,
-    credentials: "include",
-    cache: "no-store",
     signal: options.signal,
     keepalive: options.keepalive,
+    skipRefresh: options.skipRefresh,
   });
 
   const payload = (await res.json().catch(() => null)) as {
