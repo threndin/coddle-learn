@@ -17,14 +17,34 @@ export async function markOAuthStateConsumed(jti: string) {
   });
 }
 
-export async function createSessionRow(jti: string, userId: string, expiresAt: Date) {
+export async function createSessionRow(
+  jti: string,
+  userId: string,
+  refreshTokenHash: string,
+  expiresAt: Date,
+) {
   return prisma.session.create({
-    data: { jti, userId, expiresAt },
+    data: { jti, userId, refreshTokenHash, expiresAt },
   });
 }
 
 export async function findSessionByJti(jti: string) {
   return prisma.session.findUnique({ where: { jti } });
+}
+
+export async function findSessionByRefreshHash(refreshTokenHash: string) {
+  return prisma.session.findUnique({ where: { refreshTokenHash } });
+}
+
+export async function rotateSessionRefresh(
+  jti: string,
+  refreshTokenHash: string,
+  expiresAt: Date,
+) {
+  return prisma.session.update({
+    where: { jti },
+    data: { refreshTokenHash, expiresAt },
+  });
 }
 
 export async function deleteSessionByJti(jti: string) {

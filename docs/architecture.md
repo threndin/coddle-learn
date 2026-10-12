@@ -27,6 +27,7 @@ The Learn API is organized by feature under `apps/api/src`. Each feature uses th
 | `features/onboarding/` | `POST /onboarding` |
 | `features/roadmaps/` | Catalog, detail, start, step progress (`/roadmaps/*`) |
 | `features/courses/` | Catalog, detail, start, lesson progress, exercise submissions (`/courses/*`) |
+| `features/credentials/` | Issue, list, detail, public verify (`/credentials/*`, `/verify/:code`) |
 
 | Layer | Responsibility |
 |---|---|
@@ -79,7 +80,7 @@ Course progress counts lessons and exercises together, plus the final assessment
 
 ### Assessments
 
-Each published course can have one final assessment. Question kinds: `multiple_choice`, `true_false`, `short_answer`. Attempts are append-only (`in_progress` → `submitted`). Answer keys are withheld until submit. Passing awards points and can complete the course.
+Each published course can have one final assessment. Question kinds: `multiple_choice`, `true_false`, `short_answer`. Attempts are append-only (`in_progress` → `submitted`). Answer keys are withheld until submit. Passing awards points, can complete the course, and mints a credential on the first pass.
 
 - `GET /assessments` — catalog for published course finals
 - `GET /assessments/:id` — meta + attempt history
@@ -87,6 +88,16 @@ Each published course can have one final assessment. Question kinds: `multiple_c
 - `POST /assessments/:id/attempts/:attemptId/submit` — grade
 - `GET /assessments/:id/attempts/:attemptId` — result (keys after submit)
 - Studio: `PUT /studio/courses/:id/assessment`
+
+### Credentials
+
+Free, verifiable credentials owned by Learn. Minted on first assessment pass and first project submit (one row per user + assessment or user + project). Skill credentials are deferred until the skill graph exists.
+
+- `GET /credentials` — authenticated list for the signed-in learner
+- `GET /credentials/:id` — authenticated owner detail (includes public `verifyUrl`)
+- `GET /verify/:code` — public verification (name + avatar only; no email)
+
+Public UI lives at `/verify/[code]` outside the authenticated app shell.
 
 - `POST /courses/:slug/exercises/:exerciseId/submission` — submit or resubmit
 - `DELETE /courses/:slug/exercises/:exerciseId/submission` — reopen (refunds points)
@@ -104,10 +115,12 @@ Learn /login
        → POST Coddle /auth/sso/code  (one-time code; access token stays on Coddle)
   → POST Learn /api/auth/coddle/finish  (code + state)
   → Learn exchanges code server-to-server via Coddle /auth/sso/exchange
-  → Upsert User, create revocable Session (JWT jti)
-  → Set httpOnly session cookie + CSRF cookie
+  → Upsert User, create revocable Session (JWT jti + hashed refresh token)
+  → Set httpOnly access + refresh cookies + CSRF cookie
   → Redirect /dashboard
 ```
+
+Access JWT is short-lived (`JWT_ACCESS_EXPIRY_MINUTES`, default 15m). The refresh cookie (`learn_refresh`) lasts `JWT_REFRESH_EXPIRY_DAYS` (default 30d, sliding). `POST /auth/refresh` rotates the refresh token and issues a new access JWT; the web client retries once on 401 after refreshing.
 
 | Concern | Owner |
 |---|---|
@@ -121,6 +134,8 @@ Learn /login
 |---|---|---|
 | `DATABASE_URL` | `apps/api` | Postgres |
 | `JWT_SECRET` | `apps/api` | Learn session signing |
+| `JWT_ACCESS_EXPIRY_MINUTES` | `apps/api` | Access JWT lifetime (default 15) |
+| `JWT_REFRESH_EXPIRY_DAYS` | `apps/api` | Sliding refresh-token lifetime (default 30) |
 | `LEARN_SSO_CLIENT_ID` / `LEARN_SSO_CLIENT_SECRET` | `apps/api` | Server-to-server SSO exchange with Coddle |
 | `CODDLE_APP_URL` | `apps/api` | Coddle web (login + SSO bridge) |
 | `CODDLE_API_URL` | `apps/api` | Coddle API including `/api/v1` |
@@ -153,5 +168,6 @@ Locally, Learn web defaults to port `3002` so Coddle can stay on `3000`. Point `
 - Lesson exercises (task, link, written answer, quiz) authored in Studio and submitted under each lesson
 - Course final assessments (`Assessment`, `AssessmentQuestion`, `AssessmentAttempt`) with MCQ, true/false, and short answer; gated until lessons and exercises are done; required for course completion when present
 - Studio assessment authoring (`PUT /studio/courses/:id/assessment`) and learner routes `/assessments`, `/assessments/:id`, `/assessments/:id/attempts/:attemptId`
+- Credentials (`Credential`) issued on assessment pass and project submit; `/credentials`, `/credentials/:id`, public `/verify/:code`
 - Learn `/login`, `/onboarding`, and `/dashboard`
 - Coddle `/sso/learn` bridge page

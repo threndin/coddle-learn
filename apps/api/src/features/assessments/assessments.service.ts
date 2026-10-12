@@ -27,6 +27,10 @@ import {
   syncCourseCompletion,
 } from "../courses/courses.service.js";
 import {
+  issueAssessmentCredential,
+  type IssuedCredential,
+} from "../credentials/credentials.service.js";
+import {
   createAttempt,
   findAssessmentById,
   findAttempt,
@@ -356,8 +360,9 @@ export async function submitAssessmentAttempt(
   const score = assessmentScorePercent(earned, points);
   const passed = assessmentPassed(earned, points, assessment.passPercent);
 
+  const firstPass = passed && !(await hasPassedAssessment(userId, assessment.id));
   let pointsAwarded = 0;
-  if (passed && !(await hasPassedAssessment(userId, assessment.id))) {
+  if (firstPass) {
     pointsAwarded = ASSESSMENT_PASS_POINTS;
     await incrementUserPoints(userId, ASSESSMENT_PASS_POINTS);
   }
@@ -370,6 +375,18 @@ export async function submitAssessmentAttempt(
     pointsEarned: earned,
   });
 
+  let credential: IssuedCredential | null = null;
+  if (firstPass) {
+    credential = await issueAssessmentCredential({
+      userId,
+      assessmentId: assessment.id,
+      assessmentAttemptId: submitted.id,
+      assessmentTitle: assessment.title,
+      courseTitle: assessment.course.title,
+      summary: assessment.summary || undefined,
+    });
+  }
+
   const courseCompleteBonus = await syncCourseCompletion(userId, course, enrollment);
 
   return {
@@ -377,6 +394,7 @@ export async function submitAssessmentAttempt(
     assessment: assessmentMeta(assessment),
     pointsAwarded,
     courseCompleteBonus,
+    credential,
   };
 }
 

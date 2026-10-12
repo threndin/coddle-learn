@@ -25,6 +25,7 @@ export function ProjectDetailView({ initial }: { initial: ProjectDetailType }) {
   const [showSubmit, setShowSubmit] = useState(
     initial.submission?.status === "started" || initial.submission?.status === "submitted",
   );
+  const [issuedCredentialId, setIssuedCredentialId] = useState<string | null>(null);
 
   const level = levelById(project.level);
   const started = Boolean(project.submission);
@@ -51,16 +52,21 @@ export function ProjectDetailView({ initial }: { initial: ProjectDetailType }) {
     if (pending) return;
     setPending(true);
     try {
-      const { project: next, pointsAwarded } = await submitProjectSolution(project.slug, {
-        repoUrl: repoUrl.trim() || null,
-        liveUrl: liveUrl.trim() || null,
-        notes: notes.trim(),
-      });
+      const { project: next, pointsAwarded, credential } = await submitProjectSolution(
+        project.slug,
+        {
+          repoUrl: repoUrl.trim() || null,
+          liveUrl: liveUrl.trim() || null,
+          notes: notes.trim(),
+        },
+      );
       setProject(next);
+      if (credential) setIssuedCredentialId(credential.id);
+      const bits: string[] = [];
+      if (pointsAwarded > 0) bits.push(`+${pointsAwarded} pts`);
+      if (credential) bits.push("credential earned");
       pushToast(
-        pointsAwarded > 0
-          ? `Solution submitted · +${pointsAwarded} pts`
-          : "Solution updated",
+        bits.length > 0 ? `Solution submitted · ${bits.join(" · ")}` : "Solution updated",
         "success",
       );
       router.refresh();
@@ -100,7 +106,7 @@ export function ProjectDetailView({ initial }: { initial: ProjectDetailType }) {
             ))}
           </div>
 
-          <h1 className="mt-4 font-display text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
+          <h1 className="mt-4 font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">
             {project.title}
           </h1>
           <p className="mt-3 max-w-2xl text-base leading-relaxed text-ink-muted">
@@ -174,6 +180,15 @@ export function ProjectDetailView({ initial }: { initial: ProjectDetailType }) {
                 {submitted ? "Update solution" : "Submit solution"}
               </button>
             )}
+
+            {issuedCredentialId ? (
+              <Link
+                href={`/credentials/${issuedCredentialId}`}
+                className="mt-3 inline-flex text-sm font-semibold text-brand hover:underline"
+              >
+                View credential
+              </Link>
+            ) : null}
 
             <p className="mt-3 text-xs leading-relaxed text-ink-muted">
               First submission earns {PROJECT_SUBMIT_POINTS} points. Add a GitHub repo and/or a
