@@ -4,6 +4,11 @@ import { forwardRef, useEffect, useId, useRef, useState } from "react";
 import QRCode from "qrcode";
 import { APP_NAME, CREDENTIAL_KIND_LABELS, isCredentialKind } from "@coddle/shared";
 
+/** Fixed landscape design size. Full certs render at this width and scale to fit. */
+const CERT_WIDTH = 800;
+const CERT_ASPECT = 1.414;
+const CERT_HEIGHT = Math.round(CERT_WIDTH / CERT_ASPECT);
+
 export type CertificateData = {
   earnerName: string;
   title: string;
@@ -105,9 +110,7 @@ function CertificateSeal({
       <div
         className={[
           "relative flex items-center justify-center rounded-full border-[#004CC8] bg-[#e8f0ff]",
-          compact
-            ? "h-8 w-8 border-2 sm:h-9 sm:w-9"
-            : "h-16 w-16 border-[3px] sm:h-20 sm:w-20",
+          compact ? "h-8 w-8 border-2 sm:h-9 sm:w-9" : "h-20 w-20 border-[3px]",
         ].join(" ")}
       >
         {!compact ? (
@@ -115,7 +118,7 @@ function CertificateSeal({
         ) : null}
         <svg
           viewBox="0 0 48 48"
-          className={compact ? "h-4 w-4" : "h-8 w-8 sm:h-10 sm:w-10"}
+          className={compact ? "h-4 w-4" : "h-10 w-10"}
           aria-hidden
         >
           <circle cx="24" cy="24" r="22" fill="#004CC8" />
@@ -132,7 +135,7 @@ function CertificateSeal({
       <p
         className={[
           "font-bold uppercase tracking-[0.12em] text-[#004CC8]",
-          compact ? "text-[5px]" : "text-[8px] sm:text-[9px]",
+          compact ? "text-[5px]" : "text-[9px]",
         ].join(" ")}
       >
         {kindLabel(kind)}
@@ -178,9 +181,7 @@ function VerifyQr({
       <div
         className={[
           "overflow-hidden rounded-md border border-[#004CC8]/25 bg-white",
-          compact
-            ? "h-8 w-8 p-px sm:h-9 sm:w-9"
-            : "h-16 w-16 p-0.5 sm:h-20 sm:w-20",
+          compact ? "h-8 w-8 p-px sm:h-9 sm:w-9" : "h-20 w-20 p-0.5",
         ].join(" ")}
       >
         {src ? (
@@ -191,9 +192,7 @@ function VerifyQr({
         )}
       </div>
       {!compact ? (
-        <p className="text-[7px] uppercase tracking-[0.12em] text-[#94a3b8] sm:text-[8px]">
-          Scan to verify
-        </p>
+        <p className="text-[8px] uppercase tracking-[0.12em] text-[#94a3b8]">Scan to verify</p>
       ) : null}
     </div>
   );
@@ -217,10 +216,10 @@ export const CredentialCertificate = forwardRef<
     <div
       ref={ref}
       className={[
-        "relative flex aspect-[1.414/1] w-full select-none flex-col overflow-hidden border-[#004CC8] bg-white text-[#111827]",
+        "relative flex select-none flex-col overflow-hidden border-[#004CC8] bg-white text-[#111827]",
         compact
-          ? "rounded-lg border-2 shadow-none"
-          : "rounded-xl border-[3px] shadow-[0_20px_50px_-28px_rgba(0,60,160,0.45)]",
+          ? "aspect-[1.414/1] w-full rounded-lg border-2 shadow-none"
+          : "h-full w-full rounded-xl border-[3px] shadow-[0_20px_50px_-28px_rgba(0,60,160,0.45)]",
         className,
       ].join(" ")}
       role="img"
@@ -230,19 +229,19 @@ export const CredentialCertificate = forwardRef<
 
       {!compact ? (
         <>
-          <div className="pointer-events-none absolute inset-[6px] rounded-lg border border-[#004CC8]/40 sm:inset-[8px]" />
-          <div className="pointer-events-none absolute inset-[11px] rounded-md border border-dashed border-[#004CC8]/30 sm:inset-[14px]" />
-          <span className="absolute left-3 top-3 z-[1] h-4 w-4 border-l-2 border-t-2 border-white/80 sm:left-4 sm:top-4 sm:h-5 sm:w-5" />
-          <span className="absolute right-3 top-3 z-[1] h-4 w-4 border-r-2 border-t-2 border-white/80 sm:right-4 sm:top-4 sm:h-5 sm:w-5" />
-          <span className="absolute bottom-3 left-3 z-[1] h-4 w-4 border-b-2 border-l-2 border-[#004CC8] sm:bottom-4 sm:left-4 sm:h-5 sm:w-5" />
-          <span className="absolute bottom-3 right-3 z-[1] h-4 w-4 border-b-2 border-r-2 border-[#004CC8] sm:bottom-4 sm:right-4 sm:h-5 sm:w-5" />
+          <div className="pointer-events-none absolute inset-[8px] rounded-lg border border-[#004CC8]/40" />
+          <div className="pointer-events-none absolute inset-[14px] rounded-md border border-dashed border-[#004CC8]/30" />
+          <span className="absolute left-4 top-4 z-[1] h-5 w-5 border-l-2 border-t-2 border-white/80" />
+          <span className="absolute right-4 top-4 z-[1] h-5 w-5 border-r-2 border-t-2 border-white/80" />
+          <span className="absolute bottom-4 left-4 z-[1] h-5 w-5 border-b-2 border-l-2 border-[#004CC8]" />
+          <span className="absolute bottom-4 right-4 z-[1] h-5 w-5 border-b-2 border-r-2 border-[#004CC8]" />
         </>
       ) : null}
 
       <div
         className={[
           "relative z-[1] flex items-center justify-center bg-[#004CC8]",
-          compact ? "py-1.5" : "py-3.5 sm:py-4",
+          compact ? "py-1.5" : "py-4",
         ].join(" ")}
       >
         {/* eslint-disable-next-line @next/next/no-img-element -- inline cert asset */}
@@ -252,7 +251,7 @@ export const CredentialCertificate = forwardRef<
           crossOrigin="anonymous"
           className={[
             "w-auto object-contain brightness-0 invert",
-            compact ? "h-4" : "h-8 sm:h-10",
+            compact ? "h-4" : "h-10",
           ].join(" ")}
         />
       </div>
@@ -260,14 +259,14 @@ export const CredentialCertificate = forwardRef<
       <div
         className={[
           "relative z-[1] flex flex-1 flex-col",
-          compact ? "px-3 py-2" : "px-[6%] py-[4%] sm:px-[8%]",
+          compact ? "px-3 py-2" : "px-[8%] py-[4%]",
         ].join(" ")}
       >
         <div className="flex flex-1 flex-col items-center justify-center text-center">
           <p
             className={[
               "font-display font-bold tracking-tight text-[#003A9E]",
-              compact ? "text-[10px]" : "text-lg sm:text-2xl",
+              compact ? "text-[10px]" : "text-2xl",
             ].join(" ")}
           >
             Certificate of Completion
@@ -275,7 +274,7 @@ export const CredentialCertificate = forwardRef<
           <p
             className={[
               "text-[#64748b]",
-              compact ? "mt-1 text-[7px]" : "mt-3 text-[10px] sm:text-xs",
+              compact ? "mt-1 text-[7px]" : "mt-3 text-xs",
             ].join(" ")}
           >
             This certifies that
@@ -285,7 +284,7 @@ export const CredentialCertificate = forwardRef<
               "font-display font-bold tracking-tight text-[#111827]",
               compact
                 ? "mt-0.5 line-clamp-1 text-xs leading-tight"
-                : "mt-1 text-2xl leading-tight sm:text-3xl",
+                : "mt-1 text-3xl leading-tight",
             ].join(" ")}
           >
             {data.earnerName}
@@ -293,13 +292,13 @@ export const CredentialCertificate = forwardRef<
           <div
             className={[
               "mx-auto h-px bg-gradient-to-r from-transparent via-[#004CC8]/50 to-transparent",
-              compact ? "mt-1 w-10" : "mt-2 w-28 sm:w-40",
+              compact ? "mt-1 w-10" : "mt-2 w-40",
             ].join(" ")}
           />
           <p
             className={[
               "text-[#64748b]",
-              compact ? "mt-1 text-[7px]" : "mt-2 text-[10px] sm:text-xs",
+              compact ? "mt-1 text-[7px]" : "mt-2 text-xs",
             ].join(" ")}
           >
             {data.kind === "assessment"
@@ -311,7 +310,7 @@ export const CredentialCertificate = forwardRef<
               "font-display font-bold tracking-tight text-[#004CC8]",
               compact
                 ? "mt-0.5 line-clamp-1 text-[10px] leading-snug"
-                : "mt-1 line-clamp-2 text-base leading-snug sm:text-xl",
+                : "mt-1 line-clamp-2 text-xl leading-snug",
             ].join(" ")}
           >
             {subject}
@@ -320,7 +319,7 @@ export const CredentialCertificate = forwardRef<
             <p
               className={[
                 "line-clamp-1 text-[#64748b]",
-                compact ? "mt-0.5 text-[7px]" : "mt-1 text-[10px] sm:text-xs",
+                compact ? "mt-0.5 text-[7px]" : "mt-1 text-xs",
               ].join(" ")}
             >
               {context}
@@ -330,10 +329,7 @@ export const CredentialCertificate = forwardRef<
           <div className={["mx-auto", compact ? "mt-1.5" : "mt-5"].join(" ")}>
             <svg
               viewBox="0 0 160 52"
-              className={[
-                "mx-auto",
-                compact ? "h-5 w-20" : "h-11 w-40 sm:h-12 sm:w-48",
-              ].join(" ")}
+              className={["mx-auto", compact ? "h-5 w-20" : "h-12 w-48"].join(" ")}
               aria-hidden
             >
               <text
@@ -360,7 +356,7 @@ export const CredentialCertificate = forwardRef<
             <p
               className={[
                 "mt-0.5 uppercase leading-tight tracking-[0.14em]",
-                compact ? "text-[4px]" : "text-[7px] sm:text-[8px]",
+                compact ? "text-[4px]" : "text-[8px]",
               ].join(" ")}
             >
               Ahiakwo John
@@ -384,7 +380,7 @@ export const CredentialCertificate = forwardRef<
             <p
               className={[
                 "uppercase tracking-[0.14em] text-[#94a3b8]",
-                compact ? "text-[5px]" : "text-[8px] sm:text-[9px]",
+                compact ? "text-[5px]" : "text-[9px]",
               ].join(" ")}
             >
               Issued
@@ -392,15 +388,13 @@ export const CredentialCertificate = forwardRef<
             <p
               className={[
                 "font-bold text-[#111827]",
-                compact ? "truncate text-[7px]" : "text-[10px] sm:text-xs",
+                compact ? "truncate text-[7px]" : "text-xs",
               ].join(" ")}
             >
               {dated}
             </p>
             {!compact ? (
-              <p className="mt-0.5 truncate font-mono text-[8px] text-[#64748b] sm:text-[9px]">
-                {data.code}
-              </p>
+              <p className="mt-0.5 truncate font-mono text-[9px] text-[#64748b]">{data.code}</p>
             ) : null}
           </div>
 
@@ -420,9 +414,26 @@ export function DownloadableCertificate({
   data: CertificateData;
   className?: string;
 }) {
+  const frameRef = useRef<HTMLDivElement>(null);
   const nodeRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const frame = frameRef.current;
+    if (!frame) return;
+
+    const update = () => {
+      const next = frame.clientWidth / CERT_WIDTH;
+      setScale(Number.isFinite(next) && next > 0 ? Math.min(1, next) : 1);
+    };
+
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(frame);
+    return () => observer.disconnect();
+  }, []);
 
   async function download() {
     const node = nodeRef.current;
@@ -435,6 +446,13 @@ export function DownloadableCertificate({
         cacheBust: true,
         pixelRatio: 2,
         backgroundColor: "#ffffff",
+        width: CERT_WIDTH,
+        height: CERT_HEIGHT,
+        style: {
+          transform: "none",
+          width: `${CERT_WIDTH}px`,
+          height: `${CERT_HEIGHT}px`,
+        },
       });
       const link = document.createElement("a");
       link.download = `coddle-learn-${slugify(data.earnerName)}-${slugify(data.code)}.png`;
@@ -449,7 +467,22 @@ export function DownloadableCertificate({
 
   return (
     <div className={className}>
-      <CredentialCertificate ref={nodeRef} data={data} />
+      <div
+        ref={frameRef}
+        className="relative w-full overflow-hidden"
+        style={{ height: CERT_HEIGHT * scale }}
+      >
+        <div
+          className="origin-top-left"
+          style={{
+            width: CERT_WIDTH,
+            height: CERT_HEIGHT,
+            transform: `scale(${scale})`,
+          }}
+        >
+          <CredentialCertificate ref={nodeRef} data={data} />
+        </div>
+      </div>
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <button
           type="button"
