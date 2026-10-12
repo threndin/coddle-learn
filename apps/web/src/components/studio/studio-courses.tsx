@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { levelById, type CourseStatus } from "@coddle/shared";
 import { useToast } from "@/components/app/toast";
@@ -13,6 +13,7 @@ import { errorMessage } from "@/lib/api-client";
 import { pluralize, timeAgo } from "@/lib/format";
 import {
   deleteStudioCourse,
+  fetchStudioCourses,
   runLifecycleAction,
   type StudioCourseList,
   type StudioCourseListItem,
@@ -35,10 +36,33 @@ const TABS: { id: Tab; label: string; statuses: CourseStatus[] }[] = [
 export function StudioCourses({ initial }: { initial: StudioCourseList | null }) {
   const { pushToast } = useToast();
   const [courses, setCourses] = useState<StudioCourseListItem[]>(initial?.courses ?? []);
+  const [reviewMode, setReviewMode] = useState(initial?.reviewMode ?? "auto");
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [loading, setLoading] = useState(initial === null);
   const [tab, setTab] = useState<Tab>("all");
   const [query, setQuery] = useState("");
   const [pendingDelete, setPendingDelete] = useState<StudioCourseListItem | null>(null);
-  const reviewMode = initial?.reviewMode ?? "auto";
+
+  useEffect(() => {
+    if (initial !== null) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const data = await fetchStudioCourses();
+        if (cancelled) return;
+        setCourses(data.courses);
+        setReviewMode(data.reviewMode);
+        setLoadFailed(false);
+      } catch {
+        if (!cancelled) setLoadFailed(true);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [initial]);
 
   const counts = useMemo(() => {
     const map = new Map<Tab, number>();
@@ -110,7 +134,7 @@ export function StudioCourses({ initial }: { initial: StudioCourseList | null })
           <p className="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-brand">
             Studio
           </p>
-          <h1 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
+          <h1 className="mt-3 font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">
             Your courses
           </h1>
           <p className="mt-3 text-base leading-relaxed text-ink-muted">
@@ -139,7 +163,9 @@ export function StudioCourses({ initial }: { initial: StudioCourseList | null })
         </Link>
       </div>
 
-      {initial === null ? (
+      {loading ? (
+        <p className="mt-8 text-sm text-ink-muted">Loading your courses…</p>
+      ) : loadFailed ? (
         <p className="mt-8 rounded-2xl border border-border bg-surface p-5 text-sm text-ink-muted">
           Could not load your courses. Refresh to try again.
         </p>
@@ -258,7 +284,7 @@ function StatTile({
         </span>
         <span className="text-xs font-semibold uppercase tracking-[0.12em]">{label}</span>
       </div>
-      <p className="mt-3 font-display text-2xl font-extrabold tabular-nums tracking-tight text-ink">
+      <p className="mt-3 font-display text-2xl font-bold tabular-nums tracking-tight text-ink">
         {value}
       </p>
       <p className="mt-0.5 text-xs text-ink-muted">{sub}</p>
@@ -412,7 +438,7 @@ function EmptyStudio({ reviewMode }: { reviewMode: "auto" | "manual" }) {
           <span className="mx-auto inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-brand text-white shadow-xl shadow-brand/30">
             <Icon name="book" className="h-7 w-7" />
           </span>
-          <h2 className="mt-5 font-display text-2xl font-extrabold tracking-tight text-ink">
+          <h2 className="mt-5 font-display text-2xl font-bold tracking-tight text-ink">
             Teach what you know
           </h2>
           <p className="mt-2 text-sm leading-relaxed text-ink-muted">

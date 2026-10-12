@@ -120,7 +120,7 @@ Learn /login
   → Redirect /dashboard
 ```
 
-Access JWT is short-lived (`JWT_ACCESS_EXPIRY_MINUTES`, default 15m). The refresh cookie (`learn_refresh`) lasts `JWT_REFRESH_EXPIRY_DAYS` (default 30d, sliding). `POST /auth/refresh` rotates the refresh token and issues a new access JWT; the web client retries once on 401 after refreshing.
+Access JWT is short-lived (`JWT_ACCESS_EXPIRY_MINUTES`, default 15m). The refresh cookie (`learn_refresh`) lasts `JWT_REFRESH_EXPIRY_DAYS` (default 30d, sliding). `POST /auth/refresh` rotates the refresh token and issues a new access JWT. Learn web refreshes in three places: Next middleware (before SSR when access is missing/near expiry), `serverApiFetch` (SSR safety net on 401), and the browser `apiFetch` client (retries once after refresh).
 
 | Concern | Owner |
 |---|---|
