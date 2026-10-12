@@ -94,11 +94,13 @@ export function CredentialDetailView({
     );
   }
 
-  const href = sourceHref(credential);
+  // Local binding so nested handlers keep the non-null narrowing.
+  const detail = credential;
+  const href = sourceHref(detail);
 
   async function copyVerifyUrl() {
     try {
-      await navigator.clipboard.writeText(credential.verifyUrl);
+      await navigator.clipboard.writeText(detail.verifyUrl);
       setCopied(true);
       pushToast("Verification link copied", "success");
       window.setTimeout(() => setCopied(false), 2000);
@@ -119,27 +121,27 @@ export function CredentialDetailView({
       <DownloadableCertificate
         className="mt-8"
         data={{
-          earnerName: credential.earner.name,
-          title: credential.title,
-          kind: credential.kind,
-          issuedAt: credential.issuedAt,
-          code: credential.code,
-          verifyUrl: credential.verifyUrl,
-          assessmentTitle: credential.source.assessmentTitle,
-          courseTitle: credential.source.courseTitle,
-          projectTitle: credential.source.projectTitle,
-          pathLabel: credential.source.pathLabel,
+          earnerName: detail.earner.name,
+          title: detail.title,
+          kind: detail.kind,
+          issuedAt: detail.issuedAt,
+          code: detail.code,
+          verifyUrl: detail.verifyUrl,
+          assessmentTitle: detail.source.assessmentTitle,
+          courseTitle: detail.source.courseTitle,
+          projectTitle: detail.source.projectTitle,
+          pathLabel: detail.source.pathLabel,
         }}
       />
 
       <article className="mt-8 rounded-3xl border border-border bg-surface p-6 sm:p-8">
         <p className="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-brand">
-          {kindLabel(credential.kind)} credential
+          {kindLabel(detail.kind)} credential
         </p>
         <h1 className="mt-3 font-display text-2xl font-bold tracking-tight text-ink sm:text-3xl">
-          {credential.title}
+          {detail.title}
         </h1>
-        <p className="mt-3 text-base leading-relaxed text-ink-muted">{credential.summary}</p>
+        <p className="mt-3 text-base leading-relaxed text-ink-muted">{detail.summary}</p>
 
         <dl className="mt-8 grid gap-4 sm:grid-cols-2">
           <div>
@@ -147,14 +149,14 @@ export function CredentialDetailView({
               Issued
             </dt>
             <dd className="mt-1 text-sm font-medium text-ink">
-              {formatIssued(credential.issuedAt)}
+              {formatIssued(detail.issuedAt)}
             </dd>
           </div>
           <div>
             <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-muted">
               Earner
             </dt>
-            <dd className="mt-1 text-sm font-medium text-ink">{credential.earner.name}</dd>
+            <dd className="mt-1 text-sm font-medium text-ink">{detail.earner.name}</dd>
           </div>
         </dl>
 
@@ -163,7 +165,7 @@ export function CredentialDetailView({
             href={href}
             className="mt-6 inline-flex text-sm font-semibold text-brand hover:underline"
           >
-            {sourceLabel(credential)}
+            {sourceLabel(detail)}
           </Link>
         ) : null}
 
@@ -171,7 +173,7 @@ export function CredentialDetailView({
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-muted">
             Share credential
           </p>
-          <p className="mt-2 break-all font-mono text-sm text-ink">{credential.verifyUrl}</p>
+          <p className="mt-2 break-all font-mono text-sm text-ink">{detail.verifyUrl}</p>
           <div className="mt-4 flex flex-wrap gap-3">
             <button
               type="button"
@@ -181,7 +183,7 @@ export function CredentialDetailView({
               {copied ? "Copied" : "Copy link"}
             </button>
             <Link
-              href={`/verify/${encodeURIComponent(credential.code)}`}
+              href={`/verify/${encodeURIComponent(detail.code)}`}
               className="inline-flex rounded-xl border border-border bg-surface px-4 py-2 text-sm font-semibold text-ink transition hover:border-brand/40"
             >
               Open public page
