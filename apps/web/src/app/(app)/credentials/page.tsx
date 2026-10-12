@@ -1,10 +1,7 @@
-import { ComingSoon } from "@/components/app/coming-soon";
+import { CredentialsCatalog } from "@/components/credentials/credentials-catalog";
+import { loadCredentials } from "@/lib/credentials-server";
 
-export default function CredentialsPage() {
-  return (
-    <ComingSoon
-      title="Credentials"
-      description="Free, verifiable credentials tied to real achievements — with public verification URLs."
-    />
-  );
+export default async function CredentialsPage() {
+  const credentials = await loadCredentials();
+  return <CredentialsCatalog initialCredentials={credentials} />;
 }

@@ -39,6 +39,7 @@ model User {
   createdProjects       Project[]                @relation("ProjectCreator")
   reviewedProjects      Project[]                @relation("ProjectReviewer")
   projectSubmissions    ProjectSubmission[]
+  credentials           Credential[]
 
   @@map("users")
 }
@@ -276,6 +277,7 @@ model Assessment {
   updatedAt        DateTime             @updatedAt @map("updated_at")
   questions        AssessmentQuestion[]
   attempts         AssessmentAttempt[]
+  credentials      Credential[]
 
   @@map("assessments")
 }
@@ -311,10 +313,11 @@ model AssessmentAttempt {
   answers      Json       @default("{}")
   results      Json?
   pointsEarned Int        @default(0) @map("points_earned")
-  startedAt    DateTime   @default(now()) @map("started_at")
-  submittedAt  DateTime?  @map("submitted_at")
-  createdAt    DateTime   @default(now()) @map("created_at")
-  updatedAt    DateTime   @updatedAt @map("updated_at")
+  startedAt    DateTime      @default(now()) @map("started_at")
+  submittedAt  DateTime?     @map("submitted_at")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+  credentials  Credential[]
 
   @@index([userId, assessmentId])
   @@index([assessmentId])
@@ -491,6 +494,7 @@ model Project {
   updatedAt        DateTime            @updatedAt @map("updated_at")
   skills           ProjectSkill[]
   submissions      ProjectSubmission[]
+  credentials      Credential[]
 
   @@index([createdByUserId])
   @@index([roadmapId, status, sortOrder])
@@ -528,9 +532,37 @@ model ProjectSubmission {
   submittedAt   DateTime? @map("submitted_at")
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
+  credentials   Credential[]
 
   @@unique([userId, projectId])
   @@index([projectId, status])
   @@index([userId, status, updatedAt])
   @@map("project_submissions")
+}
+
+/// Free, verifiable proof. `kind`: assessment | project.
+/// `code` is the public verification token; `id` is the owner detail URL.
+model Credential {
+  id                   String              @id @default(cuid())
+  code                 String              @unique
+  userId               String              @map("user_id")
+  user                 User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind                 String
+  title                String
+  summary              String              @default("")
+  assessmentId         String?             @map("assessment_id")
+  assessment           Assessment?         @relation(fields: [assessmentId], references: [id], onDelete: SetNull)
+  assessmentAttemptId  String?             @map("assessment_attempt_id")
+  assessmentAttempt    AssessmentAttempt?  @relation(fields: [assessmentAttemptId], references: [id], onDelete: SetNull)
+  projectId            String?             @map("project_id")
+  project              Project?            @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  projectSubmissionId  String?             @map("project_submission_id")
+  projectSubmission    ProjectSubmission?  @relation(fields: [projectSubmissionId], references: [id], onDelete: SetNull)
+  issuedAt             DateTime            @default(now()) @map("issued_at")
+
+  @@unique([userId, assessmentId])
+  @@unique([userId, projectId])
+  @@index([userId, issuedAt])
+  @@index([kind])
+  @@map("credentials")
 }
