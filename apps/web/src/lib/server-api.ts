@@ -1,10 +1,7 @@
 import { cookies } from "next/headers";
+import { AUTH_COOKIES } from "@/lib/auth-cookies";
 
 const apiUrl = (process.env.API_URL ?? "http://localhost:4000").replace(/\/$/, "");
-
-const SESSION_COOKIE = "learn_session";
-const REFRESH_COOKIE = "learn_refresh";
-const CSRF_COOKIE = "learn_csrf";
 
 function cookieHeaderFromMap(map: Map<string, string>): string {
   return [...map.entries()].map(([name, value]) => `${name}=${value}`).join("; ");
@@ -64,11 +61,11 @@ export async function serverApiFetch(
   };
 
   const res = await send(cookieMap);
-  if (res.status !== 401 || !cookieMap.get(REFRESH_COOKIE)) {
+  if (res.status !== 401 || !cookieMap.get(AUTH_COOKIES.refresh)) {
     return res;
   }
 
-  const csrf = cookieMap.get(CSRF_COOKIE);
+  const csrf = cookieMap.get(AUTH_COOKIES.csrf);
   if (!csrf) return res;
 
   const refreshRes = await fetch(`${apiUrl}/auth/refresh`, {
@@ -87,7 +84,11 @@ export async function serverApiFetch(
   // Best-effort: persist rotated cookies on the browser response when allowed.
   try {
     const writable = await cookies();
-    for (const name of [SESSION_COOKIE, REFRESH_COOKIE, CSRF_COOKIE] as const) {
+    for (const name of [
+      AUTH_COOKIES.session,
+      AUTH_COOKIES.refresh,
+      AUTH_COOKIES.csrf,
+    ] as const) {
       const value = cookieMap.get(name);
       if (value) writable.set(name, value, { path: "/" });
     }

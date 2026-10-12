@@ -1,29 +1,14 @@
-import { cookies } from "next/headers";
 import type {
   AssessmentAttemptDetail,
   AssessmentCatalogItem,
   AssessmentDetail,
   AssessmentMeta,
 } from "@/lib/assessments";
-
-const apiUrl = (process.env.API_URL ?? "http://localhost:4000").replace(/\/$/, "");
-
-async function apiFetch(path: string) {
-  const jar = await cookies();
-  const cookieHeader = jar
-    .getAll()
-    .map((cookie) => `${cookie.name}=${cookie.value}`)
-    .join("; ");
-
-  return fetch(`${apiUrl}${path}`, {
-    headers: cookieHeader ? { cookie: cookieHeader } : {},
-    cache: "no-store",
-  });
-}
+import { serverApiFetch } from "@/lib/server-api";
 
 export async function loadAssessmentCatalog(): Promise<AssessmentCatalogItem[] | null> {
   try {
-    const res = await apiFetch("/assessments");
+    const res = await serverApiFetch("/assessments");
     if (!res.ok) return null;
     const body = (await res.json()) as { data: { assessments: AssessmentCatalogItem[] } };
     return body.data.assessments;
@@ -34,7 +19,7 @@ export async function loadAssessmentCatalog(): Promise<AssessmentCatalogItem[] |
 
 export async function loadAssessmentDetail(id: string): Promise<AssessmentDetail | null> {
   try {
-    const res = await apiFetch(`/assessments/${encodeURIComponent(id)}`);
+    const res = await serverApiFetch(`/assessments/${encodeURIComponent(id)}`);
     if (!res.ok) return null;
     const body = (await res.json()) as { data: { assessment: AssessmentDetail } };
     return body.data.assessment;
@@ -48,7 +33,7 @@ export async function loadAssessmentAttempt(
   attemptId: string,
 ): Promise<{ attempt: AssessmentAttemptDetail; assessment: AssessmentMeta } | null> {
   try {
-    const res = await apiFetch(
+    const res = await serverApiFetch(
       `/assessments/${encodeURIComponent(id)}/attempts/${encodeURIComponent(attemptId)}`,
     );
     if (!res.ok) return null;

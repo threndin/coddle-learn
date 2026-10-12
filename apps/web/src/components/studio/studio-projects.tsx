@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { levelById, type ProjectStatus } from "@coddle/shared";
 import { useToast } from "@/components/app/toast";
@@ -12,6 +12,7 @@ import { errorMessage } from "@/lib/api-client";
 import { pluralize, timeAgo } from "@/lib/format";
 import {
   deleteStudioProject,
+  fetchStudioProjects,
   runProjectLifecycle,
   type StudioProjectList,
   type StudioProjectListItem,
@@ -34,10 +35,33 @@ const TABS: { id: Tab; label: string; statuses: ProjectStatus[] }[] = [
 export function StudioProjects({ initial }: { initial: StudioProjectList | null }) {
   const { pushToast } = useToast();
   const [projects, setProjects] = useState<StudioProjectListItem[]>(initial?.projects ?? []);
+  const [reviewMode, setReviewMode] = useState(initial?.reviewMode ?? "auto");
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [loading, setLoading] = useState(initial === null);
   const [tab, setTab] = useState<Tab>("all");
   const [query, setQuery] = useState("");
   const [pendingDelete, setPendingDelete] = useState<StudioProjectListItem | null>(null);
-  const reviewMode = initial?.reviewMode ?? "auto";
+
+  useEffect(() => {
+    if (initial !== null) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const data = await fetchStudioProjects();
+        if (cancelled) return;
+        setProjects(data.projects);
+        setReviewMode(data.reviewMode);
+        setLoadFailed(false);
+      } catch {
+        if (!cancelled) setLoadFailed(true);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [initial]);
 
   const counts = useMemo(() => {
     const map = new Map<Tab, number>();
@@ -94,7 +118,7 @@ export function StudioProjects({ initial }: { initial: StudioProjectList | null 
           <p className="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-brand">
             Studio
           </p>
-          <h1 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
+          <h1 className="mt-3 font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">
             Your projects
           </h1>
           <p className="mt-3 text-base leading-relaxed text-ink-muted">
@@ -123,7 +147,9 @@ export function StudioProjects({ initial }: { initial: StudioProjectList | null 
         </Link>
       </div>
 
-      {initial === null ? (
+      {loading ? (
+        <p className="mt-8 text-sm text-ink-muted">Loading your projects…</p>
+      ) : loadFailed ? (
         <p className="mt-8 rounded-2xl border border-border bg-surface p-5 text-sm text-ink-muted">
           Could not load your projects. Refresh to try again.
         </p>
