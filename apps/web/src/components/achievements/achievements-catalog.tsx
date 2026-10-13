@@ -96,14 +96,9 @@ export function AchievementsCatalog({
           Milestones along the way
         </h1>
         <p className="mt-1 text-base leading-relaxed text-ink-muted">
-          Smaller wins from learning, building, and contributing. Earn them as you go — locked
+          Smaller wins from learning, building, and contributing. Earn them as you go. Locked
           ones show what is still ahead.
         </p>
-        {catalog ? (
-          <p className="mt-4 text-sm font-semibold text-ink">
-            {catalog.earnedCount} of {catalog.totalCount} earned
-          </p>
-        ) : null}
       </div>
 
       <div className="mt-6 flex flex-col gap-3 sm:mt-4 sm:flex-row sm:flex-wrap sm:items-center">
@@ -120,20 +115,22 @@ export function AchievementsCatalog({
             className="w-full rounded-xl border border-border bg-surface py-2.5 pl-9 pr-3 text-sm text-ink placeholder:text-ink-muted focus:border-brand focus:outline-none"
           />
         </label>
-        <div className="flex w-full flex-wrap gap-1 rounded-xl border border-border bg-surface p-1 sm:w-auto">
-          {CATEGORY_FILTERS.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => setFilter(item.id)}
-              className={[
-                "rounded-lg px-3 py-1.5 text-xs font-semibold transition",
-                filter === item.id ? "bg-brand text-white" : "text-ink-muted hover:text-ink",
-              ].join(" ")}
-            >
-              {item.label}
-            </button>
-          ))}
+        <div className="-mx-5 overflow-x-auto px-5 sm:mx-0 sm:overflow-visible sm:px-0 sm:w-auto">
+          <div className="flex w-max min-w-full gap-1 rounded-xl border border-border bg-surface p-1 sm:w-auto sm:min-w-0">
+            {CATEGORY_FILTERS.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => setFilter(item.id)}
+                className={[
+                  "shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold transition",
+                  filter === item.id ? "bg-brand text-white" : "text-ink-muted hover:text-ink",
+                ].join(" ")}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -154,11 +151,13 @@ export function AchievementsCatalog({
                 <h2 className="font-display text-xl font-bold tracking-tight text-ink">
                   Unlocked
                 </h2>
-                <p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-ink-muted">
-                  {earned.length} achievements
-                </p>
+                {catalog ? (
+                  <p className="font-mono text-xs font-semibold uppercase tracking-[0.14em] text-ink-muted">
+                    {catalog.earnedCount} of {catalog.totalCount} achievements
+                  </p>
+                ) : null}
               </div>
-              <ul className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <ul className="mt-4 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
                 {earned.map((item, index) => (
                   <li key={item.slug}>
                     <AchievementCard item={item} priority={index} />
@@ -181,7 +180,7 @@ export function AchievementsCatalog({
               <p className="mt-1 text-sm text-ink-muted">
                 Complete the quest on each card to unlock it.
               </p>
-              <ul className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <ul className="mt-4 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
                 {locked.map((item, index) => (
                   <li key={item.slug}>
                     <AchievementCard item={item} priority={index + earned.length} />

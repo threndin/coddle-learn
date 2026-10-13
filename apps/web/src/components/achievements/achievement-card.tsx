@@ -34,7 +34,7 @@ const SLUG_THEMES: Record<string, Theme> = {
     accent: "#2DD4BF",
     soft: "rgba(15, 118, 110, 0.12)",
     ring: "rgba(45, 212, 191, 0.5)",
-    label: "Rare",
+    label: "Notable",
   },
   "streak-7": {
     from: "#C2410C",
@@ -42,7 +42,7 @@ const SLUG_THEMES: Record<string, Theme> = {
     accent: "#FB923C",
     soft: "rgba(194, 65, 12, 0.12)",
     ring: "rgba(251, 146, 60, 0.55)",
-    label: "Rare",
+    label: "Notable",
   },
   "open-source-contributor": {
     from: "#15803D",
@@ -50,7 +50,7 @@ const SLUG_THEMES: Record<string, Theme> = {
     accent: "#4ADE80",
     soft: "rgba(21, 128, 61, 0.12)",
     ring: "rgba(74, 222, 128, 0.5)",
-    label: "Epic",
+    label: "Standout",
   },
   "roadmap-completed": {
     from: "#1E3A5F",
@@ -58,7 +58,7 @@ const SLUG_THEMES: Record<string, Theme> = {
     accent: "#7DD3FC",
     soft: "rgba(30, 58, 95, 0.14)",
     ring: "rgba(125, 211, 252, 0.45)",
-    label: "Epic",
+    label: "Standout",
   },
   mentor: {
     from: "#BE185D",
@@ -74,7 +74,7 @@ const SLUG_THEMES: Record<string, Theme> = {
     accent: "#FBBF24",
     soft: "rgba(180, 83, 9, 0.12)",
     ring: "rgba(251, 191, 36, 0.55)",
-    label: "Epic",
+    label: "Standout",
   },
   "resource-reviewer": {
     from: "#0E7490",
@@ -82,7 +82,7 @@ const SLUG_THEMES: Record<string, Theme> = {
     accent: "#67E8F9",
     soft: "rgba(14, 116, 144, 0.12)",
     ring: "rgba(103, 232, 249, 0.5)",
-    label: "Rare",
+    label: "Notable",
   },
 };
 
