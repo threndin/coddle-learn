@@ -111,7 +111,7 @@ export function AchievementsCatalog({
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search cards"
+            placeholder="Search achievements"
             className="w-full rounded-xl border border-border bg-surface py-2.5 pl-9 pr-3 text-sm text-ink placeholder:text-ink-muted focus:border-brand focus:outline-none"
           />
         </label>

@@ -141,8 +141,17 @@ function Medallion({
   theme: Theme;
   size?: "md" | "lg";
 }) {
-  const dim = size === "lg" ? "h-28 w-28 sm:h-32 sm:w-32" : "h-24 w-24";
-  const iconSize = size === "lg" ? "h-10 w-10 sm:h-11 sm:w-11" : "h-8 w-8";
+  const dim =
+    size === "lg"
+      ? "h-24 w-24 sm:h-28 sm:w-28 md:h-32 md:w-32"
+      : "h-[4.25rem] w-[4.25rem] sm:h-20 sm:w-20 md:h-24 md:w-24";
+  const iconSize =
+    size === "lg" ? "h-8 w-8 sm:h-10 sm:w-10 md:h-11 md:w-11" : "h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8";
+  const badge =
+    size === "lg"
+      ? "h-7 w-7"
+      : "h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7";
+  const badgeIcon = size === "lg" ? "h-3.5 w-3.5" : "h-2.5 w-2.5 sm:h-3 sm:w-3 md:h-3.5 md:w-3.5";
 
   return (
     <div className={`relative mx-auto ${dim}`}>
@@ -163,7 +172,7 @@ function Medallion({
         style={{
           borderColor: item.earned ? theme.ring : "var(--border-strong)",
           boxShadow: item.earned
-            ? `0 0 0 4px ${theme.soft}, inset 0 1px 0 rgba(255,255,255,0.35)`
+            ? `0 0 0 3px ${theme.soft}, inset 0 1px 0 rgba(255,255,255,0.35)`
             : "inset 0 1px 0 rgba(255,255,255,0.2)",
           background: item.earned
             ? `linear-gradient(145deg, ${theme.from}, ${theme.to})`
@@ -188,18 +197,20 @@ function Medallion({
         />
       </div>
       {!item.earned ? (
-        <div className="absolute -bottom-0.5 left-1/2 flex h-7 w-7 -translate-x-1/2 items-center justify-center rounded-full border border-border bg-surface text-ink-muted shadow-sm">
-          <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+        <div
+          className={`absolute -bottom-0.5 left-1/2 flex -translate-x-1/2 items-center justify-center rounded-full border border-border bg-surface text-ink-muted shadow-sm ${badge}`}
+        >
+          <svg viewBox="0 0 24 24" className={badgeIcon} fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
             <rect x="5" y="11" width="14" height="10" rx="2" />
             <path d="M8 11V8a4 4 0 0 1 8 0v3" />
           </svg>
         </div>
       ) : (
         <div
-          className="absolute -bottom-0.5 left-1/2 flex h-7 w-7 -translate-x-1/2 items-center justify-center rounded-full text-white shadow-sm"
+          className={`absolute -bottom-0.5 left-1/2 flex -translate-x-1/2 items-center justify-center rounded-full text-white shadow-sm ${badge}`}
           style={{ background: theme.from }}
         >
-          <Icon name="check" className="h-3.5 w-3.5" strokeWidth={2.4} />
+          <Icon name="check" className={badgeIcon} strokeWidth={2.4} />
         </div>
       )}
     </div>
@@ -221,7 +232,7 @@ export function AchievementCard({
     <Link
       href={href}
       className={[
-        "group relative flex h-full flex-col overflow-hidden rounded-2xl border transition duration-300",
+        "group relative flex h-full flex-col overflow-hidden rounded-xl border transition duration-300 sm:rounded-2xl",
         "motion-safe:[animation:achievement-card-in_420ms_ease-out_both]",
         item.earned
           ? "border-border bg-surface hover:-translate-y-1 hover:shadow-[0_18px_40px_-28px_var(--brand-glow)]"
@@ -233,7 +244,7 @@ export function AchievementCard({
     >
       {/* Header plane */}
       <div
-        className="relative overflow-hidden px-5 pb-10 pt-5"
+        className="relative overflow-hidden px-2.5 pb-7 pt-2.5 sm:px-4 sm:pb-9 sm:pt-4 md:px-5 md:pb-10 md:pt-5"
         style={{
           background: item.earned
             ? `linear-gradient(155deg, ${theme.from} 0%, ${theme.to} 100%)`
@@ -248,10 +259,10 @@ export function AchievementCard({
             backgroundSize: "18px 18px, 22px 22px",
           }}
         />
-        <div className="relative flex items-start justify-between gap-2">
+        <div className="relative flex items-start justify-between gap-1.5">
           <span
             className={[
-              "rounded-md px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.16em]",
+              "max-w-[55%] truncate rounded px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.12em] sm:max-w-none sm:rounded-md sm:px-2 sm:py-1 sm:text-[10px] sm:tracking-[0.16em]",
               item.earned ? "bg-white/15 text-white" : "bg-white/50 text-ink-muted",
             ].join(" ")}
           >
@@ -259,21 +270,28 @@ export function AchievementCard({
           </span>
           <span
             className={[
-              "rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-[0.14em]",
+              "shrink-0 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] sm:rounded-md sm:px-2 sm:py-1 sm:text-[10px] sm:tracking-[0.14em]",
               item.earned ? "bg-white text-[color:var(--brand-navy)]" : "bg-surface text-ink-muted",
             ].join(" ")}
           >
-            {item.earned ? "Achieved" : "Locked"}
+            {item.earned ? (
+              <>
+                <span className="sm:hidden">Done</span>
+                <span className="hidden sm:inline">Achieved</span>
+              </>
+            ) : (
+              "Locked"
+            )}
           </span>
         </div>
 
-        <div className="relative mt-5">
+        <div className="relative mt-3 sm:mt-4 md:mt-5">
           <Medallion item={item} theme={theme} />
         </div>
 
         {item.earned ? (
           <div
-            className="pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-full opacity-40 transition duration-500 group-hover:opacity-70"
+            className="pointer-events-none absolute -right-8 -top-10 h-20 w-20 rounded-full opacity-40 transition duration-500 group-hover:opacity-70 sm:h-28 sm:w-28"
             style={{
               background: `radial-gradient(circle, ${theme.accent}, transparent 70%)`,
             }}
@@ -282,30 +300,33 @@ export function AchievementCard({
       </div>
 
       {/* Body */}
-      <div className="relative flex flex-1 flex-col px-5 pb-5 pt-4">
-        <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-muted">
+      <div className="relative flex flex-1 flex-col px-2.5 pb-2.5 pt-3 sm:px-4 sm:pb-4 sm:pt-3.5 md:px-5 md:pb-5 md:pt-4">
+        <p className="font-mono text-[9px] font-semibold uppercase tracking-[0.12em] text-ink-muted sm:text-[10px] sm:tracking-[0.16em]">
           {categoryLabel(item.category)}
         </p>
         <h3
           className={[
-            "mt-1.5 font-display text-lg font-bold tracking-tight transition",
+            "mt-1 font-display text-sm font-bold leading-snug tracking-tight transition sm:mt-1.5 sm:text-base md:text-lg",
             item.earned ? "text-ink group-hover:text-brand" : "text-ink-muted",
           ].join(" ")}
         >
           {item.title}
         </h3>
-        <p className="mt-2 flex-1 text-sm leading-relaxed text-ink-muted">{item.summary}</p>
+        <p className="mt-1.5 line-clamp-3 flex-1 text-[11px] leading-relaxed text-ink-muted sm:mt-2 sm:line-clamp-none sm:text-sm">
+          {item.summary}
+        </p>
 
         <div
-          className="mt-4 rounded-xl px-3 py-2.5"
+          className="mt-3 rounded-lg px-2 py-1.5 sm:mt-4 sm:rounded-xl sm:px-3 sm:py-2.5"
           style={{ background: item.earned ? theme.soft : "var(--surface)" }}
         >
           {item.earned && item.earnedAt ? (
-            <p className="text-xs font-semibold" style={{ color: theme.from }}>
-              Achieved {formatEarned(item.earnedAt)}
+            <p className="text-[10px] font-semibold sm:text-xs" style={{ color: theme.from }}>
+              <span className="sm:hidden">{formatEarned(item.earnedAt)}</span>
+              <span className="hidden sm:inline">Achieved {formatEarned(item.earnedAt)}</span>
             </p>
           ) : (
-            <p className="text-xs leading-relaxed text-ink-muted">
+            <p className="line-clamp-3 text-[10px] leading-relaxed text-ink-muted sm:line-clamp-none sm:text-xs">
               <span className="font-semibold text-ink">Quest: </span>
               {item.howToEarn}
             </p>
@@ -315,7 +336,7 @@ export function AchievementCard({
 
       {item.earned ? (
         <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-1 opacity-90 transition group-hover:opacity-100"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-0.5 opacity-90 transition group-hover:opacity-100 sm:h-1"
           style={{ background: `linear-gradient(90deg, ${theme.from}, ${theme.accent})` }}
         />
       ) : null}
