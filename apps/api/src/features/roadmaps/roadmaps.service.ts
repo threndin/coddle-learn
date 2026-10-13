@@ -8,6 +8,7 @@ import {
 } from "@coddle/shared";
 import type { RoadmapStep, UserStepProgress } from "@prisma/client";
 import { AppError } from "../../shared/errors.js";
+import { scheduleAchievementEvaluation } from "../achievements/achievements.service.js";
 import {
   deleteBookmark,
   listBookmarkedResourceIds,
@@ -446,6 +447,8 @@ export async function updateRoadmapProgress(
     await clearUserRoadmapCompleted(userId, roadmap.id);
     await incrementUserPoints(userId, -ROADMAP_COMPLETE_POINTS);
   }
+
+  scheduleAchievementEvaluation(userId);
 
   const detail = await getRoadmapDetail(userId, slug);
   return {

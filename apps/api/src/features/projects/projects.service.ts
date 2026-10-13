@@ -6,6 +6,7 @@ import {
   pathLabelForRoadmapSlug,
 } from "@coddle/shared";
 import { AppError } from "../../shared/errors.js";
+import { scheduleAchievementEvaluation } from "../achievements/achievements.service.js";
 import {
   issueProjectCredential,
   type IssuedCredential,
@@ -236,6 +237,8 @@ export async function submitProject(userId: string, slug: string, input: unknown
       summary: project.summary,
     });
   }
+
+  scheduleAchievementEvaluation(userId);
 
   return {
     project: detailPayload(project, saved),

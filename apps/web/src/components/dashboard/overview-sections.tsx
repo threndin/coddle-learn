@@ -16,6 +16,8 @@ import {
   type ContinueLearning,
   type EnrolledRoadmapSummary,
 } from "@/lib/roadmaps";
+import { AchievementCard } from "@/components/achievements/achievement-card";
+import { fetchAchievements, type AchievementItem } from "@/lib/achievements";
 import { fetchCredentials, type CredentialSummary } from "@/lib/credentials";
 import { fetchMyProjects, type ProjectActivityItem } from "@/lib/projects";
 import { useToast } from "@/components/app/toast";
@@ -41,6 +43,8 @@ export function OverviewSections({ user }: { user: PublicUser }) {
   const [continueCourse, setContinueCourse] = useState<ContinueCourse | null>(null);
   const [projectActivity, setProjectActivity] = useState<ProjectActivityItem[]>([]);
   const [credentials, setCredentials] = useState<CredentialSummary[]>([]);
+  const [achievements, setAchievements] = useState<AchievementItem[]>([]);
+  const [achievementTotals, setAchievementTotals] = useState({ earned: 0, total: 0 });
   const [loaded, setLoaded] = useState(false);
   const [busyPrimary, setBusyPrimary] = useState<string | null>(null);
 
@@ -48,20 +52,33 @@ export function OverviewSections({ user }: { user: PublicUser }) {
     let cancelled = false;
     void (async () => {
       try {
-        const [roadmapValue, courseRes, projectsValue, credentialsValue] = await Promise.all([
-          fetchContinueLearning(),
-          fetch("/api/courses/continue", {
-            credentials: "include",
-            cache: "no-store",
-          }),
-          fetchMyProjects().catch(() => ({ submissions: [] as ProjectActivityItem[] })),
-          fetchCredentials().catch(() => ({ credentials: [] as CredentialSummary[] })),
-        ]);
+        const [roadmapValue, courseRes, projectsValue, credentialsValue, achievementsValue] =
+          await Promise.all([
+            fetchContinueLearning(),
+            fetch("/api/courses/continue", {
+              credentials: "include",
+              cache: "no-store",
+            }),
+            fetchMyProjects().catch(() => ({ submissions: [] as ProjectActivityItem[] })),
+            fetchCredentials().catch(() => ({ credentials: [] as CredentialSummary[] })),
+            fetchAchievements().catch(() => ({
+              earnedCount: 0,
+              totalCount: 0,
+              achievements: [] as AchievementItem[],
+            })),
+          ]);
         if (cancelled) return;
         setContinueLearning(roadmapValue.continue);
         setEnrolled(roadmapValue.enrolled);
         setProjectActivity(projectsValue.submissions.slice(0, 3));
         setCredentials(credentialsValue.credentials.slice(0, 3));
+        setAchievementTotals({
+          earned: achievementsValue.earnedCount,
+          total: achievementsValue.totalCount,
+        });
+        setAchievements(
+          achievementsValue.achievements.filter((item) => item.earned).slice(0, 4),
+        );
         if (courseRes.ok) {
           const body = (await courseRes.json()) as {
             data: { continue: ContinueCourse | null };
@@ -77,6 +94,8 @@ export function OverviewSections({ user }: { user: PublicUser }) {
           setContinueCourse(null);
           setProjectActivity([]);
           setCredentials([]);
+          setAchievements([]);
+          setAchievementTotals({ earned: 0, total: 0 });
         }
       } finally {
         if (!cancelled) setLoaded(true);
@@ -371,6 +390,41 @@ export function OverviewSections({ user }: { user: PublicUser }) {
           />
         )}
       </div>
+
+      {achievements.length > 0 ? (
+        <article className="rounded-2xl border border-border bg-surface p-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-ink-muted">
+                Achievements
+              </p>
+              <h3 className="mt-2 font-display text-xl font-bold tracking-tight text-ink">
+                {achievementTotals.earned} of {achievementTotals.total} unlocked
+              </h3>
+            </div>
+            <Link
+              href="/achievements"
+              className="inline-flex rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-ink transition hover:bg-surface-subtle"
+            >
+              Collection
+            </Link>
+          </div>
+          <ul className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {achievements.map((item, index) => (
+              <li key={item.slug}>
+                <AchievementCard item={item} priority={index} />
+              </li>
+            ))}
+          </ul>
+        </article>
+      ) : loaded ? (
+        <EmptyPanel
+          title="Achievements"
+          body="Unlock gamified cards for first course, first project, streaks, and more."
+          href="/achievements"
+          cta="See achievements"
+        />
+      ) : null}
 
       <article className="rounded-2xl border border-border bg-surface p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">

@@ -13,6 +13,7 @@
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
+    "achievements:backfill": "tsx src/jobs/achievements-backfill.ts",
     "clean": "rm -rf dist"
   },
   "prisma": {
