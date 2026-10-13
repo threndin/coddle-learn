@@ -173,7 +173,7 @@ coddle-learn/
 
 Initial entities:
 
-`User` · `Profile` · `Skill` · `Roadmap` · `RoadmapNode` · `Course` · `CourseModule` · `Lesson` · `Resource` · `Project` · `Assessment` · `Question` · `Submission` · `Credential` · `Badge` · `CommunityPost` · `Comment` · `MentorProfile` · `MentorshipRequest` · `Contributor` · `Notification` · `Report`
+`User` · `Profile` · `Skill` · `Roadmap` · `RoadmapNode` · `Course` · `CourseModule` · `Lesson` · `Resource` · `Project` · `Assessment` · `Question` · `Submission` · `Credential` · `Achievement` · `CommunityPost` · `Comment` · `MentorProfile` · `MentorshipRequest` · `Contributor` · `Notification` · `Report`
 
 ---
 
@@ -191,7 +191,7 @@ Logout clears the Learn session only. Google/GitHub and password reset stay on C
 
 ### User Profile
 
-Public learning profile with bio, skills, learning paths, progress, projects, credentials, contributions, badges, and community activity.
+Public learning profile with bio, skills, learning paths, progress, projects, credentials, contributions, achievements, and community activity.
 
 ### Roadmaps
 
@@ -246,9 +246,9 @@ Assessment types: multiple choice, true/false, short answer, coding challenges, 
 
 Credentials are free, verifiable, and tied to real achievements (skills, projects, assessments), with public verification URLs.
 
-### Badges
+### Achievements
 
-Smaller achievements: first course, first project, streaks, open-source contributor, roadmap completed, mentor, course creator, resource reviewer.
+Smaller milestones: first course, first project, streaks, open-source contributor, roadmap completed, mentor, course creator, resource reviewer. Catalog shows earned and locked items; a backfill job awards existing users who already qualify.
 
 ### Community
 
@@ -344,7 +344,7 @@ Validate the core learning loop first.
 | 17 | Projects: catalog, details, requirements, submission |
 | 18 | Project showcase: publish, GitHub/live URLs, screenshots, technologies |
 | 19 | Credentials: generation, IDs, public verification page |
-| 20 | Badges: definitions, achievement engine, user badges |
+| 20 | Achievements: definitions, award engine, backfill job, `/achievements` |
 | 21 | Community: posts, comments, questions, answers |
 | 22 | Community profiles: follow, activity, contributions, projects, progress |
 | 23 | Contributors: profiles, submissions, status, review workflow |

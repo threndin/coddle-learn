@@ -9,6 +9,7 @@ import {
 } from "@coddle/shared";
 import type { CourseLesson, UserExerciseSubmission, UserLessonProgress } from "@prisma/client";
 import { AppError } from "../../shared/errors.js";
+import { scheduleAchievementEvaluation } from "../achievements/achievements.service.js";
 import {
   findAssessmentByCourseId,
   hasPassedAssessment,
@@ -397,6 +398,7 @@ export async function syncCourseCompletion(
   if (nowComplete && !wasComplete) {
     await markUserCourseCompleted(userId, course.id);
     await incrementUserPoints(userId, COURSE_COMPLETE_POINTS);
+    scheduleAchievementEvaluation(userId);
     return COURSE_COMPLETE_POINTS;
   }
   if (!nowComplete && wasComplete) {
@@ -518,6 +520,7 @@ export async function updateCourseProgress(
   }
 
   const courseCompleteBonus = await syncCourseCompletion(userId, course, enrollment);
+  scheduleAchievementEvaluation(userId);
   const detail = await getCourseDetail(userId, slug);
   return {
     ...detail,

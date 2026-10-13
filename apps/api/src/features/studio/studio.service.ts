@@ -28,6 +28,7 @@ import type { Prisma } from "@prisma/client";
 import { config, isR2Configured } from "../../config.js";
 import { AppError } from "../../shared/errors.js";
 import { imageExtension, storeGeneratedThumbnail, uploadToR2 } from "../../shared/r2.js";
+import { scheduleAchievementEvaluation } from "../achievements/achievements.service.js";
 import {
   findAssessmentByCourseId,
   replaceQuestions,
@@ -508,6 +509,7 @@ export async function submitStudioCourse(userId: string, courseId: string) {
       reviewNote: null,
       publishedAt: course.publishedAt ?? now,
     });
+    scheduleAchievementEvaluation(userId);
   } else {
     await updateCourse(course.id, { status: "in_review", submittedAt: now });
   }

@@ -29,6 +29,7 @@ First visit after sign-in goes to **onboarding**. Every later visit goes to the 
 | Assessments | `/assessments`, `/assessments/[id]`, attempts | Built (course finals; MCQ / T-F / short answer) |
 | Projects | `/projects`, `/projects/[slug]`, Studio `/studio/projects/*` | Built (path + level catalog, briefs, start/submit, contributor editor) |
 | Credentials | `/credentials`, `/credentials/[id]`, `/verify/[code]` | Built (issued on assessment pass + first project submit; public verify) |
+| Achievements | `/achievements`, `/achievements/[slug]` | Built (earned + locked catalog; backfill job for existing users) |
 
 ## Build order
 
@@ -60,7 +61,7 @@ Signed-in home. Build the shell first, then fill each block as its screen exists
 - Courses in progress
 - Saved resources
 - Projects
-- Credentials and badges
+- Credentials and achievements
 - Recent community activity
 - Unread notifications
 
@@ -115,7 +116,7 @@ Prompt and answer cards for a lesson or node. Completion counts toward the daily
 A short interactive task inside a module (follow a prompt, produce an answer, mark it done).
 
 **14. Coding challenge** — `/challenges/[slug]`  
-A coding problem with a prompt, starter notes, and a submission. Passing can feed a project assessment or a badge.
+A coding problem with a prompt, starter notes, and a submission. Passing can feed a project assessment or an achievement.
 
 ### Resources
 
@@ -145,7 +146,7 @@ Requirements, technologies, and what done means.
 **22. Publish project** — `/projects/[slug]/publish`  
 The showcase entry: name, description, screenshots, GitHub repo, live URL, technologies, related roadmap or course, challenges faced, and what they learned. Publishing attaches it to the public profile.
 
-### Credentials, badges, and skills
+### Credentials, achievements, and skills
 
 **23. Credential** — `/credentials/[id]`  
 Issued for a passed assessment or a first project submit (skill credentials wait on the skill graph). Shows the achievement and a public verification URL. Credentials are free. List at `/credentials`.
@@ -153,8 +154,8 @@ Issued for a passed assessment or a first project submit (skill credentials wait
 **24. Verify credential** — `/verify/[code]`  
 Public. No sign-in. Confirms the credential and what it was issued for. Built with credentials v1.
 
-**25. Badges** — `/badges`  
-Smaller achievements: first course, first project, streak, open-source contributor, roadmap completed, mentor, course creator, resource reviewer. Earned badges also show on the public profile and the dashboard.
+**25. Achievements** — `/achievements`, `/achievements/[slug]`  
+Smaller milestones: first course, first project, streak, open-source contributor, roadmap completed, mentor, course creator, resource reviewer. The catalog shows earned and not-yet-earned items. A background job backfills awards for existing users. Earned achievements also show on the public profile and the dashboard. Built.
 
 **26. Skill graph** — `/skills`  
 Skill relationships built from completed learning, assessments, projects, and credentials (for example JavaScript → TypeScript → React → Next.js → Frontend Engineering). A finished course alone does not add the skill. The graph also appears as a section on the public profile.
@@ -162,7 +163,7 @@ Skill relationships built from completed learning, assessments, projects, and cr
 ### Profile and community
 
 **27. Public profile** — `/u/[username]`  
-The shareable learning profile: bio, skills, skill graph, roadmaps and progress, projects, credentials, badges, contributions, and community activity. Follow and unfollow live on this page.
+The shareable learning profile: bio, skills, skill graph, roadmaps and progress, projects, credentials, achievements, contributions, and community activity. Follow and unfollow live on this page.
 
 **28. Profile editor** — `/profile`  
 Edit bio, skills, and which activity is public. Distinct from onboarding: onboarding runs once, this screen is the ongoing editor.
@@ -184,7 +185,7 @@ Mentors by technology and topic. Search includes mentors.
 Expertise, technologies, experience, availability, and topics they will help with.
 
 **33. Mentorship request** — `/mentors/[username]/request`  
-Request code review, career guidance, project feedback, technical guidance, or learning advice. The mentor sees it in notifications. A completed session can award the mentor badge.
+Request code review, career guidance, project feedback, technical guidance, or learning advice. The mentor sees it in notifications. A completed session can award the mentor achievement.
 
 ### Contribute
 
@@ -241,7 +242,7 @@ Every product area in `AGENTS.md` maps to a screen in this pass, or to a later p
 | Projects and showcase | 20–22 |
 | Assessments | 18 Assessment, 19 Result |
 | Credentials and public verification | 23 Credential, 24 Verify |
-| Badges (including streak, mentor, creator, reviewer) | 25 Badges |
+| Achievements (including streak, mentor, creator, reviewer) | 25 Achievements |
 | Community (ask, answer, comment, like, follow) | 29 Community, 30 Discussion, 27 Follow on profile |
 | Bookmarking | 16 Resource, 17 Saved |
 | Mentorship (profile, expertise, availability, requests) | 31–33 |
@@ -293,7 +294,8 @@ projects/[slug]/page.tsx
 projects/[slug]/publish/page.tsx
 credentials/[id]/page.tsx
 verify/[code]/page.tsx
-badges/page.tsx
+achievements/page.tsx
+achievements/[slug]/page.tsx
 skills/page.tsx
 u/[username]/page.tsx
 u/[username]/contributions/page.tsx
