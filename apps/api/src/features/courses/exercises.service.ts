@@ -10,6 +10,7 @@ import {
 } from "@coddle/shared";
 import type { Prisma } from "@prisma/client";
 import { AppError } from "../../shared/errors.js";
+import { scheduleAchievementEvaluation } from "../achievements/achievements.service.js";
 import {
   deleteExerciseSubmission,
   flattenLessons,
@@ -184,6 +185,7 @@ export async function submitExercise(
   await upsertExerciseSubmission(userId, exercise.id, { ...graded, pointsAwarded });
 
   const courseCompleteBonus = await syncCourseCompletion(userId, course, enrollment);
+  scheduleAchievementEvaluation(userId);
   const detail = await getCourseDetail(userId, slug);
   return {
     ...detail,

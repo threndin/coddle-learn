@@ -28,6 +28,8 @@ The Learn API is organized by feature under `apps/api/src`. Each feature uses th
 | `features/roadmaps/` | Catalog, detail, start, step progress (`/roadmaps/*`) |
 | `features/courses/` | Catalog, detail, start, lesson progress, exercise submissions (`/courses/*`) |
 | `features/credentials/` | Issue, list, detail, public verify (`/credentials/*`, `/verify/:code`) |
+| `features/achievements/` | Definitions from shared, award engine, list/detail (`/achievements/*`) |
+| `jobs/achievements-backfill.ts` | Startup + interval job awarding achievements to existing users |
 
 | Layer | Responsibility |
 |---|---|

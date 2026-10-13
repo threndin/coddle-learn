@@ -12,6 +12,7 @@ import {
 } from "@coddle/shared";
 import { config } from "../../config.js";
 import { AppError } from "../../shared/errors.js";
+import { scheduleAchievementEvaluation } from "../achievements/achievements.service.js";
 import {
   createProject,
   deleteProject,
@@ -542,6 +543,7 @@ export async function submitStudioProject(userId: string, projectId: string) {
       reviewNote: null,
       publishedAt: project.publishedAt ?? now,
     });
+    scheduleAchievementEvaluation(userId);
     return { project: studioPayload(updated) };
   }
 

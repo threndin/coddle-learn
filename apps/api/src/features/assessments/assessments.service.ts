@@ -12,6 +12,7 @@ import {
 } from "@coddle/shared";
 import type { AssessmentAttempt } from "@prisma/client";
 import { AppError } from "../../shared/errors.js";
+import { scheduleAchievementEvaluation } from "../achievements/achievements.service.js";
 import {
   canViewCourse,
   findCourseBySlug,
@@ -388,6 +389,7 @@ export async function submitAssessmentAttempt(
   }
 
   const courseCompleteBonus = await syncCourseCompletion(userId, course, enrollment);
+  scheduleAchievementEvaluation(userId);
 
   return {
     attempt: attemptDetail(submitted, assessment, true),

@@ -13,6 +13,7 @@ import {
 import type { Prisma } from "@prisma/client";
 import { config } from "../../config.js";
 import { AppError } from "../../shared/errors.js";
+import { scheduleAchievementEvaluation } from "../achievements/achievements.service.js";
 import {
   countResources,
   countResourceBookmarks,
@@ -282,6 +283,10 @@ export async function submitResource(userId: string, input: unknown) {
     submittedByUserId: userId,
     skillIds: skills.map((skill) => skill.id),
   });
+
+  if (autoPublish) {
+    scheduleAchievementEvaluation(userId);
+  }
 
   return { resource: toItem(created, userId, new Set()) };
 }

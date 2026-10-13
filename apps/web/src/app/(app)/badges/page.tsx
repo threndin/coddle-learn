@@ -1,10 +1,5 @@
-import { ComingSoon } from "@/components/app/coming-soon";
+import { redirect } from "next/navigation";
 
-export default function BadgesPage() {
-  return (
-    <ComingSoon
-      title="Badges"
-      description="Smaller achievements like streaks, first project, and roadmap milestones will live here."
-    />
-  );
+export default function BadgesRedirectPage() {
+  redirect("/achievements");
 }
