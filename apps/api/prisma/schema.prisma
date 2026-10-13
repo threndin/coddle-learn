@@ -40,6 +40,7 @@ model User {
   reviewedProjects      Project[]                @relation("ProjectReviewer")
   projectSubmissions    ProjectSubmission[]
   credentials           Credential[]
+  achievements          UserAchievement[]
 
   @@map("users")
 }
@@ -566,4 +567,19 @@ model Credential {
   @@index([userId, issuedAt])
   @@index([kind])
   @@map("credentials")
+}
+
+/// Awarded milestones. Definitions live in `@coddle/shared`; this table stores earns only.
+/// `slug` matches `ACHIEVEMENT_SLUGS` (e.g. first-course, streak-7).
+model UserAchievement {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  slug      String
+  earnedAt  DateTime @default(now()) @map("earned_at")
+
+  @@unique([userId, slug])
+  @@index([userId, earnedAt])
+  @@index([slug])
+  @@map("user_achievements")
 }

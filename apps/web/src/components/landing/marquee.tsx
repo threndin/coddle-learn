@@ -8,7 +8,7 @@ const items = [
   "Skill Graphs",
   "Community",
   "Open Source",
-  "Badges",
+  "Achievements",
 ];
 
 export function Marquee() {
