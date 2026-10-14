@@ -10,6 +10,7 @@ import {
 import type { CourseLesson, UserExerciseSubmission, UserLessonProgress } from "@prisma/client";
 import { AppError } from "../../shared/errors.js";
 import { scheduleAchievementEvaluation } from "../achievements/achievements.service.js";
+import { scheduleSkillGraphEvaluation } from "../skills/skills.service.js";
 import {
   findAssessmentByCourseId,
   hasPassedAssessment,
@@ -441,6 +442,7 @@ export async function startCourse(userId: string, slug: string) {
   const existing = await findUserCourse(userId, course.id);
   if (!existing) {
     await createUserCourse(userId, course.id);
+    scheduleSkillGraphEvaluation(userId);
   }
 
   return getCourseDetail(userId, slug);

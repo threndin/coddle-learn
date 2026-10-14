@@ -18,6 +18,7 @@ export type NavIconId =
   | "community"
   | "mentorship"
   | "achievements"
+  | "skills"
   | "notifications"
   | "profile"
   | "studio"
@@ -83,6 +84,12 @@ export const APP_NAV: AppNavItem[] = [
     label: "Achievements",
     description: "Milestones, streaks, and contributions",
     icon: "achievements",
+  },
+  {
+    href: "/skills",
+    label: "Skills",
+    description: "Evidence-based skill graph",
+    icon: "skills",
   },
   {
     href: "/notifications",
@@ -217,6 +224,15 @@ export function NavIcon({
       return (
         <svg {...common}>
           <path d="M12 3 14.4 8.2l5.6.5-4.3 3.6 1.4 5.5L12 15.2 6.9 17.8l1.4-5.5L4 8.7l5.6-.5L12 3Z" />
+        </svg>
+      );
+    case "skills":
+      return (
+        <svg {...common}>
+          <circle cx="7" cy="8" r="2.2" />
+          <circle cx="17" cy="7" r="2.2" />
+          <circle cx="12" cy="16" r="2.2" />
+          <path d="M8.8 9.2 10.5 14.2M15.2 8.6 13.5 14.1M9.2 8h5.6" />
         </svg>
       );
     case "notifications":

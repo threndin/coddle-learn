@@ -18,6 +18,7 @@ import { projectsRouter } from "./features/projects/projects.routes.js";
 import { studioProjectsRouter } from "./features/projects/studio-projects.routes.js";
 import { resourcesRouter } from "./features/resources/resources.routes.js";
 import { roadmapsRouter } from "./features/roadmaps/roadmaps.routes.js";
+import { skillsRouter } from "./features/skills/skills.routes.js";
 import { studioRouter } from "./features/studio/studio.routes.js";
 import { errorHandler } from "./shared/http/error-handler.js";
 
@@ -48,6 +49,7 @@ export function createApp(): Express {
   app.use("/projects", projectsRouter);
   app.use("/credentials", credentialsRouter);
   app.use("/achievements", achievementsRouter);
+  app.use("/skills", skillsRouter);
   app.use("/verify", verifyRouter);
   app.use("/studio/projects", studioProjectsRouter);
   app.use("/studio", studioRouter);

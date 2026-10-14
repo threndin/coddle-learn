@@ -14,6 +14,7 @@
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
     "achievements:backfill": "tsx src/jobs/achievements-backfill.ts",
+    "skills:backfill": "tsx src/jobs/skills-backfill.ts",
     "clean": "rm -rf dist"
   },
   "prisma": {
