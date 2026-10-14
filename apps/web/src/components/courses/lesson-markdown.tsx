@@ -10,7 +10,7 @@ export function LessonMarkdown({ content }: { content: string }) {
         remarkPlugins={[remarkGfm]}
         components={{
           h1: ({ children }) => (
-            <h1 className="mt-2 font-display text-2xl font-extrabold tracking-tight text-ink first:mt-0">
+            <h1 className="mt-2 font-display text-2xl font-bold tracking-tight text-ink first:mt-0">
               {children}
             </h1>
           ),

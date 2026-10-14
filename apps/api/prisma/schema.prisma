@@ -41,22 +41,60 @@ model User {
   projectSubmissions    ProjectSubmission[]
   credentials           Credential[]
   achievements          UserAchievement[]
+  skillProgress         UserSkillProgress[]
 
   @@map("users")
 }
 
 model Skill {
-  id        String        @id @default(cuid())
-  slug      String        @unique
+  id        String             @id @default(cuid())
+  slug      String             @unique
   name      String
   category  String
-  createdAt DateTime      @default(now()) @map("created_at")
+  createdAt DateTime           @default(now()) @map("created_at")
   users     UserSkill[]
   courses   CourseSkill[]
   resources ResourceSkill[]
   projects  ProjectSkill[]
+  edgesFrom SkillEdge[]        @relation("SkillEdgeFrom")
+  edgesTo   SkillEdge[]        @relation("SkillEdgeTo")
+  progress  UserSkillProgress[]
 
   @@map("skills")
+}
+
+/// Directed relationship between catalog skills (e.g. javascript → typescript).
+model SkillEdge {
+  id          String   @id @default(cuid())
+  fromSkillId String   @map("from_skill_id")
+  toSkillId   String   @map("to_skill_id")
+  fromSkill   Skill    @relation("SkillEdgeFrom", fields: [fromSkillId], references: [id], onDelete: Cascade)
+  toSkill     Skill    @relation("SkillEdgeTo", fields: [toSkillId], references: [id], onDelete: Cascade)
+  kind        String   @default("leads_to")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@unique([fromSkillId, toSkillId])
+  @@index([toSkillId])
+  @@map("skill_edges")
+}
+
+/// Evidence-based proficiency. Onboarding interests stay on `UserSkill`.
+/// Status: interested | learning | demonstrated | credentialed.
+model UserSkillProgress {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  skillId   String   @map("skill_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skill     Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  status    String
+  evidence  Json     @default("{}")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([userId, skillId])
+  @@index([skillId])
+  @@index([userId, status])
+  @@map("user_skill_progress")
 }
 
 model UserSkill {

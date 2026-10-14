@@ -129,7 +129,7 @@ export function AssessmentPane({
         <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-muted">
           Final assessment
         </p>
-        <h2 className="mt-2 font-display text-2xl font-extrabold tracking-tight text-ink">
+        <h2 className="mt-2 font-display text-2xl font-bold tracking-tight text-ink">
           Course check
         </h2>
         <p className="mt-2 text-sm text-ink-muted">

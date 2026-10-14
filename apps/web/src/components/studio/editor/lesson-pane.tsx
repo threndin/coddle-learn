@@ -137,7 +137,7 @@ export function LessonPane({
           onChange={(event) => onPatch({ title: event.target.value })}
           placeholder="Lesson title"
           aria-label="Lesson title"
-          className="w-full border-0 bg-transparent p-0 font-display text-3xl font-extrabold tracking-tight text-ink placeholder:text-ink-muted/50 focus:outline-none focus:ring-0 disabled:opacity-80"
+          className="w-full border-0 bg-transparent p-0 font-display text-3xl font-bold tracking-tight text-ink placeholder:text-ink-muted/50 focus:outline-none focus:ring-0 disabled:opacity-80"
         />
         {emptyTitle ? (
           <p className="mt-1 text-xs text-rose-600">Lessons need a title. Not saved yet.</p>

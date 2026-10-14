@@ -73,7 +73,7 @@ export function SettingsPane({
         <p className="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-brand">
           Course details
         </p>
-        <h2 className="mt-2 font-display text-2xl font-extrabold tracking-tight text-ink">
+        <h2 className="mt-2 font-display text-2xl font-bold tracking-tight text-ink">
           How learners discover this course
         </h2>
         <p className="mt-2 text-sm text-ink-muted">
@@ -286,7 +286,7 @@ export function SettingsPane({
                   <dd className="mt-1 flex items-center gap-2">
                     {course.stats.ratingCount ? (
                       <>
-                        <span className="font-display text-xl font-extrabold tabular-nums text-ink">
+                        <span className="font-display text-xl font-bold tabular-nums text-ink">
                           {course.stats.ratingAverage.toFixed(1)}
                         </span>
                         <Stars value={course.stats.ratingAverage} />
@@ -356,7 +356,7 @@ function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <dt className="text-[11px] font-semibold uppercase tracking-[0.1em] text-ink-muted">{label}</dt>
-      <dd className="mt-1 font-display text-xl font-extrabold tabular-nums text-ink">{value}</dd>
+      <dd className="mt-1 font-display text-xl font-bold tabular-nums text-ink">{value}</dd>
     </div>
   );
 }

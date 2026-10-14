@@ -107,7 +107,7 @@ export function PlatformBoard() {
           <p className="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-brand">
             Platform
           </p>
-          <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-ink sm:text-5xl">
+          <h2 className="mt-3 font-display text-3xl font-bold tracking-tight text-ink sm:text-5xl">
             Learn, build, and{" "}
             <span className="text-gradient-primary">prove it in one place.</span>
           </h2>
@@ -173,7 +173,7 @@ export function PlatformBoard() {
                   </div>
 
                   <h3
-                    className={`mt-4 font-display font-extrabold tracking-tight ${
+                    className={`mt-4 font-display font-bold tracking-tight ${
                       mod.large ? "text-3xl sm:text-4xl" : "text-xl sm:text-2xl"
                     } ${isActive ? "text-white" : "text-ink"}`}
                   >

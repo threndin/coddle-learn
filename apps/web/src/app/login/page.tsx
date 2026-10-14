@@ -48,7 +48,7 @@ function LoginContent() {
             <p className="font-mono text-xs font-semibold uppercase tracking-[0.18em]">
               Coddle Learn
             </p>
-            <h2 className="mt-3 max-w-md font-display text-4xl font-extrabold tracking-tight text-ink">
+            <h2 className="mt-3 max-w-md font-display text-4xl font-bold tracking-tight text-ink">
               Learn, Build, Share, Grow.
             </h2>
             <ul className="mt-6 max-w-md space-y-3">
@@ -90,7 +90,7 @@ function LoginContent() {
             transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
             className="mx-auto w-full max-w-md"
           >
-            <h1 className="font-display text-4xl font-extrabold tracking-tight text-ink">
+            <h1 className="font-display text-4xl font-bold tracking-tight text-ink">
               Sign in
             </h1>
             <p className="mt-3 text-base leading-relaxed text-ink-muted">

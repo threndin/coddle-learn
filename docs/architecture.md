@@ -93,7 +93,7 @@ Each published course can have one final assessment. Question kinds: `multiple_c
 
 ### Credentials
 
-Free, verifiable credentials owned by Learn. Minted on first assessment pass and first project submit (one row per user + assessment or user + project). Skill credentials are deferred until the skill graph exists.
+Free, verifiable credentials owned by Learn. Minted on first assessment pass and first project submit (one row per user + assessment or user + project). The skill graph (`GET /skills`) treats those credentials as evidence for tagged skills; dedicated `kind: "skill"` credentials remain deferred.
 
 - `GET /credentials` — authenticated list for the signed-in learner
 - `GET /credentials/:id` — authenticated owner detail (includes public `verifyUrl`)
@@ -171,5 +171,6 @@ Locally, Learn web defaults to port `3002` so Coddle can stay on `3000`. Point `
 - Course final assessments (`Assessment`, `AssessmentQuestion`, `AssessmentAttempt`) with MCQ, true/false, and short answer; gated until lessons and exercises are done; required for course completion when present
 - Studio assessment authoring (`PUT /studio/courses/:id/assessment`) and learner routes `/assessments`, `/assessments/:id`, `/assessments/:id/attempts/:attemptId`
 - Credentials (`Credential`) issued on assessment pass and project submit; `/credentials`, `/credentials/:id`, public `/verify/:code`
+- Skill graph (`SkillEdge`, `UserSkillProgress`) with `GET /skills` and interactive `/skills` UI; evidence from assessments, projects, and credentials (not course completion alone); section on `/profile`
 - Learn `/login`, `/onboarding`, and `/dashboard`
 - Coddle `/sso/learn` bridge page
