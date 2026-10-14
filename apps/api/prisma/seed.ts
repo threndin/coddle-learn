@@ -2,6 +2,7 @@ import "dotenv/config";
 import {
   EXERCISE_LIMITS,
   SKILL_CATALOG,
+  SKILL_EDGES,
   STARTER_ASSESSMENTS,
   STARTER_COURSES,
   STARTER_EXERCISES,
@@ -33,6 +34,26 @@ async function seedSkills() {
         category: skill.category,
       },
     });
+  }
+
+  const skills = await prisma.skill.findMany({ select: { id: true, slug: true } });
+  const skillIdBySlug = new Map(skills.map((skill) => [skill.slug, skill.id]));
+  const edgeData = SKILL_EDGES.map((edge) => {
+    const fromSkillId = skillIdBySlug.get(edge.from);
+    const toSkillId = skillIdBySlug.get(edge.to);
+    if (!fromSkillId || !toSkillId) {
+      throw new Error(`Missing skill for edge seed: ${edge.from} → ${edge.to}`);
+    }
+    return {
+      fromSkillId,
+      toSkillId,
+      kind: edge.kind ?? "leads_to",
+    };
+  });
+
+  await prisma.skillEdge.deleteMany();
+  if (edgeData.length > 0) {
+    await prisma.skillEdge.createMany({ data: edgeData });
   }
 }
 

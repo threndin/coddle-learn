@@ -44,8 +44,8 @@ export const SKILL_CATALOG = [
   { slug: "docker", name: "Docker", category: "Tools" },
   { slug: "linux", name: "Linux", category: "Tools" },
   { slug: "cloud", name: "Cloud", category: "Tools" },
-  { slug: "testing", name: "Testing", category: "Practice" },
-  { slug: "system-design", name: "System design", category: "Practice" },
+  { slug: "testing", name: "Testing", category: "Backend" },
+  { slug: "system-design", name: "System design", category: "Backend" },
 ] as const;
 
 export type CatalogSkill = (typeof SKILL_CATALOG)[number];

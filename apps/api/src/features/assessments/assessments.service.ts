@@ -13,6 +13,7 @@ import {
 import type { AssessmentAttempt } from "@prisma/client";
 import { AppError } from "../../shared/errors.js";
 import { scheduleAchievementEvaluation } from "../achievements/achievements.service.js";
+import { scheduleSkillGraphEvaluation } from "../skills/skills.service.js";
 import {
   canViewCourse,
   findCourseBySlug,
@@ -390,6 +391,7 @@ export async function submitAssessmentAttempt(
 
   const courseCompleteBonus = await syncCourseCompletion(userId, course, enrollment);
   scheduleAchievementEvaluation(userId);
+  if (passed) scheduleSkillGraphEvaluation(userId);
 
   return {
     attempt: attemptDetail(submitted, assessment, true),

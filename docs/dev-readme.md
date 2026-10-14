@@ -30,6 +30,7 @@ First visit after sign-in goes to **onboarding**. Every later visit goes to the 
 | Projects | `/projects`, `/projects/[slug]`, Studio `/studio/projects/*` | Built (path + level catalog, briefs, start/submit, contributor editor) |
 | Credentials | `/credentials`, `/credentials/[id]`, `/verify/[code]` | Built (issued on assessment pass + first project submit; public verify) |
 | Achievements | `/achievements`, `/achievements/[slug]` | Built (earned + locked catalog; backfill job for existing users) |
+| Skill graph | `/skills` (also section on `/profile`) | Built (interactive graph; evidence from assessments, projects, credentials; locked nodes stay visible) |
 
 ## Build order
 
@@ -157,8 +158,8 @@ Public. No sign-in. Confirms the credential and what it was issued for. Built wi
 **25. Achievements** — `/achievements`, `/achievements/[slug]`  
 Smaller milestones: first course, first project, streak, open-source contributor, roadmap completed, mentor, course creator, resource reviewer. The catalog shows earned and not-yet-earned items. A background job backfills awards for existing users. Earned achievements also show on the public profile and the dashboard. Built.
 
-**26. Skill graph** — `/skills`  
-Skill relationships built from completed learning, assessments, projects, and credentials (for example JavaScript → TypeScript → React → Next.js → Frontend Engineering). A finished course alone does not add the skill. The graph also appears as a section on the public profile.
+**26. Skill graph** — `/skills`
+Skill relationships built from assessments, projects, and credentials (for example JavaScript → TypeScript → React → Next.js). A finished course alone does not demonstrate the skill; enrollment can mark Learning. Locked / not-started skills stay on the graph with a distinct UI. Interactive: pan, select nodes, highlight edges, evidence panel. Also embedded on `/profile` until the public `/u/[username]` profile ships. Built.
 
 ### Profile and community
 
