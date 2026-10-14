@@ -131,7 +131,7 @@ export function CourseReviews({
           {summary && summary.count > 0 ? (
             <>
               <div className="mt-3 flex items-end gap-2">
-                <span className="font-display text-5xl font-extrabold leading-none tracking-tight text-ink tabular-nums">
+                <span className="font-display text-5xl font-bold leading-none tracking-tight text-ink tabular-nums">
                   {summary.average.toFixed(1)}
                 </span>
                 <span className="pb-1 text-sm font-semibold text-ink-muted">/ 5</span>

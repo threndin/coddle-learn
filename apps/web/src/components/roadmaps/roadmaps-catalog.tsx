@@ -41,7 +41,7 @@ export function RoadmapsCatalog({
         <p className="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-brand">
           Roadmaps
         </p>
-        <h1 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
+        <h1 className="mt-3 font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">
           Choose a path
         </h1>
         <p className="mt-3 text-base leading-relaxed text-ink-muted">

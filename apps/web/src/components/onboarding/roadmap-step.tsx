@@ -265,7 +265,7 @@ function DeckCard({
         ) : null}
       </div>
 
-      <h2 className="relative mt-4 font-display text-3xl font-extrabold tracking-tight">{roadmap.name}</h2>
+      <h2 className="relative mt-4 font-display text-3xl font-bold tracking-tight">{roadmap.name}</h2>
       <p className="relative mt-3 max-w-md text-sm leading-relaxed text-white/80">{roadmap.summary}</p>
 
       <div className="relative mt-5 flex flex-wrap items-center gap-1.5">

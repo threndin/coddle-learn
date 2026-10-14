@@ -37,7 +37,7 @@ export function OpenSource() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
         >
-          <h2 className="font-display text-3xl font-extrabold tracking-tight text-ink sm:text-5xl">
+          <h2 className="font-display text-3xl font-bold tracking-tight text-ink sm:text-5xl">
             Built in public.{" "}
             <span className="text-gradient-primary">Join the build.</span>
           </h2>

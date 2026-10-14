@@ -224,7 +224,7 @@ export function ResourcesCatalog({
     <div className="mx-auto w-full max-w-7xl px-5 py-8 sm:px-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="max-w-2xl">
-          <h1 className="font-display text-2xl font-extrabold tracking-tight text-ink sm:text-3xl">
+          <h1 className="font-display text-2xl font-bold tracking-tight text-ink sm:text-3xl">
             Resources
           </h1>
           <p className="mt-1.5 text-sm leading-relaxed text-ink-muted">
