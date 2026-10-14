@@ -89,7 +89,7 @@ export function AssessmentDetailView({
                 {assessment.course.title} · {level}
               </span>
             </p>
-            <h1 className="mt-2 break-words font-display text-2xl font-extrabold tracking-tight sm:mt-3 sm:text-4xl lg:text-5xl">
+            <h1 className="mt-2 break-words font-display text-2xl font-bold tracking-tight sm:mt-3 sm:text-4xl lg:text-5xl">
               {assessment.title}
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/80 sm:mt-4 sm:text-lg">
@@ -184,7 +184,7 @@ export function AssessmentDetailView({
                         {label}
                       </span>
                       {attempt.score != null ? (
-                        <span className="font-display text-lg font-extrabold tabular-nums text-ink">
+                        <span className="font-display text-lg font-bold tabular-nums text-ink">
                           {attempt.score}%
                         </span>
                       ) : null}
@@ -209,7 +209,7 @@ function HeroStat({ label, value }: { label: string; value: string }) {
       <dt className="truncate text-[9px] font-semibold uppercase tracking-[0.12em] text-white/60 sm:text-[10px] sm:tracking-[0.14em]">
         {label}
       </dt>
-      <dd className="mt-0.5 truncate font-display text-base font-extrabold text-white sm:mt-1 sm:text-xl">
+      <dd className="mt-0.5 truncate font-display text-base font-bold text-white sm:mt-1 sm:text-xl">
         {value}
       </dd>
     </div>

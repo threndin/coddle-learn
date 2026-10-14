@@ -347,7 +347,7 @@ export function Hero() {
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
           className="pointer-events-auto"
         >
-          <h1 className="font-display text-[clamp(2.4rem,6vw,4.25rem)] font-extrabold leading-[1.12] tracking-tight text-white">
+          <h1 className="font-display text-[clamp(2.4rem,6vw,4.25rem)] font-bold leading-[1.12] tracking-tight text-white">
             <span className="block">Your path to becoming a</span>
             <span className="mt-1 block">
               <RotatingRole reduceMotion={reduceMotion} />

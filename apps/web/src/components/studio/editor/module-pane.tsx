@@ -62,7 +62,7 @@ export function ModulePane({
         onChange={(event) => onPatch({ title: event.target.value })}
         placeholder="Module title"
         aria-label="Module title"
-        className="mt-3 w-full border-0 bg-transparent p-0 font-display text-3xl font-extrabold tracking-tight text-ink placeholder:text-ink-muted/50 focus:outline-none focus:ring-0 disabled:opacity-80"
+        className="mt-3 w-full border-0 bg-transparent p-0 font-display text-3xl font-bold tracking-tight text-ink placeholder:text-ink-muted/50 focus:outline-none focus:ring-0 disabled:opacity-80"
       />
       {empty ? <p className="mt-1 text-xs text-rose-600">Modules need a title. Not saved yet.</p> : null}
       <textarea

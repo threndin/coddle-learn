@@ -386,7 +386,7 @@ export function CourseDetailView({
           <p className="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-brand">
             {levelLabel?.label ?? course.level}
           </p>
-          <h1 className="mt-2 font-display text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
+          <h1 className="mt-2 font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">
             {course.title}
           </h1>
           <p className="mt-3 max-w-2xl text-base leading-relaxed text-ink-muted">
@@ -487,7 +487,7 @@ export function CourseDetailView({
                 <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-muted">
                   Lesson
                 </p>
-                <h2 className="mt-2 font-display text-2xl font-extrabold tracking-tight text-ink">
+                <h2 className="mt-2 font-display text-2xl font-bold tracking-tight text-ink">
                   {selected.lesson.title}
                 </h2>
                 <p className="mt-2 text-sm text-ink-muted">

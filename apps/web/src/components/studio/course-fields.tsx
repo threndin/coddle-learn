@@ -289,7 +289,7 @@ export function CoverPreview({
       <div className="absolute inset-0 flex flex-col px-[6%] py-[8%]">
         <p className="text-[2.3cqw] font-bold tracking-[0.33em] text-white/75">CODDLE LEARN</p>
         <div className="flex flex-1 flex-col justify-center">
-          <p className="line-clamp-3 max-w-[85%] text-[5.2cqw] font-extrabold leading-[1.12] text-white">
+          <p className="line-clamp-3 max-w-[85%] text-[5.2cqw] font-bold leading-[1.12] text-white">
             {title.trim() || "Your course title"}
           </p>
           <p className="mt-[2.5%] text-[2.3cqw] font-semibold text-white/80">{levelLabel}</p>

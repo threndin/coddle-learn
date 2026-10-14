@@ -51,7 +51,7 @@ export function GoalStep({
       </p>
 
       <div className="mt-8 rounded-2xl border border-border bg-surface p-5 sm:p-8">
-        <p className="font-display text-5xl font-extrabold tracking-tight text-ink sm:text-6xl" aria-live="polite">
+        <p className="font-display text-5xl font-bold tracking-tight text-ink sm:text-6xl" aria-live="polite">
           {formatMinutes(minutes)}
         </p>
         <p className="mt-2 text-sm text-ink-muted">
