@@ -185,7 +185,7 @@ export function PathsShowcase() {
           <p className="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-brand-light">
             Ecosystem
           </p>
-          <h2 className="mt-3 max-w-xl font-display text-3xl font-extrabold tracking-tight sm:text-5xl">
+          <h2 className="mt-3 max-w-xl font-display text-3xl font-bold tracking-tight sm:text-5xl">
             Find your path.{" "}
             <span className="text-brand-light">Follow it through.</span>
           </h2>

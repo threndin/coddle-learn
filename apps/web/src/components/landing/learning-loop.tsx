@@ -151,7 +151,7 @@ const steps: {
     id: "prove",
     label: "Prove",
     title: "Earn verifiable credentials",
-    body: "Free credentials tied to assessments and projects, with public verification URLs.",
+    body: "Free credentials tied to assessments and projects, with public verification link.",
     icon: IconProve,
   },
   {
@@ -205,7 +205,7 @@ export function LearningLoop() {
           <p className="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-brand">
             How it works
           </p>
-          <h2 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-ink sm:text-5xl">
+          <h2 className="mt-3 font-display text-3xl font-bold tracking-tight text-ink sm:text-5xl">
             One path from start to proof.
           </h2>
           <p className="mt-4 text-lg text-ink-muted">
@@ -257,7 +257,7 @@ export function LearningLoop() {
                 </p>
 
                 <h3
-                  className={`mt-2 font-display text-xl font-extrabold tracking-tight sm:text-2xl ${
+                  className={`mt-2 font-display text-xl font-bold tracking-tight sm:text-2xl ${
                     isActive ? "text-white" : "text-ink"
                   }`}
                 >

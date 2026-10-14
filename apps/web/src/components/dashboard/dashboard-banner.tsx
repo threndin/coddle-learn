@@ -36,7 +36,7 @@ export function DashboardBanner({ user }: { user: PublicUser }) {
           <p className="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-white/75">
             Welcome back
           </p>
-          <h2 className="mt-2 font-display text-3xl font-extrabold tracking-tight sm:text-4xl">
+          <h2 className="mt-2 font-display text-3xl font-bold tracking-tight sm:text-4xl">
             {firstName}, keep going.
           </h2>
           <p className="mt-3 max-w-xl text-base leading-relaxed text-white/85">

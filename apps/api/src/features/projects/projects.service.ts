@@ -7,6 +7,7 @@ import {
 } from "@coddle/shared";
 import { AppError } from "../../shared/errors.js";
 import { scheduleAchievementEvaluation } from "../achievements/achievements.service.js";
+import { scheduleSkillGraphEvaluation } from "../skills/skills.service.js";
 import {
   issueProjectCredential,
   type IssuedCredential,
@@ -140,6 +141,7 @@ export async function startProject(userId: string, slug: string) {
     throw new AppError(404, "project_missing", "That project could not be found.");
   }
   const submission = await startSubmission(userId, project.id);
+  scheduleSkillGraphEvaluation(userId);
   return {
     project: detailPayload(project, submission),
   };
@@ -239,6 +241,7 @@ export async function submitProject(userId: string, slug: string, input: unknown
   }
 
   scheduleAchievementEvaluation(userId);
+  scheduleSkillGraphEvaluation(userId);
 
   return {
     project: detailPayload(project, saved),

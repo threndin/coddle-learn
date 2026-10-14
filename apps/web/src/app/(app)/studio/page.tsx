@@ -7,7 +7,7 @@ export default function StudioPage() {
       <p className="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-brand">
         Studio
       </p>
-      <h1 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
+      <h1 className="mt-3 font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">
         Create learning content
       </h1>
       <p className="mt-3 max-w-2xl text-base leading-relaxed text-ink-muted">

@@ -236,7 +236,7 @@ export function RoadmapDetailView({
         <p className="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-brand">
           Roadmaps
         </p>
-        <h1 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-ink">
+        <h1 className="mt-3 font-display text-3xl font-bold tracking-tight text-ink">
           Roadmap unavailable
         </h1>
         <p className="mt-3 text-ink-muted">{error}</p>
@@ -271,7 +271,7 @@ export function RoadmapDetailView({
           >
             ← All roadmaps
           </Link>
-          <h1 className="mt-3 font-display text-3xl font-extrabold tracking-tight sm:text-4xl">
+          <h1 className="mt-3 font-display text-3xl font-bold tracking-tight sm:text-4xl">
             {roadmap.name}
           </h1>
           <p className="mt-3 text-base leading-relaxed text-white/80">{roadmap.summary}</p>

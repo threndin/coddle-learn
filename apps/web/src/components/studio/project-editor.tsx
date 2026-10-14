@@ -177,7 +177,7 @@ export function ProjectEditor({
             Studio projects
           </Link>
           <div className="mt-4 flex flex-wrap items-center gap-2">
-            <h1 className="font-display text-2xl font-extrabold tracking-tight text-ink sm:text-3xl">
+            <h1 className="font-display text-2xl font-bold tracking-tight text-ink sm:text-3xl">
               {project.title}
             </h1>
             <StatusBadge status={project.status} size="md" />
