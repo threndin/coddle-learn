@@ -42,6 +42,9 @@ model User {
   credentials           Credential[]
   achievements          UserAchievement[]
   skillProgress         UserSkillProgress[]
+  communityPosts        CommunityPost[]
+  communityImpressions  CommunityPostImpression[]
+  communityReactions    CommunityPostReaction[]
 
   @@map("users")
 }
@@ -620,4 +623,65 @@ model UserAchievement {
   @@index([userId, earnedAt])
   @@index([slug])
   @@map("user_achievements")
+}
+
+/// Community feed. `kind`: question | discussion | project_share.
+/// `topic`: general | course | roadmap | project. Thread replies ship with /community/[id].
+model CommunityPost {
+  id              String                    @id @default(cuid())
+  authorId        String                    @map("author_id")
+  author          User                      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  kind            String
+  topic           String                    @default("general")
+  relatedSlug     String?                   @map("related_slug")
+  relatedTitle    String?                   @map("related_title")
+  title           String
+  body            String
+  imageUrls       String[]                  @default([]) @map("image_urls")
+  impressionCount Int                       @default(0) @map("impression_count")
+  commentCount    Int                       @default(0) @map("comment_count")
+  isDeleted       Boolean                   @default(false) @map("is_deleted")
+  deletedAt       DateTime?                 @map("deleted_at")
+  createdAt       DateTime                  @default(now()) @map("created_at")
+  updatedAt       DateTime                  @updatedAt @map("updated_at")
+  impressions     CommunityPostImpression[]
+  reactions       CommunityPostReaction[]
+
+  @@index([createdAt])
+  @@index([isDeleted, createdAt])
+  @@index([kind, createdAt])
+  @@index([topic, createdAt])
+  @@index([authorId, createdAt])
+  @@map("community_posts")
+}
+
+/// Unique viewer per post. Drives `CommunityPost.impressionCount`.
+model CommunityPostImpression {
+  id        String        @id @default(cuid())
+  postId    String        @map("post_id")
+  userId    String        @map("user_id")
+  post      CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  @@unique([postId, userId])
+  @@index([userId])
+  @@map("community_post_impressions")
+}
+
+/// One reaction per user per post. `emoji` is a COMMUNITY_REACTION_EMOJIS value.
+model CommunityPostReaction {
+  id        String        @id @default(cuid())
+  postId    String        @map("post_id")
+  userId    String        @map("user_id")
+  post      CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emoji     String
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+
+  @@unique([postId, userId])
+  @@index([postId, emoji])
+  @@index([userId])
+  @@map("community_post_reactions")
 }

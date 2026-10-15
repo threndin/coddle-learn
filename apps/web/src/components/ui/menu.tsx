@@ -20,11 +20,14 @@ export function Menu({
   label = "More actions",
   trigger,
   align = "right",
+  triggerClassName,
 }: {
   items: MenuItem[];
   label?: string;
   trigger?: ReactNode;
   align?: "left" | "right";
+  /** Overrides the default bordered trigger chrome. */
+  triggerClassName?: string;
 }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -56,7 +59,10 @@ export function Menu({
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((prev) => !prev)}
-        className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-surface text-ink-muted transition hover:bg-surface-subtle hover:text-ink"
+        className={
+          triggerClassName ??
+          "inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-surface text-ink-muted transition hover:bg-surface-subtle hover:text-ink"
+        }
       >
         {trigger ?? <Icon name="more" className="h-4 w-4" />}
       </button>

@@ -436,8 +436,8 @@ export function OverviewSections({ user }: { user: PublicUser }) {
               Recent activity
             </h3>
             <p className="mt-2 max-w-xl text-sm leading-relaxed text-ink-muted">
-              Questions, replies, and project shares from developers you follow will show up
-              here once community is live.
+              Ask questions, start discussions, and share projects with other learners on the
+              community feed.
             </p>
           </div>
           <Link
