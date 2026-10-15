@@ -31,13 +31,15 @@
     "express": "^5.1.0",
     "helmet": "^8.1.0",
     "jose": "^6.2.12",
-    "morgan": "^1.10.0"
+    "morgan": "^1.10.0",
+    "multer": "^2.4.0"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.18",
     "@types/express": "^5.0.2",
     "@types/morgan": "^1.9.9",
+    "@types/multer": "^2.3.0",
     "@types/node": "^22.15.21",
     "prisma": "^6.19.3",
     "tsx": "^4.19.4",
