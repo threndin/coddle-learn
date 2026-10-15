@@ -2,8 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { SignOutButton } from "@/components/sign-out-button";
-import { ProfileAvatar } from "@/components/onboarding/profile-avatar";
+import { AccountMenu } from "@/components/app/account-menu";
 import { navTitleForPath } from "@/components/app/nav-config";
 import { useAppUser } from "@/components/app/app-user-context";
 
@@ -44,13 +43,7 @@ export function AppHeader({
           <span className="hidden text-xs text-ink-muted sm:inline">pts</span>
         </div>
         <ThemeToggle />
-        <div className="hidden items-center gap-2 sm:flex">
-          <ProfileAvatar name={user.name} avatarUrl={user.avatarUrl} size="sm" />
-          <SignOutButton className="text-sm font-medium text-ink-muted transition hover:text-ink" />
-        </div>
-        <div className="sm:hidden">
-          <SignOutButton className="text-sm font-medium text-ink-muted transition hover:text-ink" />
-        </div>
+        <AccountMenu />
       </div>
     </header>
   );

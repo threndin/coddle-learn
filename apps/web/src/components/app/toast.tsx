@@ -1,31 +1,72 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
+
+export type ToastTone = "success" | "error" | "info";
+
+export type ToastAction = {
+  label: string;
+  onClick?: () => void;
+};
 
 type Toast = {
   id: number;
   message: string;
-  tone: "success" | "error" | "info";
+  tone: ToastTone;
+  sticky?: boolean;
+  action?: ToastAction;
+};
+
+type PushToastOptions = {
+  tone?: ToastTone;
+  sticky?: boolean;
+  durationMs?: number;
+  action?: ToastAction;
 };
 
 type ToastContextValue = {
-  pushToast: (message: string, tone?: Toast["tone"]) => void;
+  pushToast: (message: string, toneOrOptions?: ToastTone | PushToastOptions) => number;
+  dismissToast: (id: number) => void;
 };
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 
-export function ToastProvider({ children }: { children: React.ReactNode }) {
+export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const pushToast = useCallback((message: string, tone: Toast["tone"] = "info") => {
-    const id = Date.now() + Math.floor(Math.random() * 1000);
-    setToasts((prev) => [...prev, { id, message, tone }]);
-    window.setTimeout(() => {
-      setToasts((prev) => prev.filter((toast) => toast.id !== id));
-    }, 3200);
+  const dismissToast = useCallback((id: number) => {
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
   }, []);
 
-  const value = useMemo(() => ({ pushToast }), [pushToast]);
+  const pushToast = useCallback(
+    (message: string, toneOrOptions: ToastTone | PushToastOptions = "info") => {
+      const options: PushToastOptions =
+        typeof toneOrOptions === "string" ? { tone: toneOrOptions } : toneOrOptions;
+      const id = Date.now() + Math.floor(Math.random() * 1000);
+      const tone = options.tone ?? "info";
+      const sticky = options.sticky ?? false;
+      setToasts((prev) => [
+        ...prev,
+        { id, message, tone, sticky, action: options.action },
+      ]);
+      if (!sticky) {
+        window.setTimeout(() => {
+          setToasts((prev) => prev.filter((toast) => toast.id !== id));
+        }, options.durationMs ?? (options.action ? 6500 : 3200));
+      }
+      return id;
+    },
+    [],
+  );
+
+  const value = useMemo(() => ({ pushToast, dismissToast }), [pushToast, dismissToast]);
 
   return (
     <ToastContext.Provider value={value}>
@@ -44,7 +85,36 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             ].join(" ")}
             role="status"
           >
-            {toast.message}
+            <div className="flex items-start justify-between gap-3">
+              <p className="min-w-0 flex-1">{toast.message}</p>
+              {toast.sticky ? (
+                <button
+                  type="button"
+                  aria-label="Dismiss"
+                  onClick={() => dismissToast(toast.id)}
+                  className="shrink-0 text-xs font-semibold opacity-70 transition hover:opacity-100"
+                >
+                  Dismiss
+                </button>
+              ) : null}
+            </div>
+            {toast.action ? (
+              <button
+                type="button"
+                onClick={() => {
+                  toast.action?.onClick?.();
+                  dismissToast(toast.id);
+                }}
+                className={[
+                  "mt-2 text-sm font-semibold underline underline-offset-2 transition",
+                  toast.tone === "success" || toast.tone === "error"
+                    ? "text-white/95 hover:text-white"
+                    : "text-ink hover:text-brand",
+                ].join(" ")}
+              >
+                {toast.action.label}
+              </button>
+            ) : null}
           </div>
         ))}
       </div>
