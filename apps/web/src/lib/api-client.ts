@@ -109,6 +109,8 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     body = JSON.stringify(options.json);
   } else if (options.contentType) {
     headers["Content-Type"] = options.contentType;
+  } else if (body instanceof FormData) {
+    // Let the browser set multipart boundary; do not force Content-Type.
   }
 
   const res = await apiFetch(path, {

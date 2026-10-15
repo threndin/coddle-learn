@@ -1,6 +1,6 @@
 # Developer guide: screens and build order
 
-Build the product UI in the order below. Each screen depends on the ones before it. The sequence follows the learning loop in [`AGENTS.md`](../AGENTS.md):
+Build the product UI in the order below. Each screen depends on the ones before it. The sequence follows the learning loop in `[AGENTS.md](../AGENTS.md)`:
 
 **Discover → Learn → Practice → Build → Prove → Share → Grow**
 
@@ -16,23 +16,30 @@ First visit after sign-in goes to **onboarding**. Every later visit goes to the 
 
 ## Already built
 
-| Screen | Route | State |
-|---|---|---|
-| Landing | `/` | Built |
-| Sign in | `/login` | Built |
-| Onboarding | `/onboarding` | Built |
-| Dashboard | `/dashboard` | Built (continue learning + progress blocks) |
-| Roadmaps | `/roadmaps`, `/roadmaps/[slug]` | Built |
-| Courses | `/courses`, `/courses/[slug]` | Built (lessons + exercises) |
-| Resources | `/resources`, `/resources/[slug]`, `/saved` | Built |
-| Studio | `/studio/courses/*` | Built (including final assessment editor) |
-| Assessments | `/assessments`, `/assessments/[id]`, attempts | Built (course finals; MCQ / T-F / short answer) |
-| Projects | `/projects`, `/projects/[slug]`, Studio `/studio/projects/*` | Built (path + level catalog, briefs, start/submit, contributor editor) |
-| Credentials | `/credentials`, `/credentials/[id]`, `/verify/[code]` | Built (issued on assessment pass + first project submit; public verify) |
-| Achievements | `/achievements`, `/achievements/[slug]` | Built (earned + locked catalog; backfill job for existing users) |
-| Skill graph | `/skills` (also section on `/profile`) | Built (interactive graph; evidence from assessments, projects, credentials; locked nodes stay visible) |
+
+| Screen       | Route                                                        | State                                                                                                  |
+| ------------ | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| Landing      | `/`                                                          | Built                                                                                                  |
+| Sign in      | `/login`                                                     | Built                                                                                                  |
+| Onboarding   | `/onboarding`                                                | Built                                                                                                  |
+| Dashboard    | `/dashboard`                                                 | Built (continue learning + progress blocks)                                                            |
+| Roadmaps     | `/roadmaps`, `/roadmaps/[slug]`                              | Built                                                                                                  |
+| Courses      | `/courses`, `/courses/[slug]`                                | Built (lessons + exercises)                                                                            |
+| Resources    | `/resources`, `/resources/[slug]`, `/saved`                  | Built                                                                                                  |
+| Studio       | `/studio/courses/*`                                          | Built (including final assessment editor)                                                              |
+| Assessments  | `/assessments`, `/assessments/[id]`, attempts                | Built (course finals; MCQ / T-F / short answer)                                                        |
+| Projects     | `/projects`, `/projects/[slug]`, Studio `/studio/projects/*` | Built (path + level catalog, briefs, start/submit, contributor editor)                                 |
+| Credentials  | `/credentials`, `/credentials/[id]`, `/verify/[code]`        | Built (issued on assessment pass + first project submit; public verify)                                |
+| Achievements | `/achievements`, `/achievements/[slug]`                      | Built (earned + locked catalog; backfill job for existing users)                                       |
+| Skill graph  | `/skills` (also section on `/profile`)                       | Built (interactive graph; evidence from assessments, projects, credentials; locked nodes stay visible) |
+| Community    | `/community`                                                 | Built (feed: questions, discussions, project shares; compose; filters). Thread detail not yet.         |
+
+
+
 
 ## Build order
+
+
 
 ### Arrive
 
@@ -170,7 +177,7 @@ The shareable learning profile: bio, skills, skill graph, roadmaps and progress,
 Edit bio, skills, and which activity is public. Distinct from onboarding: onboarding runs once, this screen is the ongoing editor.
 
 **29. Community** — `/community`  
-Questions and discussions about courses, roadmaps, and projects. Ask a question or share a project.
+Questions and discussions about courses, roadmaps, and projects. Ask a question or share a project. Built (list + compose; no thread detail yet).
 
 **30. Discussion** — `/community/[id]`  
 One thread: the question, answers, comments, and likes.
@@ -227,45 +234,53 @@ Notification preferences, profile visibility, and sign out. Sign out clears the 
 
 Every product area in `AGENTS.md` maps to a screen in this pass, or to a later pass called out here.
 
-| Feature in AGENTS.md | Where it lives |
-|---|---|
-| Authentication (Coddle SSO, session, logout) | 2 Sign in, 42 Settings |
-| User profile | 3 Onboarding, 28 Profile editor, 27 Public profile |
-| Roadmaps (nodes, prerequisites, start, complete, skip, progress) | 5–7 |
-| Courses (modules, lessons, video, code, progress, completion) | 8–10 |
-| External resources | 15–17 |
-| Resource verification | 16 Resource status, 34 Studio, 37 Review queue |
-| Community reports | 16 Report action, 38 Reports |
-| Quizzes, MCQ, true/false, fill-in-the-blank, knowledge checks | 11 Quiz |
-| Flashcards | 12 Flashcards |
-| Exercises | 13 Exercise |
-| Coding challenges | 14 Coding challenge, 18 Assessment |
-| Projects and showcase | 20–22 |
-| Assessments | 18 Assessment, 19 Result |
-| Credentials and public verification | 23 Credential, 24 Verify |
-| Achievements (including streak, mentor, creator, reviewer) | 25 Achievements |
-| Community (ask, answer, comment, like, follow) | 29 Community, 30 Discussion, 27 Follow on profile |
-| Bookmarking | 16 Resource, 17 Saved |
-| Mentorship (profile, expertise, availability, requests) | 31–33 |
-| Contributor submissions and status | 34 Contributor studio |
-| Contributor impact | 35 Contributor profile |
-| Admin review, reject, remove, suspend, mark outdated | 36–39 |
-| Search | 40 Search |
-| Notifications | 41 Notifications, count on 4 Dashboard |
-| Dashboard (continue, progress, daily goal, projects, credentials, community) | 4 Dashboard |
-| Skill graph | 26 Skill graph, section on 27 Public profile |
+
+| Feature in AGENTS.md                                                         | Where it lives                                     |
+| ---------------------------------------------------------------------------- | -------------------------------------------------- |
+| Authentication (Coddle SSO, session, logout)                                 | 2 Sign in, 42 Settings                             |
+| User profile                                                                 | 3 Onboarding, 28 Profile editor, 27 Public profile |
+| Roadmaps (nodes, prerequisites, start, complete, skip, progress)             | 5–7                                                |
+| Courses (modules, lessons, video, code, progress, completion)                | 8–10                                               |
+| External resources                                                           | 15–17                                              |
+| Resource verification                                                        | 16 Resource status, 34 Studio, 37 Review queue     |
+| Community reports                                                            | 16 Report action, 38 Reports                       |
+| Quizzes, MCQ, true/false, fill-in-the-blank, knowledge checks                | 11 Quiz                                            |
+| Flashcards                                                                   | 12 Flashcards                                      |
+| Exercises                                                                    | 13 Exercise                                        |
+| Coding challenges                                                            | 14 Coding challenge, 18 Assessment                 |
+| Projects and showcase                                                        | 20–22                                              |
+| Assessments                                                                  | 18 Assessment, 19 Result                           |
+| Credentials and public verification                                          | 23 Credential, 24 Verify                           |
+| Achievements (including streak, mentor, creator, reviewer)                   | 25 Achievements                                    |
+| Community (ask, answer, comment, like, follow)                               | 29 Community, 30 Discussion, 27 Follow on profile  |
+| Bookmarking                                                                  | 16 Resource, 17 Saved                              |
+| Mentorship (profile, expertise, availability, requests)                      | 31–33                                              |
+| Contributor submissions and status                                           | 34 Contributor studio                              |
+| Contributor impact                                                           | 35 Contributor profile                             |
+| Admin review, reject, remove, suspend, mark outdated                         | 36–39                                              |
+| Search                                                                       | 40 Search                                          |
+| Notifications                                                                | 41 Notifications, count on 4 Dashboard             |
+| Dashboard (continue, progress, daily goal, projects, credentials, community) | 4 Dashboard                                        |
+| Skill graph                                                                  | 26 Skill graph, section on 27 Public profile       |
+
+
+
 
 ## Later, on purpose
 
 These are in the product plan and have no screen in this build. Add them after the loop above works.
 
-| Feature | Why it waits |
-|---|---|
-| Passkeys, GitHub identity verification | After Coddle SSO is solid |
-| Browser coding environment, automated evaluation | Challenges are submitted without an in-browser IDE |
-| AI learning assistant | Explains, quizzes, and recommends. It does not replace the content screens |
-| Premium: AI, advanced assessments, premium courses, paid mentor sessions, analytics, private environments, org dashboards, managed hosting, enterprise | Core learning stays free |
-| Employer marketplace, payments, mobile app | Outside the first learning loop |
+
+| Feature                                                                                                                                                | Why it waits                                                               |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| Passkeys, GitHub identity verification                                                                                                                 | After Coddle SSO is solid                                                  |
+| Browser coding environment, automated evaluation                                                                                                       | Challenges are submitted without an in-browser IDE                         |
+| AI learning assistant                                                                                                                                  | Explains, quizzes, and recommends. It does not replace the content screens |
+| Premium: AI, advanced assessments, premium courses, paid mentor sessions, analytics, private environments, org dashboards, managed hosting, enterprise | Core learning stays free                                                   |
+| Employer marketplace, payments, mobile app                                                                                                             | Outside the first learning loop                                            |
+
+
+
 
 ## Suggested route files
 
@@ -316,4 +331,3 @@ notifications/page.tsx
 settings/page.tsx
 ```
 
-Build 3 and 4 next: onboarding, then the real dashboard.

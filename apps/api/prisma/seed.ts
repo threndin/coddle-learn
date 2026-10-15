@@ -4,6 +4,7 @@ import {
   SKILL_CATALOG,
   SKILL_EDGES,
   STARTER_ASSESSMENTS,
+  STARTER_COMMUNITY_POSTS,
   STARTER_COURSES,
   STARTER_EXERCISES,
   STARTER_PROJECTS,
@@ -508,6 +509,45 @@ async function seedProjects() {
   console.log(`Seeded ${STARTER_PROJECTS.length} projects (creator: ${creator.email}).`);
 }
 
+async function seedCommunity() {
+  const email = config.seedCourseCreatorEmail.toLowerCase();
+  const author = await prisma.user.findUnique({ where: { email } });
+  if (!author) {
+    console.log(
+      `Skipped community seed (no Learn user ${email}). Sign in once, then re-run seed.`,
+    );
+    return;
+  }
+
+  for (const post of STARTER_COMMUNITY_POSTS) {
+    await prisma.communityPost.upsert({
+      where: { id: post.id },
+      create: {
+        id: post.id,
+        authorId: author.id,
+        kind: post.kind,
+        topic: post.topic,
+        relatedSlug: post.relatedSlug ?? null,
+        relatedTitle: post.relatedTitle ?? null,
+        title: post.title,
+        body: post.body,
+        imageUrls: post.imageUrls ? [...post.imageUrls] : [],
+      },
+      update: {
+        kind: post.kind,
+        topic: post.topic,
+        relatedSlug: post.relatedSlug ?? null,
+        relatedTitle: post.relatedTitle ?? null,
+        title: post.title,
+        body: post.body,
+        imageUrls: post.imageUrls ? [...post.imageUrls] : [],
+      },
+    });
+  }
+
+  console.log(`Seeded ${STARTER_COMMUNITY_POSTS.length} community posts (author: ${author.email}).`);
+}
+
 async function main() {
   await seedSkills();
   const resourceIdByUrl = await seedResources();
@@ -516,6 +556,7 @@ async function main() {
   console.log(`Seeded ${STARTER_ROADMAPS.length} roadmaps.`);
   await seedCourses();
   await seedProjects();
+  await seedCommunity();
 }
 
 main()
