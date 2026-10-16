@@ -2,13 +2,22 @@ import type { Request, Response } from "express";
 import { AppError } from "../../shared/errors.js";
 import type { AuthedRequest } from "../auth/auth.middleware.js";
 import {
+  createCommunityComment,
   createCommunityFeedPost,
+  deleteCommunityComment,
   deleteCommunityFeedPost,
   getCommunityCatalog,
+  getCommunityPostDetail,
+  getCommunityPostReactions,
   getSpotlightLearners,
   listRelatedOptions,
   recordCommunityImpression,
+  reportCommunityComment,
+  reportCommunityPost,
+  setCommunityCommentReaction,
   setCommunityReaction,
+  updateCommunityComment,
+  updateCommunityFeedPost,
   uploadCommunityImage,
 } from "./community.service.js";
 
@@ -37,10 +46,34 @@ export async function createCommunityHandler(req: Request, res: Response) {
   res.status(201).json({ data });
 }
 
+export async function getCommunityPostHandler(req: Request, res: Response) {
+  const session = requireSession(req);
+  const data = await getCommunityPostDetail(session.sub, param(req, "id"));
+  res.json({ data });
+}
+
 export async function deleteCommunityHandler(req: Request, res: Response) {
   const session = requireSession(req);
   const data = await deleteCommunityFeedPost(session.sub, param(req, "id"));
   res.json({ data });
+}
+
+export async function updateCommunityHandler(req: Request, res: Response) {
+  const session = requireSession(req);
+  const data = await updateCommunityFeedPost(session.sub, param(req, "id"), req.body);
+  res.json({ data });
+}
+
+export async function reportPostHandler(req: Request, res: Response) {
+  const session = requireSession(req);
+  const data = await reportCommunityPost(session.sub, param(req, "id"), req.body);
+  res.status(201).json({ data });
+}
+
+export async function reportCommentHandler(req: Request, res: Response) {
+  const session = requireSession(req);
+  const data = await reportCommunityComment(session.sub, param(req, "commentId"), req.body);
+  res.status(201).json({ data });
 }
 
 export async function relatedOptionsHandler(req: Request, res: Response) {
@@ -70,5 +103,35 @@ export async function impressionHandler(req: Request, res: Response) {
 export async function reactionHandler(req: Request, res: Response) {
   const session = requireSession(req);
   const data = await setCommunityReaction(session.sub, param(req, "id"), req.body);
+  res.json({ data });
+}
+
+export async function listPostReactionsHandler(req: Request, res: Response) {
+  const session = requireSession(req);
+  const data = await getCommunityPostReactions(session.sub, param(req, "id"));
+  res.json({ data });
+}
+
+export async function createCommentHandler(req: Request, res: Response) {
+  const session = requireSession(req);
+  const data = await createCommunityComment(session.sub, param(req, "id"), req.body);
+  res.status(201).json({ data });
+}
+
+export async function updateCommentHandler(req: Request, res: Response) {
+  const session = requireSession(req);
+  const data = await updateCommunityComment(session.sub, param(req, "commentId"), req.body);
+  res.json({ data });
+}
+
+export async function deleteCommentHandler(req: Request, res: Response) {
+  const session = requireSession(req);
+  const data = await deleteCommunityComment(session.sub, param(req, "commentId"));
+  res.json({ data });
+}
+
+export async function commentReactionHandler(req: Request, res: Response) {
+  const session = requireSession(req);
+  const data = await setCommunityCommentReaction(session.sub, param(req, "commentId"), req.body);
   res.json({ data });
 }

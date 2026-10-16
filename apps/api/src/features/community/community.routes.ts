@@ -4,13 +4,22 @@ import { COMMUNITY_IMAGE_TYPES, COMMUNITY_LIMITS } from "@coddle/shared";
 import { asyncHandler } from "../../shared/http/async-handler.js";
 import { requireAuth, requireCsrf } from "../auth/auth.middleware.js";
 import {
+  commentReactionHandler,
+  createCommentHandler,
   createCommunityHandler,
+  deleteCommentHandler,
   deleteCommunityHandler,
+  getCommunityPostHandler,
   impressionHandler,
   listCommunityHandler,
+  listPostReactionsHandler,
   reactionHandler,
   relatedOptionsHandler,
+  reportCommentHandler,
+  reportPostHandler,
   spotlightHandler,
+  updateCommentHandler,
+  updateCommunityHandler,
   uploadImageHandler,
 } from "./community.controller.js";
 
@@ -91,11 +100,59 @@ communityRouter.post(
   rawImage,
   asyncHandler(uploadImageHandler),
 );
+communityRouter.put(
+  "/comments/:commentId/reactions",
+  requireAuth,
+  requireCsrf,
+  asyncHandler(commentReactionHandler),
+);
+communityRouter.post(
+  "/comments/:commentId/reports",
+  requireAuth,
+  requireCsrf,
+  asyncHandler(reportCommentHandler),
+);
+communityRouter.patch(
+  "/comments/:commentId",
+  requireAuth,
+  requireCsrf,
+  asyncHandler(updateCommentHandler),
+);
+communityRouter.delete(
+  "/comments/:commentId",
+  requireAuth,
+  requireCsrf,
+  asyncHandler(deleteCommentHandler),
+);
+communityRouter.get("/:id", requireAuth, asyncHandler(getCommunityPostHandler));
+communityRouter.patch(
+  "/:id",
+  requireAuth,
+  requireCsrf,
+  asyncHandler(updateCommunityHandler),
+);
+communityRouter.post(
+  "/:id/comments",
+  requireAuth,
+  requireCsrf,
+  asyncHandler(createCommentHandler),
+);
+communityRouter.post(
+  "/:id/reports",
+  requireAuth,
+  requireCsrf,
+  asyncHandler(reportPostHandler),
+);
 communityRouter.post(
   "/:id/impressions",
   requireAuth,
   requireCsrf,
   asyncHandler(impressionHandler),
+);
+communityRouter.get(
+  "/:id/reactions",
+  requireAuth,
+  asyncHandler(listPostReactionsHandler),
 );
 communityRouter.put("/:id/reactions", requireAuth, requireCsrf, asyncHandler(reactionHandler));
 communityRouter.delete(

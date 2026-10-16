@@ -42,11 +42,32 @@ model User {
   credentials           Credential[]
   achievements          UserAchievement[]
   skillProgress         UserSkillProgress[]
-  communityPosts        CommunityPost[]
-  communityImpressions  CommunityPostImpression[]
-  communityReactions    CommunityPostReaction[]
+  communityPosts             CommunityPost[]
+  communityImpressions       CommunityPostImpression[]
+  communityReactions         CommunityPostReaction[]
+  communityComments          CommunityComment[]
+  communityCommentReactions  CommunityCommentReaction[]
+  communityReports           CommunityReport[]
+  pointEvents                UserPointEvent[]
 
   @@map("users")
+}
+
+/// Append-only ledger of point awards and deductions.
+model UserPointEvent {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount    Int
+  reason    String
+  refType   String?  @map("ref_type")
+  refId     String?  @map("ref_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId, createdAt])
+  @@index([reason, createdAt])
+  @@index([refType, refId])
+  @@map("user_point_events")
 }
 
 model Skill {
@@ -626,11 +647,14 @@ model UserAchievement {
 }
 
 /// Community feed. `kind`: question | discussion | project_share.
-/// `topic`: general | course | roadmap | project. Thread replies ship with /community/[id].
+/// `topic`: general | course | roadmap | project.
+/// Comments are two levels: top-level on the post, then replies to those only.
+/// `quotePostId` embeds another post X-style (quote post).
 model CommunityPost {
   id              String                    @id @default(cuid())
   authorId        String                    @map("author_id")
   author          User                      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  slug            String                    @unique
   kind            String
   topic           String                    @default("general")
   relatedSlug     String?                   @map("related_slug")
@@ -638,21 +662,93 @@ model CommunityPost {
   title           String
   body            String
   imageUrls       String[]                  @default([]) @map("image_urls")
+  quotePostId     String?                   @map("quote_post_id")
+  quotePost       CommunityPost?            @relation("CommunityPostQuote", fields: [quotePostId], references: [id], onDelete: SetNull)
+  quotes          CommunityPost[]           @relation("CommunityPostQuote")
   impressionCount Int                       @default(0) @map("impression_count")
   commentCount    Int                       @default(0) @map("comment_count")
   isDeleted       Boolean                   @default(false) @map("is_deleted")
   deletedAt       DateTime?                 @map("deleted_at")
+  editedAt        DateTime?                 @map("edited_at")
   createdAt       DateTime                  @default(now()) @map("created_at")
   updatedAt       DateTime                  @updatedAt @map("updated_at")
   impressions     CommunityPostImpression[]
   reactions       CommunityPostReaction[]
+  comments        CommunityComment[]
+  reports         CommunityReport[]
 
   @@index([createdAt])
   @@index([isDeleted, createdAt])
   @@index([kind, createdAt])
   @@index([topic, createdAt])
   @@index([authorId, createdAt])
+  @@index([quotePostId])
   @@map("community_posts")
+}
+
+/// Top-level comments on a post, or replies when `parentId` points at a top-level comment.
+model CommunityComment {
+  id        String                    @id @default(cuid())
+  postId    String                    @map("post_id")
+  post      CommunityPost             @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorId  String                    @map("author_id")
+  author    User                      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parentId  String?                   @map("parent_id")
+  parent    CommunityComment?         @relation("CommentThread", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   CommunityComment[]        @relation("CommentThread")
+  body      String
+  isDeleted Boolean                   @default(false) @map("is_deleted")
+  deletedAt DateTime?                 @map("deleted_at")
+  editedAt  DateTime?                 @map("edited_at")
+  createdAt DateTime                  @default(now()) @map("created_at")
+  updatedAt DateTime                  @updatedAt @map("updated_at")
+  reactions CommunityCommentReaction[]
+  reports   CommunityReport[]
+
+  @@index([postId, createdAt])
+  @@index([parentId, createdAt])
+  @@index([authorId, createdAt])
+  @@map("community_comments")
+}
+
+/// Moderation reports for posts or comments. One report per reporter per target.
+model CommunityReport {
+  id         String           @id @default(cuid())
+  reporterId String           @map("reporter_id")
+  reporter   User             @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+  postId     String?          @map("post_id")
+  post       CommunityPost?   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  commentId  String?          @map("comment_id")
+  comment    CommunityComment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  reason     String
+  details    String?
+  status     String           @default("pending")
+  createdAt  DateTime         @default(now()) @map("created_at")
+  updatedAt  DateTime         @updatedAt @map("updated_at")
+
+  @@unique([reporterId, postId])
+  @@unique([reporterId, commentId])
+  @@index([status, createdAt])
+  @@index([postId])
+  @@index([commentId])
+  @@map("community_reports")
+}
+
+/// One reaction per user per comment. Same emoji vocabulary as posts.
+model CommunityCommentReaction {
+  id        String           @id @default(cuid())
+  commentId String           @map("comment_id")
+  comment   CommunityComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  userId    String           @map("user_id")
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emoji     String
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime         @updatedAt @map("updated_at")
+
+  @@unique([commentId, userId])
+  @@index([commentId, emoji])
+  @@index([userId])
+  @@map("community_comment_reactions")
 }
 
 /// Unique viewer per post. Drives `CommunityPost.impressionCount`.
