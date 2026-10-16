@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   COMMUNITY_KINDS,
   COMMUNITY_KIND_LABELS,
   COMMUNITY_LIMITS,
+  COMMUNITY_POST_CREATE_POINTS,
   COMMUNITY_TOPICS,
   COMMUNITY_TOPIC_LABELS,
   type CommunityKind,
@@ -15,7 +17,11 @@ import {
   ComposePostDialog,
   type ComposePostDraft,
 } from "@/components/community/compose-post-dialog";
+import { EditPostDialog } from "@/components/community/edit-post-dialog";
+import { QuotePostDialog, type QuotePostDraft } from "@/components/community/quote-post-dialog";
+import { ReportDialog } from "@/components/community/report-dialog";
 import { SponsoredPanel } from "@/components/community/sponsored-panel";
+import { useAppUserActions } from "@/components/app/app-user-context";
 import { useToast } from "@/components/app/toast";
 import { Icon } from "@/components/ui/icon";
 import { errorMessage } from "@/lib/api-client";
@@ -46,7 +52,9 @@ export function CommunityFeed({
   initialCatalog: CommunityCatalog | null;
   initialSpotlight?: SpotlightLearner[];
 }) {
+  const router = useRouter();
   const { pushToast, dismissToast } = useToast();
+  const { refreshUser } = useAppUserActions();
   const [filters, setFilters] = useState<CommunityFilters>(initialFilters);
   const [catalog, setCatalog] = useState<CommunityCatalog | null>(initialCatalog);
   const [posts, setPosts] = useState<CommunityPostItem[]>(initialCatalog?.posts ?? []);
@@ -58,6 +66,9 @@ export function CommunityFeed({
   );
   const [composeOpen, setComposeOpen] = useState(false);
   const [composeKind, setComposeKind] = useState<CommunityKind>("question");
+  const [quoteTarget, setQuoteTarget] = useState<CommunityPostItem | null>(null);
+  const [editTarget, setEditTarget] = useState<CommunityPostItem | null>(null);
+  const [reportTarget, setReportTarget] = useState<CommunityPostItem | null>(null);
   const loadedKey = useRef(communityQueryString(initialFilters));
   const loadMoreLock = useRef(false);
   const postQueue = useRef<Promise<void>>(Promise.resolve());
@@ -205,18 +216,51 @@ export function CommunityFeed({
           });
           dismissToast(creatingId);
           insertPost(post);
-          pushToast("Your post is live", {
+          void refreshUser();
+          pushToast(`Your post is live · +${COMMUNITY_POST_CREATE_POINTS} pts`, {
             tone: "success",
             durationMs: 7000,
             action: {
               label: "Show",
-              // Detail route comes later; keep the action visible for now.
-              onClick: () => undefined,
+              onClick: () => router.push(`/community/${post.slug}`),
             },
           });
         } catch (err) {
           dismissToast(creatingId);
           pushToast(errorMessage(err, "Could not publish this post"), "error");
+        }
+      });
+  }
+
+  function queueQuote(draft: QuotePostDraft) {
+    setQuoteTarget(null);
+    const creatingId = pushToast("Creating quote…", { tone: "info", sticky: true });
+
+    postQueue.current = postQueue.current
+      .catch(() => undefined)
+      .then(async () => {
+        try {
+          const { post } = await createCommunityPost({
+            kind: "discussion",
+            topic: "general",
+            title: draft.title,
+            body: draft.body,
+            quotePostId: draft.quotePostId,
+          });
+          dismissToast(creatingId);
+          insertPost(post);
+          void refreshUser();
+          pushToast(`Quote published · +${COMMUNITY_POST_CREATE_POINTS} pts`, {
+            tone: "success",
+            durationMs: 7000,
+            action: {
+              label: "Show",
+              onClick: () => router.push(`/community/${post.slug}`),
+            },
+          });
+        } catch (err) {
+          dismissToast(creatingId);
+          pushToast(errorMessage(err, "Could not publish quote"), "error");
         }
       });
   }
@@ -287,7 +331,7 @@ export function CommunityFeed({
         </div>
       </section>
 
-      <div className="mx-auto w-full max-w-7xl px-5 py-6 sm:px-8 sm:py-8">
+      <div className="mx-auto w-full max-w-7xl px-4 py-4 sm:px-8 sm:py-8">
         <div className="overflow-x-auto rounded-2xl border border-border bg-surface">
           <div className="flex w-max min-w-full items-center gap-2 p-3 lg:w-auto lg:min-w-0">
             <button
@@ -462,6 +506,9 @@ export function CommunityFeed({
                         post={post}
                         onPatch={(patch) => patchPost(post.id, patch)}
                         onDeleted={removePost}
+                        onQuote={setQuoteTarget}
+                        onEdit={setEditTarget}
+                        onReport={setReportTarget}
                       />
                       {showMobileAd && index === MOBILE_AD_AFTER - 1 ? (
                         <div className="lg:hidden">
@@ -514,6 +561,27 @@ export function CommunityFeed({
         initialKind={composeKind}
         onClose={() => setComposeOpen(false)}
         onQueue={queuePost}
+      />
+      <QuotePostDialog
+        open={quoteTarget !== null}
+        post={quoteTarget}
+        onClose={() => setQuoteTarget(null)}
+        onQueue={queueQuote}
+      />
+      <EditPostDialog
+        open={editTarget !== null}
+        post={editTarget}
+        onClose={() => setEditTarget(null)}
+        onSaved={(next) => patchPost(next.id, next)}
+      />
+      <ReportDialog
+        open={reportTarget !== null}
+        target={
+          reportTarget
+            ? { type: "post", id: reportTarget.id, label: reportTarget.title }
+            : null
+        }
+        onClose={() => setReportTarget(null)}
       />
     </div>
   );

@@ -1,13 +1,33 @@
 import type {
   CommunityKind,
   CommunityReactionEmoji,
+  CommunityReportReason,
   CommunityScope,
   CommunityTopic,
 } from "@coddle/shared";
 import { apiRequest } from "@/lib/api-client";
 
+export type CommunityAuthor = {
+  id: string;
+  name: string;
+  avatarUrl: string | null;
+};
+
+export type QuotedPostSummary = {
+  id: string;
+  slug: string;
+  kind: CommunityKind | string;
+  title: string;
+  body: string;
+  imageUrls: string[];
+  createdAt: string;
+  isDeleted: boolean;
+  author: CommunityAuthor;
+};
+
 export type CommunityPostItem = {
   id: string;
+  slug: string;
   kind: CommunityKind | string;
   topic: CommunityTopic | string;
   relatedSlug: string | null;
@@ -16,14 +36,74 @@ export type CommunityPostItem = {
   title: string;
   body: string;
   imageUrls: string[];
+  quotePostId: string | null;
+  quotedPost: QuotedPostSummary | null;
   impressionCount: number;
   commentCount: number;
   reactionCounts: Record<CommunityReactionEmoji, number>;
   myReaction: CommunityReactionEmoji | null;
   createdAt: string;
   updatedAt: string;
-  author: { id: string; name: string; avatarUrl: string | null };
+  editedAt: string | null;
+  isEdited: boolean;
+  author: CommunityAuthor;
   isMine: boolean;
+};
+
+/** Canonical public path for a community post. */
+export function communityPostPath(post: { slug: string }) {
+  return `/community/${encodeURIComponent(post.slug)}`;
+}
+
+/** Reactions list for a community post. */
+export function communityPostReactionsPath(post: { slug: string }) {
+  return `${communityPostPath(post)}/reactions`;
+}
+
+export type CommunityPostReactionItem = {
+  id: string;
+  emoji: CommunityReactionEmoji;
+  createdAt: string;
+  user: CommunityAuthor;
+};
+
+export type CommunityPostQuoteItem = {
+  id: string;
+  slug: string;
+  title: string;
+  body: string;
+  createdAt: string;
+  author: CommunityAuthor;
+};
+
+export type CommunityPostReactions = {
+  post: { id: string; slug: string; title: string };
+  reactions: CommunityPostReactionItem[];
+  reactionCounts: Record<CommunityReactionEmoji, number>;
+  total: number;
+  quotes: CommunityPostQuoteItem[];
+  quoteCount: number;
+};
+
+export type CommunityCommentItem = {
+  id: string;
+  postId: string;
+  parentId: string | null;
+  body: string;
+  createdAt: string;
+  updatedAt: string;
+  editedAt: string | null;
+  isEdited: boolean;
+  author: CommunityAuthor;
+  isMine: boolean;
+  reactionCounts: Record<CommunityReactionEmoji, number>;
+  myReaction: CommunityReactionEmoji | null;
+  replies: CommunityCommentItem[];
+};
+
+export type CommunityPostDetail = {
+  post: CommunityPostItem;
+  comments: CommunityCommentItem[];
 };
 
 export type CommunityCatalog = {
@@ -86,6 +166,19 @@ export function fetchCommunity(filters: CommunityFilters, page = 1, signal?: Abo
   return apiRequest<CommunityCatalog>(`/community${query ? `?${query}` : ""}`, { signal });
 }
 
+export function fetchCommunityPost(postId: string, signal?: AbortSignal) {
+  return apiRequest<CommunityPostDetail>(`/community/${encodeURIComponent(postId)}`, {
+    signal,
+  });
+}
+
+export function fetchCommunityPostReactions(postRef: string, signal?: AbortSignal) {
+  return apiRequest<CommunityPostReactions>(
+    `/community/${encodeURIComponent(postRef)}/reactions`,
+    { signal },
+  );
+}
+
 export function fetchRelatedOptions(
   topic: Exclude<CommunityTopic, "general">,
   q = "",
@@ -107,6 +200,7 @@ export function createCommunityPost(input: {
   title: string;
   body: string;
   images?: File[];
+  quotePostId?: string;
 }) {
   const form = new FormData();
   form.append("kind", input.kind);
@@ -114,6 +208,7 @@ export function createCommunityPost(input: {
   form.append("title", input.title);
   form.append("body", input.body);
   if (input.relatedSlug) form.append("relatedSlug", input.relatedSlug);
+  if (input.quotePostId) form.append("quotePostId", input.quotePostId);
   for (const image of input.images ?? []) {
     form.append("images", image);
   }
@@ -129,6 +224,65 @@ export function deleteCommunityPost(postId: string) {
   });
 }
 
+export function updateCommunityPost(
+  postId: string,
+  input: {
+    title: string;
+    body: string;
+    topic: CommunityTopic;
+    relatedSlug?: string | null;
+  },
+) {
+  return apiRequest<{ post: CommunityPostItem }>(
+    `/community/${encodeURIComponent(postId)}`,
+    { method: "PATCH", json: input },
+  );
+}
+
+export function reportCommunityPost(
+  postId: string,
+  input: { reason: CommunityReportReason; details?: string },
+) {
+  return apiRequest<{ ok: true }>(`/community/${encodeURIComponent(postId)}/reports`, {
+    method: "POST",
+    json: input,
+  });
+}
+
+export function reportCommunityComment(
+  commentId: string,
+  input: { reason: CommunityReportReason; details?: string },
+) {
+  return apiRequest<{ ok: true }>(
+    `/community/comments/${encodeURIComponent(commentId)}/reports`,
+    { method: "POST", json: input },
+  );
+}
+
+export function createCommunityComment(
+  postId: string,
+  input: { body: string; parentId?: string },
+) {
+  return apiRequest<{ comment: CommunityCommentItem; commentCount: number }>(
+    `/community/${encodeURIComponent(postId)}/comments`,
+    { method: "POST", json: input },
+  );
+}
+
+export function updateCommunityComment(commentId: string, input: { body: string }) {
+  return apiRequest<{ comment: CommunityCommentItem }>(
+    `/community/comments/${encodeURIComponent(commentId)}`,
+    { method: "PATCH", json: input },
+  );
+}
+
+export function deleteCommunityComment(commentId: string) {
+  return apiRequest<{ ok: true; commentCount: number }>(
+    `/community/comments/${encodeURIComponent(commentId)}`,
+    { method: "DELETE" },
+  );
+}
+
 export function recordCommunityImpression(postId: string) {
   return apiRequest<{ impressionCount: number; recorded: boolean }>(
     `/community/${encodeURIComponent(postId)}/impressions`,
@@ -141,6 +295,16 @@ export function setCommunityReaction(postId: string, emoji: CommunityReactionEmo
     reactionCounts: Record<CommunityReactionEmoji, number>;
     myReaction: CommunityReactionEmoji | null;
   }>(`/community/${encodeURIComponent(postId)}/reactions`, {
+    method: "PUT",
+    json: { emoji },
+  });
+}
+
+export function setCommunityCommentReaction(commentId: string, emoji: CommunityReactionEmoji) {
+  return apiRequest<{
+    reactionCounts: Record<CommunityReactionEmoji, number>;
+    myReaction: CommunityReactionEmoji | null;
+  }>(`/community/comments/${encodeURIComponent(commentId)}/reactions`, {
     method: "PUT",
     json: { emoji },
   });
