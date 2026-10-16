@@ -10,12 +10,16 @@ import {
   type CommunityReactionEmoji,
   type CommunityTopic,
 } from "@coddle/shared";
+import { QuotedPostEmbed } from "@/components/community/quoted-post-embed";
 import { ProfileAvatar } from "@/components/onboarding/profile-avatar";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Icon, type IconName } from "@/components/ui/icon";
 import { Menu, type MenuItem } from "@/components/ui/menu";
 import { useToast } from "@/components/app/toast";
 import { errorMessage } from "@/lib/api-client";
 import {
+  communityPostPath,
+  communityPostReactionsPath,
   deleteCommunityPost,
   recordCommunityImpression,
   setCommunityReaction,
@@ -27,6 +31,14 @@ const KIND_ICONS: Record<CommunityKind, IconName> = {
   question: "question",
   discussion: "users",
   project_share: "layers",
+};
+
+const KIND_TAG_CLASS: Record<CommunityKind, string> = {
+  question: "border-sky-200 bg-sky-50 text-sky-800 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-300",
+  discussion:
+    "border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300",
+  project_share:
+    "border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300",
 };
 
 const LONG_PRESS_MS = 420;
@@ -47,6 +59,12 @@ function kindIcon(kind: string): IconName {
   return kind in KIND_ICONS ? KIND_ICONS[kind as CommunityKind] : "users";
 }
 
+function kindTagClass(kind: string) {
+  return kind in KIND_TAG_CLASS
+    ? KIND_TAG_CLASS[kind as CommunityKind]
+    : "border-border bg-surface-subtle text-ink-muted";
+}
+
 function emptyReactionCounts(): Record<CommunityReactionEmoji, number> {
   return Object.fromEntries(COMMUNITY_REACTION_EMOJIS.map((emoji) => [emoji, 0])) as Record<
     CommunityReactionEmoji,
@@ -58,10 +76,19 @@ export function CommunityPostCard({
   post,
   onPatch,
   onDeleted,
+  onQuote,
+  onEdit,
+  onReport,
+  detail = false,
 }: {
   post: CommunityPostItem;
   onPatch?: (patch: Partial<CommunityPostItem>) => void;
   onDeleted?: (postId: string) => void;
+  onQuote?: (post: CommunityPostItem) => void;
+  onEdit?: (post: CommunityPostItem) => void;
+  onReport?: (post: CommunityPostItem) => void;
+  /** When true, skip feed-only chrome (impressions still record once). */
+  detail?: boolean;
 }) {
   const { pushToast } = useToast();
   const rootRef = useRef<HTMLElement>(null);
@@ -70,7 +97,7 @@ export function CommunityPostCard({
   const closePickerTimer = useRef<number | null>(null);
   const impressed = useRef(false);
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [pendingEmoji, setPendingEmoji] = useState<CommunityReactionEmoji | null>(null);
   const [reactionError, setReactionError] = useState<string | null>(null);
   const images = post.imageUrls?.slice(0, 2) ?? [];
@@ -184,7 +211,7 @@ export function CommunityPostCard({
   }
 
   async function copyLink() {
-    const url = `${window.location.origin}/community?post=${encodeURIComponent(post.id)}`;
+    const url = `${window.location.origin}${communityPostPath(post)}`;
     try {
       await navigator.clipboard.writeText(url);
       pushToast("Link copied", "success");
@@ -194,35 +221,37 @@ export function CommunityPostCard({
   }
 
   async function removePost() {
-    if (!post.isMine || deleting) return;
-    setDeleting(true);
-    try {
-      await deleteCommunityPost(post.id);
-      onDeleted?.(post.id);
-      pushToast("Post deleted", "success");
-    } catch (err) {
-      pushToast(errorMessage(err, "Could not delete this post"), "error");
-    } finally {
-      setDeleting(false);
-    }
+    if (!post.isMine) return;
+    await deleteCommunityPost(post.slug);
+    onDeleted?.(post.id);
+    setConfirmDelete(false);
+    pushToast("Post deleted", "success");
   }
 
   return (
     <article
       ref={rootRef}
-      className="rounded-2xl border border-border bg-surface p-5 transition hover:border-border-strong sm:p-6"
+      className="rounded-2xl border border-border bg-surface p-4 transition hover:border-border-strong sm:p-6"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <ProfileAvatar name={post.author.name} avatarUrl={post.author.avatarUrl} size="sm" />
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-ink">{post.author.name}</p>
-            <p className="text-xs text-ink-muted">{timeAgo(post.createdAt)}</p>
+            <p className="text-xs text-ink-muted">
+              {timeAgo(post.createdAt)}
+              {post.isEdited ? <span className="ml-1.5 font-medium">· edited</span> : null}
+            </p>
           </div>
         </div>
         <div className="flex shrink-0 items-start gap-2">
           <div className="hidden flex-wrap items-center justify-end gap-2 sm:flex">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface-subtle px-2.5 py-1 text-xs font-semibold text-ink-muted">
+            <span
+              className={[
+                "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold",
+                kindTagClass(post.kind),
+              ].join(" ")}
+            >
               <Icon name={kindIcon(post.kind)} className="h-3.5 w-3.5" />
               {kindLabel(post.kind)}
             </span>
@@ -240,19 +269,45 @@ export function CommunityPostCard({
               [
                 { label: "Copy link", icon: "link", onSelect: () => void copyLink() },
                 {
-                  label: "Report",
-                  icon: "alert",
-                  onSelect: () => pushToast("Reporting comes soon", "info"),
+                  label: "View reactions & quotes",
+                  icon: "users",
+                  href: communityPostReactionsPath(post),
                 },
+                ...(onQuote
+                  ? ([
+                      {
+                        label: "Quote",
+                        icon: "quote",
+                        onSelect: () => onQuote(post),
+                      },
+                    ] satisfies MenuItem[])
+                  : []),
+                ...(post.isMine && onEdit
+                  ? ([
+                      {
+                        label: "Edit",
+                        icon: "pencil",
+                        onSelect: () => onEdit(post),
+                      },
+                    ] satisfies MenuItem[])
+                  : []),
+                ...(!post.isMine && onReport
+                  ? ([
+                      {
+                        label: "Report",
+                        icon: "alert",
+                        onSelect: () => onReport(post),
+                      },
+                    ] satisfies MenuItem[])
+                  : []),
                 ...(post.isMine
                   ? ([
                       "divider",
                       {
-                        label: deleting ? "Deleting…" : "Delete",
+                        label: "Delete",
                         icon: "trash",
                         tone: "danger",
-                        disabled: deleting,
-                        onSelect: () => void removePost(),
+                        onSelect: () => setConfirmDelete(true),
                       },
                     ] satisfies MenuItem[])
                   : []),
@@ -263,7 +318,12 @@ export function CommunityPostCard({
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2 sm:hidden">
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface-subtle px-2.5 py-1 text-xs font-semibold text-ink-muted">
+        <span
+          className={[
+            "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold",
+            kindTagClass(post.kind),
+          ].join(" ")}
+        >
           <Icon name={kindIcon(post.kind)} className="h-3.5 w-3.5" />
           {kindLabel(post.kind)}
         </span>
@@ -274,8 +334,29 @@ export function CommunityPostCard({
         ) : null}
       </div>
 
-      <h2 className="mt-4 font-display text-xl font-bold tracking-tight text-ink">{post.title}</h2>
-      <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-ink-muted">{post.body}</p>
+      {detail ? (
+        <h1 className="mt-4 font-display text-2xl font-bold tracking-tight text-ink sm:text-3xl">
+          {post.title}
+        </h1>
+      ) : (
+        <h2 className="mt-4 font-display text-xl font-bold tracking-tight text-ink">
+          <Link href={communityPostPath(post)} className="transition hover:text-brand">
+            {post.title}
+          </Link>
+        </h2>
+      )}
+      {detail ? (
+        <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-ink-muted">{post.body}</p>
+      ) : (
+        <Link
+          href={communityPostPath(post)}
+          className="mt-2 block whitespace-pre-wrap text-sm leading-relaxed text-ink-muted transition hover:text-ink"
+        >
+          {post.body}
+        </Link>
+      )}
+
+      {post.quotedPost ? <QuotedPostEmbed quoted={post.quotedPost} className="mt-4" /> : null}
 
       {images.length > 0 ? (
         <div
@@ -291,7 +372,11 @@ export function CommunityPostCard({
               key={url}
               src={url}
               alt=""
-              className="h-44 w-full rounded-xl object-cover ring-1 ring-border sm:h-52"
+              className={
+                images.length === 1
+                  ? "h-auto max-h-[min(70vh,40rem)] w-full rounded-xl bg-surface-subtle object-contain ring-1 ring-border"
+                  : "h-56 w-full rounded-xl object-cover ring-1 ring-border sm:h-72"
+              }
             />
           ))}
         </div>
@@ -396,20 +481,43 @@ export function CommunityPostCard({
           </button>
         </div>
 
-        <button
-          type="button"
-          disabled
-          title="Comments come tomorrow"
-          className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-xs font-semibold text-ink-muted opacity-80"
-        >
-          <Icon name="message" className="h-3.5 w-3.5" />
-          {pluralize(post.commentCount ?? 0, "comment")}
-        </button>
+        {detail ? (
+          <span className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-xs font-semibold text-ink-muted">
+            <Icon name="message" className="h-3.5 w-3.5" />
+            {pluralize(post.commentCount ?? 0, "comment")}
+          </span>
+        ) : (
+          <Link
+            href={communityPostPath(post)}
+            className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-xs font-semibold text-ink-muted transition hover:border-border-strong hover:text-ink"
+          >
+            <Icon name="message" className="h-3.5 w-3.5" />
+            {pluralize(post.commentCount ?? 0, "comment")}
+          </Link>
+        )}
       </div>
 
       {reactionError ? (
         <p className="mt-2 text-xs text-rose-600">{reactionError}</p>
       ) : null}
+
+      <ConfirmDialog
+        open={confirmDelete}
+        title="Delete this post?"
+        description="It will be removed from the community feed. You can't recover it later."
+        confirmLabel="Delete post"
+        pendingLabel="Deleting…"
+        tone="danger"
+        onClose={() => setConfirmDelete(false)}
+        onConfirm={async () => {
+          try {
+            await removePost();
+          } catch (err) {
+            pushToast(errorMessage(err, "Could not delete this post"), "error");
+            throw err;
+          }
+        }}
+      />
     </article>
   );
 }

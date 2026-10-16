@@ -524,6 +524,7 @@ async function seedCommunity() {
       where: { id: post.id },
       create: {
         id: post.id,
+        slug: post.slug,
         authorId: author.id,
         kind: post.kind,
         topic: post.topic,
@@ -534,6 +535,7 @@ async function seedCommunity() {
         imageUrls: post.imageUrls ? [...post.imageUrls] : [],
       },
       update: {
+        slug: post.slug,
         kind: post.kind,
         topic: post.topic,
         relatedSlug: post.relatedSlug ?? null,
@@ -541,6 +543,8 @@ async function seedCommunity() {
         title: post.title,
         body: post.body,
         imageUrls: post.imageUrls ? [...post.imageUrls] : [],
+        isDeleted: false,
+        deletedAt: null,
       },
     });
   }
