@@ -3,11 +3,16 @@ import {
   COMMUNITY_IMAGE_TYPES,
   COMMUNITY_KINDS,
   COMMUNITY_LIMITS,
+  COMMUNITY_POST_CREATE_POINT_REASON,
+  COMMUNITY_POST_CREATE_POINTS,
   COMMUNITY_REACTION_EMOJIS,
   COMMUNITY_SCOPES,
   isCommunityKind,
   isCommunityReactionEmoji,
+  isCommunityReportReason,
   isCommunityTopic,
+  slugify,
+  uniqueSlug,
   type CommunityKind,
   type CommunityReactionEmoji,
   type CommunityScope,
@@ -18,23 +23,49 @@ import { isR2Configured } from "../../config.js";
 import { AppError } from "../../shared/errors.js";
 import { imageExtension, uploadToR2 } from "../../shared/r2.js";
 import { prisma } from "../../shared/db.js";
+import { awardUserPoints } from "../points/points.repository.js";
 import {
   countCommunityPosts,
   countCommunityPostsByKind,
   countPostsSince,
+  communitySlugsLike,
+  createComment,
   createCommunityPost,
+  createReport,
+  deleteCommentReaction,
   deleteReaction,
+  findComment,
   findCommunityPost,
+  findCommunityPostByRef,
+  findMyCommentReaction,
   findMyReaction,
+  findReportByReporterAndComment,
+  findReportByReporterAndPost,
+  listCommentReactionCounts,
   listCommunityPosts,
+  listMyCommentReactions,
   listMyReactions,
+  listPostReactions,
+  listQuotesOfPost,
   listReactionCounts,
+  listRepliesForParents,
   listSpotlightLearners,
+  listTopLevelComments,
   recordImpression,
+  softDeleteCommentTree,
   softDeleteCommunityPost,
+  updateCommentBody,
+  updateCommunityPost,
+  upsertCommentReaction,
   upsertReaction,
+  type CommunityCommentRow,
   type CommunityPostRow,
 } from "./community.repository.js";
+
+async function allocatePostSlug(title: string, excludeId?: string) {
+  const base = slugify(title, "post");
+  return uniqueSlug(base, await communitySlugsLike(base, excludeId));
+}
 
 const SPOTLIGHT_TAKE = 5;
 
@@ -107,6 +138,25 @@ function emptyReactionCounts(): ReactionCounts {
   return Object.fromEntries(COMMUNITY_REACTION_EMOJIS.map((emoji) => [emoji, 0])) as ReactionCounts;
 }
 
+function quotedPostPayload(row: CommunityPostRow["quotePost"]) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    slug: row.slug,
+    kind: row.kind,
+    title: row.title,
+    body: row.body,
+    imageUrls: row.imageUrls.slice(0, 2),
+    createdAt: row.createdAt.toISOString(),
+    isDeleted: row.isDeleted,
+    author: {
+      id: row.author.id,
+      name: row.author.name,
+      avatarUrl: row.author.avatarUrl,
+    },
+  };
+}
+
 function postPayload(
   row: CommunityPostRow,
   userId: string,
@@ -120,6 +170,7 @@ function postPayload(
 ) {
   return {
     id: row.id,
+    slug: row.slug,
     kind: row.kind,
     topic: row.topic,
     relatedSlug: row.relatedSlug,
@@ -128,18 +179,71 @@ function postPayload(
     title: row.title,
     body: row.body,
     imageUrls: row.imageUrls,
+    quotePostId: row.quotePostId,
+    quotedPost: quotedPostPayload(row.quotePost),
     impressionCount: row.impressionCount,
     commentCount: row.commentCount,
     reactionCounts: engagement.reactionCounts,
     myReaction: engagement.myReaction,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
+    editedAt: row.editedAt?.toISOString() ?? null,
+    isEdited: Boolean(row.editedAt),
     author: {
       id: row.author.id,
       name: row.author.name,
       avatarUrl: row.author.avatarUrl,
     },
     isMine: row.authorId === userId,
+  };
+}
+
+type CommentPayload = {
+  id: string;
+  postId: string;
+  parentId: string | null;
+  body: string;
+  createdAt: string;
+  updatedAt: string;
+  editedAt: string | null;
+  isEdited: boolean;
+  author: { id: string; name: string; avatarUrl: string | null };
+  isMine: boolean;
+  reactionCounts: ReactionCounts;
+  myReaction: CommunityReactionEmoji | null;
+  replies: CommentPayload[];
+};
+
+function commentPayload(
+  row: CommunityCommentRow,
+  userId: string,
+  engagement: {
+    reactionCounts: ReactionCounts;
+    myReaction: CommunityReactionEmoji | null;
+  } = {
+    reactionCounts: emptyReactionCounts(),
+    myReaction: null,
+  },
+  replies: CommentPayload[] = [],
+): CommentPayload {
+  return {
+    id: row.id,
+    postId: row.postId,
+    parentId: row.parentId,
+    body: row.body,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+    editedAt: row.editedAt?.toISOString() ?? null,
+    isEdited: Boolean(row.editedAt),
+    author: {
+      id: row.author.id,
+      name: row.author.name,
+      avatarUrl: row.author.avatarUrl,
+    },
+    isMine: row.authorId === userId,
+    reactionCounts: engagement.reactionCounts,
+    myReaction: engagement.myReaction,
+    replies,
   };
 }
 
@@ -411,19 +515,29 @@ export async function createCommunityFeedPost(
     relatedSlug = body.relatedSlug.trim().slice(0, COMMUNITY_LIMITS.relatedSlugMax) || null;
   }
 
+  let quotePostId: string | null = null;
+  if (body.quotePostId !== undefined && body.quotePostId !== null && body.quotePostId !== "") {
+    if (typeof body.quotePostId !== "string") {
+      throw new AppError(400, "invalid_field", "Quote target must be a post id.", {
+        field: "quotePostId",
+      });
+    }
+    const quoted = await findCommunityPost(body.quotePostId.trim());
+    if (!quoted) {
+      throw new AppError(404, "quote_missing", "That post could not be quoted.");
+    }
+    quotePostId = quoted.id;
+  }
+
   const related = await resolveRelated(topicRaw, relatedSlug);
+  const bodyMin = quotePostId ? COMMUNITY_LIMITS.quoteBodyMin : COMMUNITY_LIMITS.bodyMin;
   const title = requireString(
     body.title,
     "Title",
     COMMUNITY_LIMITS.titleMin,
     COMMUNITY_LIMITS.titleMax,
   );
-  const postBody = requireString(
-    body.body,
-    "Body",
-    COMMUNITY_LIMITS.bodyMin,
-    COMMUNITY_LIMITS.bodyMax,
-  );
+  const postBody = requireString(body.body, "Body", bodyMin, COMMUNITY_LIMITS.bodyMax);
 
   if (files.length > COMMUNITY_LIMITS.imagesMax) {
     throw new AppError(
@@ -450,8 +564,10 @@ export async function createCommunityFeedPost(
     );
   }
 
+  const slug = await allocatePostSlug(title);
   const row = await createCommunityPost({
     authorId: userId,
+    slug,
     kind: body.kind,
     topic: topicRaw,
     relatedSlug: related.relatedSlug,
@@ -459,6 +575,15 @@ export async function createCommunityFeedPost(
     title,
     body: postBody,
     imageUrls,
+    quotePostId,
+  });
+
+  await awardUserPoints({
+    userId,
+    amount: COMMUNITY_POST_CREATE_POINTS,
+    reason: COMMUNITY_POST_CREATE_POINT_REASON,
+    refType: "community_post",
+    refId: row.id,
   });
 
   return { post: postPayload(row, userId) };
@@ -527,16 +652,430 @@ export async function uploadCommunityImage(
   return { url };
 }
 
-export async function deleteCommunityFeedPost(userId: string, postId: string) {
-  const deleted = await softDeleteCommunityPost(postId, userId);
+export async function deleteCommunityFeedPost(userId: string, postRef: string) {
+  const post = await findCommunityPostByRef(postRef);
+  if (!post || post.authorId !== userId) {
+    throw new AppError(404, "post_missing", "That post could not be found.");
+  }
+  const deleted = await softDeleteCommunityPost(post.id, userId);
   if (!deleted) {
     throw new AppError(404, "post_missing", "That post could not be found.");
   }
   return { ok: true as const };
 }
 
+export async function updateCommunityFeedPost(
+  userId: string,
+  postRef: string,
+  input: unknown,
+) {
+  const existing = await findCommunityPostByRef(postRef);
+  if (!existing || existing.authorId !== userId) {
+    throw new AppError(404, "post_missing", "That post could not be found.");
+  }
+  if (!input || typeof input !== "object") {
+    throw new AppError(400, "invalid_body", "Post details were missing.");
+  }
+  const body = input as Record<string, unknown>;
+
+  const topicRaw = body.topic ?? existing.topic;
+  if (!isCommunityTopic(topicRaw)) {
+    throw new AppError(400, "invalid_field", "Choose a topic.", { field: "topic" });
+  }
+
+  let relatedSlug: string | null = null;
+  if (body.relatedSlug !== undefined && body.relatedSlug !== null && body.relatedSlug !== "") {
+    if (typeof body.relatedSlug !== "string") {
+      throw new AppError(400, "invalid_field", "Related item must be a slug.", {
+        field: "relatedSlug",
+      });
+    }
+    relatedSlug = body.relatedSlug.trim().slice(0, COMMUNITY_LIMITS.relatedSlugMax) || null;
+  } else if (body.relatedSlug === null || body.relatedSlug === "") {
+    relatedSlug = null;
+  } else {
+    relatedSlug = existing.relatedSlug;
+  }
+
+  const related = await resolveRelated(topicRaw, relatedSlug);
+  const bodyMin = existing.quotePostId
+    ? COMMUNITY_LIMITS.quoteBodyMin
+    : COMMUNITY_LIMITS.bodyMin;
+  const title = requireString(
+    body.title ?? existing.title,
+    "Title",
+    COMMUNITY_LIMITS.titleMin,
+    COMMUNITY_LIMITS.titleMax,
+  );
+  const postBody = requireString(
+    body.body ?? existing.body,
+    "Body",
+    bodyMin,
+    COMMUNITY_LIMITS.bodyMax,
+  );
+
+  // Slug is coined at create time and stays stable so shared URLs keep working.
+  const row = await updateCommunityPost(existing.id, userId, {
+    slug: existing.slug,
+    title,
+    body: postBody,
+    topic: topicRaw,
+    relatedSlug: related.relatedSlug,
+    relatedTitle: related.relatedTitle,
+    editedAt: new Date(),
+  });
+  if (!row) {
+    throw new AppError(404, "post_missing", "That post could not be found.");
+  }
+
+  const { countsByPost, mineByPost } = await engagementForPosts(userId, [row.id]);
+  return {
+    post: postPayload(row, userId, {
+      reactionCounts: countsByPost.get(row.id) ?? emptyReactionCounts(),
+      myReaction: mineByPost.get(row.id) ?? null,
+    }),
+  };
+}
+
+function parseReportInput(input: unknown) {
+  if (!input || typeof input !== "object") {
+    throw new AppError(400, "invalid_body", "Report details were missing.");
+  }
+  const body = input as Record<string, unknown>;
+  if (!isCommunityReportReason(body.reason)) {
+    throw new AppError(400, "invalid_field", "Choose a report reason.", { field: "reason" });
+  }
+  let details: string | null = null;
+  if (body.details !== undefined && body.details !== null && body.details !== "") {
+    if (typeof body.details !== "string") {
+      throw new AppError(400, "invalid_field", "Details must be text.", { field: "details" });
+    }
+    details = body.details.trim().slice(0, COMMUNITY_LIMITS.reportDetailsMax) || null;
+  }
+  if (body.reason === "other" && !details) {
+    throw new AppError(400, "invalid_field", "Add a short note for “Something else”.", {
+      field: "details",
+    });
+  }
+  return { reason: body.reason, details };
+}
+
+export async function reportCommunityPost(userId: string, postId: string, input: unknown) {
+  const post = await findCommunityPostByRef(postId);
+  if (!post) {
+    throw new AppError(404, "post_missing", "That post could not be found.");
+  }
+  if (post.authorId === userId) {
+    throw new AppError(400, "invalid_report", "You cannot report your own post.");
+  }
+  const existing = await findReportByReporterAndPost(userId, post.id);
+  if (existing) {
+    throw new AppError(409, "already_reported", "You already reported this post.");
+  }
+  const { reason, details } = parseReportInput(input);
+  await createReport({
+    reporterId: userId,
+    postId: post.id,
+    commentId: null,
+    reason,
+    details,
+  });
+  return { ok: true as const };
+}
+
+export async function reportCommunityComment(
+  userId: string,
+  commentId: string,
+  input: unknown,
+) {
+  const comment = await findComment(commentId);
+  if (!comment) {
+    throw new AppError(404, "comment_missing", "That comment could not be found.");
+  }
+  if (comment.authorId === userId) {
+    throw new AppError(400, "invalid_report", "You cannot report your own comment.");
+  }
+  const existing = await findReportByReporterAndComment(userId, comment.id);
+  if (existing) {
+    throw new AppError(409, "already_reported", "You already reported this comment.");
+  }
+  const { reason, details } = parseReportInput(input);
+  await createReport({
+    reporterId: userId,
+    postId: null,
+    commentId: comment.id,
+    reason,
+    details,
+  });
+  return { ok: true as const };
+}
+
+async function engagementForComments(userId: string, commentIds: string[]) {
+  const [counts, mine] = await Promise.all([
+    listCommentReactionCounts(commentIds),
+    listMyCommentReactions(userId, commentIds),
+  ]);
+  const countsByComment = new Map<string, ReactionCounts>();
+  for (const id of commentIds) countsByComment.set(id, emptyReactionCounts());
+  for (const row of counts) {
+    if (!isCommunityReactionEmoji(row.emoji)) continue;
+    const bucket = countsByComment.get(row.commentId) ?? emptyReactionCounts();
+    bucket[row.emoji] = row._count._all;
+    countsByComment.set(row.commentId, bucket);
+  }
+  const mineByComment = new Map<string, CommunityReactionEmoji>();
+  for (const row of mine) {
+    if (isCommunityReactionEmoji(row.emoji)) mineByComment.set(row.commentId, row.emoji);
+  }
+  return { countsByComment, mineByComment };
+}
+
+async function loadCommentThread(userId: string, postId: string) {
+  const tops = await listTopLevelComments(postId, COMMUNITY_LIMITS.commentsPageSize);
+  const replies = await listRepliesForParents(tops.map((row) => row.id));
+  const allIds = [...tops.map((row) => row.id), ...replies.map((row) => row.id)];
+  const { countsByComment, mineByComment } = await engagementForComments(userId, allIds);
+
+  const repliesByParent = new Map<string, CommunityCommentRow[]>();
+  for (const reply of replies) {
+    if (!reply.parentId) continue;
+    const list = repliesByParent.get(reply.parentId) ?? [];
+    list.push(reply);
+    repliesByParent.set(reply.parentId, list);
+  }
+
+  return tops.map((top) =>
+    commentPayload(
+      top,
+      userId,
+      {
+        reactionCounts: countsByComment.get(top.id) ?? emptyReactionCounts(),
+        myReaction: mineByComment.get(top.id) ?? null,
+      },
+      (repliesByParent.get(top.id) ?? []).map((reply) =>
+        commentPayload(reply, userId, {
+          reactionCounts: countsByComment.get(reply.id) ?? emptyReactionCounts(),
+          myReaction: mineByComment.get(reply.id) ?? null,
+        }),
+      ),
+    ),
+  );
+}
+
+export async function getCommunityPostDetail(userId: string, postId: string) {
+  const post = await findCommunityPostByRef(postId);
+  if (!post) {
+    throw new AppError(404, "post_missing", "That post could not be found.");
+  }
+  const [{ countsByPost, mineByPost }, comments] = await Promise.all([
+    engagementForPosts(userId, [post.id]),
+    loadCommentThread(userId, post.id),
+  ]);
+  return {
+    post: postPayload(post, userId, {
+      reactionCounts: countsByPost.get(post.id) ?? emptyReactionCounts(),
+      myReaction: mineByPost.get(post.id) ?? null,
+    }),
+    comments,
+  };
+}
+
+export async function getCommunityPostReactions(_userId: string, postRef: string) {
+  const post = await findCommunityPostByRef(postRef);
+  if (!post) {
+    throw new AppError(404, "post_missing", "That post could not be found.");
+  }
+
+  const [rows, quoteRows] = await Promise.all([
+    listPostReactions(post.id),
+    listQuotesOfPost(post.id),
+  ]);
+  const reactionCounts = emptyReactionCounts();
+  const reactions = [];
+  for (const row of rows) {
+    if (!isCommunityReactionEmoji(row.emoji)) continue;
+    reactionCounts[row.emoji] += 1;
+    reactions.push({
+      id: row.id,
+      emoji: row.emoji,
+      createdAt: row.createdAt.toISOString(),
+      user: {
+        id: row.user.id,
+        name: row.user.name,
+        avatarUrl: row.user.avatarUrl,
+      },
+    });
+  }
+
+  const quotes = quoteRows.map((row) => ({
+    id: row.id,
+    slug: row.slug,
+    title: row.title,
+    body: row.body,
+    createdAt: row.createdAt.toISOString(),
+    author: {
+      id: row.author.id,
+      name: row.author.name,
+      avatarUrl: row.author.avatarUrl,
+    },
+  }));
+
+  return {
+    post: {
+      id: post.id,
+      slug: post.slug,
+      title: post.title,
+    },
+    reactions,
+    reactionCounts,
+    total: reactions.length,
+    quotes,
+    quoteCount: quotes.length,
+  };
+}
+
+export async function createCommunityComment(
+  userId: string,
+  postId: string,
+  input: unknown,
+) {
+  const post = await findCommunityPostByRef(postId);
+  if (!post) {
+    throw new AppError(404, "post_missing", "That post could not be found.");
+  }
+  if (!input || typeof input !== "object") {
+    throw new AppError(400, "invalid_body", "Comment details were missing.");
+  }
+  const body = input as Record<string, unknown>;
+  const text = requireString(
+    body.body,
+    "Comment",
+    COMMUNITY_LIMITS.commentBodyMin,
+    COMMUNITY_LIMITS.commentBodyMax,
+  );
+
+  let parentId: string | null = null;
+  if (body.parentId !== undefined && body.parentId !== null && body.parentId !== "") {
+    if (typeof body.parentId !== "string") {
+      throw new AppError(400, "invalid_field", "Reply target must be a comment id.", {
+        field: "parentId",
+      });
+    }
+    const parent = await findComment(body.parentId.trim());
+    if (!parent || parent.postId !== post.id) {
+      throw new AppError(404, "comment_missing", "That comment could not be found.");
+    }
+    if (parent.parentId) {
+      throw new AppError(
+        400,
+        "invalid_field",
+        "Replies are limited to one level under a comment.",
+        { field: "parentId" },
+      );
+    }
+    parentId = parent.id;
+  }
+
+  const row = await createComment({
+    postId: post.id,
+    authorId: userId,
+    parentId,
+    body: text,
+  });
+
+  return {
+    comment: commentPayload(row, userId),
+    commentCount: post.commentCount + 1,
+  };
+}
+
+export async function updateCommunityComment(
+  userId: string,
+  commentId: string,
+  input: unknown,
+) {
+  const existing = await findComment(commentId);
+  if (!existing || existing.authorId !== userId) {
+    throw new AppError(404, "comment_missing", "That comment could not be found.");
+  }
+  if (!input || typeof input !== "object") {
+    throw new AppError(400, "invalid_body", "Comment details were missing.");
+  }
+  const text = requireString(
+    (input as Record<string, unknown>).body,
+    "Comment",
+    COMMUNITY_LIMITS.commentBodyMin,
+    COMMUNITY_LIMITS.commentBodyMax,
+  );
+  const row = await updateCommentBody(commentId, userId, text);
+  if (!row) {
+    throw new AppError(404, "comment_missing", "That comment could not be found.");
+  }
+  const { countsByComment, mineByComment } = await engagementForComments(userId, [row.id]);
+  return {
+    comment: commentPayload(row, userId, {
+      reactionCounts: countsByComment.get(row.id) ?? emptyReactionCounts(),
+      myReaction: mineByComment.get(row.id) ?? null,
+    }),
+  };
+}
+
+export async function deleteCommunityComment(userId: string, commentId: string) {
+  const result = await softDeleteCommentTree(commentId, userId);
+  if (!result) {
+    throw new AppError(404, "comment_missing", "That comment could not be found.");
+  }
+  const post = await findCommunityPost(result.postId);
+  return {
+    ok: true as const,
+    commentCount: post?.commentCount ?? 0,
+  };
+}
+
+async function commentReactionSnapshot(commentId: string, userId: string) {
+  const [counts, mine] = await Promise.all([
+    listCommentReactionCounts([commentId]),
+    findMyCommentReaction(commentId, userId),
+  ]);
+  const reactionCounts = emptyReactionCounts();
+  for (const row of counts) {
+    if (isCommunityReactionEmoji(row.emoji)) reactionCounts[row.emoji] = row._count._all;
+  }
+  return {
+    reactionCounts,
+    myReaction: mine && isCommunityReactionEmoji(mine.emoji) ? mine.emoji : null,
+  };
+}
+
+export async function setCommunityCommentReaction(
+  userId: string,
+  commentId: string,
+  input: unknown,
+) {
+  const comment = await findComment(commentId);
+  if (!comment) {
+    throw new AppError(404, "comment_missing", "That comment could not be found.");
+  }
+  if (!input || typeof input !== "object") {
+    throw new AppError(400, "invalid_body", "Reaction details were missing.");
+  }
+  const emoji = (input as Record<string, unknown>).emoji;
+  if (!isCommunityReactionEmoji(emoji)) {
+    throw new AppError(400, "invalid_field", "Pick a valid reaction.", { field: "emoji" });
+  }
+
+  const existing = await findMyCommentReaction(commentId, userId);
+  if (existing?.emoji === emoji) {
+    await deleteCommentReaction(commentId, userId);
+  } else {
+    await upsertCommentReaction(commentId, userId, emoji);
+  }
+
+  return commentReactionSnapshot(commentId, userId);
+}
+
 export async function recordCommunityImpression(userId: string, postId: string) {
-  const post = await findCommunityPost(postId);
+  const post = await findCommunityPostByRef(postId);
   if (!post) {
     throw new AppError(404, "post_missing", "That post could not be found.");
   }
@@ -561,7 +1100,7 @@ async function reactionSnapshot(postId: string, userId: string) {
 }
 
 export async function setCommunityReaction(userId: string, postId: string, input: unknown) {
-  const post = await findCommunityPost(postId);
+  const post = await findCommunityPostByRef(postId);
   if (!post) {
     throw new AppError(404, "post_missing", "That post could not be found.");
   }
