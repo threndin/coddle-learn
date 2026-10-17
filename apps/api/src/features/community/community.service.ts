@@ -463,13 +463,11 @@ function buildSearchPostWhere(filters: SearchFilters): Prisma.CommunityPostWhere
 }
 
 function buildSearchPeopleWhere(
-  viewerId: string,
+  _viewerId: string,
   filters: SearchFilters,
 ): Prisma.UserWhereInput {
-  const and: Prisma.UserWhereInput[] = [
-    { id: { not: viewerId } },
-    { onboardingCompletedAt: { not: null } },
-  ];
+  // Include the viewer so searching your own name returns your profile too.
+  const and: Prisma.UserWhereInput[] = [{ onboardingCompletedAt: { not: null } }];
   if (filters.experienceLevel) and.push({ experienceLevel: filters.experienceLevel });
 
   const terms = searchTerms(filters.q);
