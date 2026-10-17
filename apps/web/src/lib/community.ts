@@ -1,9 +1,14 @@
 import type {
   CommunityKind,
+  CommunityPeopleSort,
   CommunityReactionEmoji,
   CommunityReportReason,
   CommunityScope,
+  CommunitySearchType,
+  CommunitySearchWhen,
+  CommunitySort,
   CommunityTopic,
+  ExperienceLevel,
 } from "@coddle/shared";
 import { apiRequest } from "@/lib/api-client";
 
@@ -53,6 +58,34 @@ export type CommunityPostItem = {
 /** Canonical public path for a community post. */
 export function communityPostPath(post: { slug: string }) {
   return `/community/${encodeURIComponent(post.slug)}`;
+}
+
+/** Remember last search URL so post detail can return with filters intact. */
+export const COMMUNITY_SEARCH_RETURN_KEY = "coddle:community-search-return";
+
+export function rememberCommunitySearchReturn(href: string) {
+  try {
+    sessionStorage.setItem(COMMUNITY_SEARCH_RETURN_KEY, href);
+  } catch {
+    // Private mode / blocked storage — ignore.
+  }
+}
+
+export function clearCommunitySearchReturn() {
+  try {
+    sessionStorage.removeItem(COMMUNITY_SEARCH_RETURN_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+export function peekCommunitySearchReturn(): string | null {
+  try {
+    const value = sessionStorage.getItem(COMMUNITY_SEARCH_RETURN_KEY);
+    return value?.startsWith("/community/search") ? value : null;
+  } catch {
+    return null;
+  }
 }
 
 /** Reactions list for a community post. */
@@ -151,6 +184,40 @@ export const DEFAULT_COMMUNITY_FILTERS: CommunityFilters = {
   scope: "all",
 };
 
+export type CommunitySearchPerson = {
+  id: string;
+  name: string;
+  avatarUrl: string | null;
+  bio: string | null;
+  points: number;
+  experienceLevel: string | null;
+  postCount: number;
+  projectCount: number;
+  note: string;
+};
+
+export type CommunitySearchFilters = {
+  q: string;
+  type: CommunitySearchType;
+  kind: CommunityKind | null;
+  topic: CommunityTopic | null;
+  sort: CommunitySort;
+  peopleSort: CommunityPeopleSort;
+  when: CommunitySearchWhen;
+  experienceLevel: ExperienceLevel | null;
+};
+
+export const DEFAULT_COMMUNITY_SEARCH_FILTERS: CommunitySearchFilters = {
+  q: "",
+  type: "all",
+  kind: null,
+  topic: null,
+  sort: "newest",
+  peopleSort: "posts",
+  when: "any",
+  experienceLevel: null,
+};
+
 /** Only non-default values, so shared URLs stay short. */
 export function communityQueryString(filters: CommunityFilters, page = 1): string {
   const params = new URLSearchParams();
@@ -161,9 +228,55 @@ export function communityQueryString(filters: CommunityFilters, page = 1): strin
   return params.toString();
 }
 
+export function communitySearchQueryString(
+  filters: CommunitySearchFilters,
+  page = 1,
+): string {
+  const params = new URLSearchParams();
+  if (filters.q.trim()) params.set("q", filters.q.trim());
+  if (filters.type !== "all") params.set("type", filters.type);
+  if (filters.kind) params.set("kind", filters.kind);
+  if (filters.topic) params.set("topic", filters.topic);
+  if (filters.sort !== (filters.q.trim() ? "relevant" : "newest")) {
+    params.set("sort", filters.sort);
+  }
+  if (filters.peopleSort !== (filters.q.trim() ? "relevant" : "posts")) {
+    params.set("peopleSort", filters.peopleSort);
+  }
+  if (filters.when !== "any") params.set("when", filters.when);
+  if (filters.experienceLevel) params.set("experienceLevel", filters.experienceLevel);
+  if (page > 1) params.set("page", String(page));
+  return params.toString();
+}
+
 export function fetchCommunity(filters: CommunityFilters, page = 1, signal?: AbortSignal) {
   const query = communityQueryString(filters, page);
   return apiRequest<CommunityCatalog>(`/community${query ? `?${query}` : ""}`, { signal });
+}
+
+export type CommunitySearchResponse = {
+  posts: CommunityPostItem[];
+  people: CommunitySearchPerson[];
+  page: number;
+  pageSize: number;
+  total: number;
+  hasMore: boolean;
+  peopleTotal: number;
+  peopleHasMore: boolean;
+  peoplePageSize: number;
+  filters: CommunitySearchFilters;
+};
+
+export function fetchCommunitySearch(
+  filters: CommunitySearchFilters,
+  page = 1,
+  signal?: AbortSignal,
+) {
+  const query = communitySearchQueryString(filters, page);
+  return apiRequest<CommunitySearchResponse>(
+    `/community/search${query ? `?${query}` : ""}`,
+    { signal },
+  );
 }
 
 export function fetchCommunityPost(postId: string, signal?: AbortSignal) {

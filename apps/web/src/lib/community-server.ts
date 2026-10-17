@@ -1,9 +1,12 @@
 import {
   communityQueryString,
+  communitySearchQueryString,
   type CommunityCatalog,
   type CommunityFilters,
   type CommunityPostDetail,
   type CommunityPostReactions,
+  type CommunitySearchFilters,
+  type CommunitySearchResponse,
   type SpotlightLearner,
 } from "@/lib/community";
 import { serverApiFetch } from "@/lib/server-api";
@@ -56,5 +59,19 @@ export async function loadSpotlightLearners(): Promise<SpotlightLearner[]> {
     return body.data.learners;
   } catch {
     return [];
+  }
+}
+
+export async function loadCommunitySearch(
+  filters: CommunitySearchFilters,
+): Promise<CommunitySearchResponse | null> {
+  try {
+    const query = communitySearchQueryString(filters);
+    const res = await serverApiFetch(`/community/search${query ? `?${query}` : ""}`);
+    if (!res.ok) return null;
+    const body = (await res.json()) as { data: CommunitySearchResponse };
+    return body.data;
+  } catch {
+    return null;
   }
 }

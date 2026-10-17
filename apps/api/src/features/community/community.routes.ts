@@ -14,6 +14,7 @@ import {
   listCommunityHandler,
   listPostReactionsHandler,
   reactionHandler,
+  searchCommunityHandler,
   relatedOptionsHandler,
   reportCommentHandler,
   reportPostHandler,
@@ -46,6 +47,7 @@ const postImages = multer({
 }).array("images", COMMUNITY_LIMITS.imagesMax);
 
 communityRouter.get("/", requireAuth, asyncHandler(listCommunityHandler));
+communityRouter.get("/search", requireAuth, asyncHandler(searchCommunityHandler));
 communityRouter.get("/related", requireAuth, asyncHandler(relatedOptionsHandler));
 communityRouter.get("/spotlight", requireAuth, asyncHandler(spotlightHandler));
 communityRouter.post(

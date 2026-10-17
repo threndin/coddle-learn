@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { COMMUNITY_POST_CREATE_POINTS } from "@coddle/shared";
 import { CommunityComments } from "@/components/community/community-comments";
@@ -15,6 +14,7 @@ import { useToast } from "@/components/app/toast";
 import { errorMessage } from "@/lib/api-client";
 import {
   createCommunityPost,
+  peekCommunitySearchReturn,
   type CommunityCommentItem,
   type CommunityPostItem,
 } from "@/lib/community";
@@ -33,6 +33,16 @@ export function CommunityPostDetailView({
   const [quoteTarget, setQuoteTarget] = useState<CommunityPostItem | null>(null);
   const [editTarget, setEditTarget] = useState<CommunityPostItem | null>(null);
   const [reportTarget, setReportTarget] = useState<CommunityPostItem | null>(null);
+  const [backHref, setBackHref] = useState("/community");
+  const [backLabel, setBackLabel] = useState("Back to community");
+
+  useEffect(() => {
+    const returnTo = peekCommunitySearchReturn();
+    if (returnTo) {
+      setBackHref(returnTo);
+      setBackLabel("Back to search");
+    }
+  }, []);
 
   function queueQuote(draft: QuotePostDraft) {
     setQuoteTarget(null);
@@ -62,15 +72,25 @@ export function CommunityPostDetailView({
       });
   }
 
+  function goBack() {
+    const returnTo = peekCommunitySearchReturn();
+    if (returnTo) {
+      router.push(returnTo);
+      return;
+    }
+    router.push(backHref);
+  }
+
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-8 sm:py-10">
-      <Link
-        href="/community"
+      <button
+        type="button"
+        onClick={goBack}
         className="inline-flex items-center gap-1.5 text-sm font-semibold text-ink-muted transition hover:text-ink"
       >
         <Icon name="arrowLeft" className="h-4 w-4" />
-        Back to community
-      </Link>
+        {backLabel}
+      </button>
 
       <div className="mt-6">
         <CommunityPostCard

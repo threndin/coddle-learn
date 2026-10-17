@@ -29,8 +29,67 @@ export function isCommunityTopic(value: unknown): value is CommunityTopic {
 export const COMMUNITY_SCOPES = ["all", "mine"] as const;
 export type CommunityScope = (typeof COMMUNITY_SCOPES)[number];
 
-export const COMMUNITY_SORTS = ["newest"] as const;
+export const COMMUNITY_SEARCH_TYPES = ["all", "posts", "people"] as const;
+export type CommunitySearchType = (typeof COMMUNITY_SEARCH_TYPES)[number];
+
+export const COMMUNITY_SEARCH_TYPE_LABELS: Record<CommunitySearchType, string> = {
+  all: "All",
+  posts: "Posts",
+  people: "People",
+};
+
+export function isCommunitySearchType(value: unknown): value is CommunitySearchType {
+  return (
+    typeof value === "string" &&
+    (COMMUNITY_SEARCH_TYPES as readonly string[]).includes(value)
+  );
+}
+
+export const COMMUNITY_SORTS = ["relevant", "newest", "top"] as const;
 export type CommunitySort = (typeof COMMUNITY_SORTS)[number];
+
+export const COMMUNITY_SORT_LABELS: Record<CommunitySort, string> = {
+  relevant: "Most relevant",
+  newest: "Newest",
+  top: "Top",
+};
+
+export function isCommunitySort(value: unknown): value is CommunitySort {
+  return typeof value === "string" && (COMMUNITY_SORTS as readonly string[]).includes(value);
+}
+
+export const COMMUNITY_SEARCH_WHEN = ["any", "day", "week", "month"] as const;
+export type CommunitySearchWhen = (typeof COMMUNITY_SEARCH_WHEN)[number];
+
+export const COMMUNITY_SEARCH_WHEN_LABELS: Record<CommunitySearchWhen, string> = {
+  any: "Any time",
+  day: "Past 24 hours",
+  week: "Past week",
+  month: "Past month",
+};
+
+export function isCommunitySearchWhen(value: unknown): value is CommunitySearchWhen {
+  return (
+    typeof value === "string" &&
+    (COMMUNITY_SEARCH_WHEN as readonly string[]).includes(value)
+  );
+}
+
+export const COMMUNITY_PEOPLE_SORTS = ["relevant", "points", "posts"] as const;
+export type CommunityPeopleSort = (typeof COMMUNITY_PEOPLE_SORTS)[number];
+
+export const COMMUNITY_PEOPLE_SORT_LABELS: Record<CommunityPeopleSort, string> = {
+  relevant: "Most relevant",
+  points: "Most points",
+  posts: "Most posts",
+};
+
+export function isCommunityPeopleSort(value: unknown): value is CommunityPeopleSort {
+  return (
+    typeof value === "string" &&
+    (COMMUNITY_PEOPLE_SORTS as readonly string[]).includes(value)
+  );
+}
 
 export const COMMUNITY_IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"] as const;
 
@@ -81,6 +140,10 @@ export const COMMUNITY_LIMITS = {
   relatedTitleMax: 160,
   queryMax: 100,
   pageSize: 10,
+  /** People results per search page. */
+  peoplePageSize: 12,
+  /** Max candidate rows scored for relevance ranking. */
+  searchCandidateMax: 150,
   /** Posts per learner per rolling 24 hours. */
   dailyPosts: 5,
   /** Images attached to a single post. Videos are not supported yet. */

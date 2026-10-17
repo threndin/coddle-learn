@@ -32,13 +32,30 @@ export async function listCommunityPosts(input: {
   where: Prisma.CommunityPostWhereInput;
   skip: number;
   take: number;
+  orderBy?: Prisma.CommunityPostOrderByWithRelationInput | Prisma.CommunityPostOrderByWithRelationInput[];
+}): Promise<{ rows: CommunityPostRow[]; total: number }> {
+  const [rows, total] = await prisma.$transaction([
+    prisma.communityPost.findMany({
+      where: input.where,
+      include: postInclude,
+      orderBy: input.orderBy ?? { createdAt: "desc" },
+      skip: input.skip,
+      take: input.take,
+    }),
+    prisma.communityPost.count({ where: input.where }),
+  ]);
+  return { rows, total };
+}
+
+export async function listCommunityPostCandidates(input: {
+  where: Prisma.CommunityPostWhereInput;
+  take: number;
 }): Promise<{ rows: CommunityPostRow[]; total: number }> {
   const [rows, total] = await prisma.$transaction([
     prisma.communityPost.findMany({
       where: input.where,
       include: postInclude,
       orderBy: { createdAt: "desc" },
-      skip: input.skip,
       take: input.take,
     }),
     prisma.communityPost.count({ where: input.where }),
@@ -449,4 +466,21 @@ export async function listSpotlightLearners(
     take: take - withPosts.length,
   });
   return [...withPosts, ...fillers];
+}
+
+export async function searchPeopleCandidates(input: {
+  where: Prisma.UserWhereInput;
+  take: number;
+  orderBy?: Prisma.UserOrderByWithRelationInput | Prisma.UserOrderByWithRelationInput[];
+}): Promise<{ rows: SpotlightUserRow[]; total: number }> {
+  const [rows, total] = await prisma.$transaction([
+    prisma.user.findMany({
+      where: input.where,
+      select: spotlightSelect,
+      orderBy: input.orderBy ?? [{ points: "desc" }, { createdAt: "desc" }],
+      take: input.take,
+    }),
+    prisma.user.count({ where: input.where }),
+  ]);
+  return { rows, total };
 }
