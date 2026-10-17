@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   COMMUNITY_KINDS,
@@ -26,6 +27,7 @@ import { useToast } from "@/components/app/toast";
 import { Icon } from "@/components/ui/icon";
 import { errorMessage } from "@/lib/api-client";
 import {
+  clearCommunitySearchReturn,
   communityQueryString,
   createCommunityPost,
   DEFAULT_COMMUNITY_FILTERS,
@@ -73,6 +75,10 @@ export function CommunityFeed({
   const loadMoreLock = useRef(false);
   const postQueue = useRef<Promise<void>>(Promise.resolve());
   const sentinelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    clearCommunitySearchReturn();
+  }, []);
 
   useEffect(() => {
     if (initialSpotlight.length > 0) return;
@@ -334,14 +340,14 @@ export function CommunityFeed({
       <div className="mx-auto w-full max-w-7xl px-4 py-4 sm:px-8 sm:py-8">
         <div className="overflow-x-auto rounded-2xl border border-border bg-surface">
           <div className="flex w-max min-w-full items-center gap-2 p-3 lg:w-auto lg:min-w-0">
-            <button
-              type="button"
+            <Link
+              href="/community/search"
               aria-label="Search community"
-              title="Search — page coming soon"
+              title="Search people and posts"
               className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-surface-subtle text-ink-muted transition hover:border-border-strong hover:text-ink"
             >
               <Icon name="search" className="h-4 w-4" />
-            </button>
+            </Link>
 
             <label className="sr-only" htmlFor="community-kind">
               Type

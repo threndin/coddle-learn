@@ -8,15 +8,25 @@ import {
   COMMUNITY_REACTION_EMOJIS,
   COMMUNITY_SCOPES,
   isCommunityKind,
+  isCommunityPeopleSort,
   isCommunityReactionEmoji,
   isCommunityReportReason,
+  isCommunitySearchType,
+  isCommunitySearchWhen,
+  isCommunitySort,
   isCommunityTopic,
+  isExperienceLevel,
   slugify,
   uniqueSlug,
   type CommunityKind,
+  type CommunityPeopleSort,
   type CommunityReactionEmoji,
   type CommunityScope,
+  type CommunitySearchType,
+  type CommunitySearchWhen,
+  type CommunitySort,
   type CommunityTopic,
+  type ExperienceLevel,
 } from "@coddle/shared";
 import type { Prisma } from "@prisma/client";
 import { isR2Configured } from "../../config.js";
@@ -42,6 +52,7 @@ import {
   findReportByReporterAndComment,
   findReportByReporterAndPost,
   listCommentReactionCounts,
+  listCommunityPostCandidates,
   listCommunityPosts,
   listMyCommentReactions,
   listMyReactions,
@@ -52,6 +63,7 @@ import {
   listSpotlightLearners,
   listTopLevelComments,
   recordImpression,
+  searchPeopleCandidates,
   softDeleteCommentTree,
   softDeleteCommunityPost,
   updateCommentBody,
@@ -60,6 +72,7 @@ import {
   upsertReaction,
   type CommunityCommentRow,
   type CommunityPostRow,
+  type SpotlightUserRow,
 } from "./community.repository.js";
 
 async function allocatePostSlug(title: string, excludeId?: string) {
@@ -118,10 +131,80 @@ function buildWhere(userId: string, filters: CatalogFilters): Prisma.CommunityPo
         { body: contains },
         { relatedSlug: contains },
         { relatedTitle: contains },
+        { author: { name: contains } },
       ],
     });
   }
   return { AND: and };
+}
+
+function searchTerms(q: string): string[] {
+  return q
+    .split(/\s+/)
+    .map((term) => term.trim().toLowerCase())
+    .filter(Boolean)
+    .slice(0, MAX_SEARCH_TERMS);
+}
+
+function whenSince(when: CommunitySearchWhen): Date | null {
+  if (when === "any") return null;
+  const ms =
+    when === "day" ? 24 * 60 * 60 * 1000 : when === "week" ? 7 * 24 * 60 * 60 * 1000 : 30 * 24 * 60 * 60 * 1000;
+  return new Date(Date.now() - ms);
+}
+
+function scorePostRelevance(
+  row: CommunityPostRow,
+  terms: string[],
+  q: string,
+  reactionTotal: number,
+): number {
+  let score = 0;
+  const title = row.title.toLowerCase();
+  const body = row.body.toLowerCase();
+  const author = row.author.name.toLowerCase();
+  const related = `${row.relatedTitle ?? ""} ${row.relatedSlug ?? ""}`.toLowerCase();
+  const qLower = q.toLowerCase().trim();
+
+  if (qLower) {
+    if (title === qLower) score += 120;
+    else if (title.startsWith(qLower)) score += 80;
+    else if (title.includes(qLower)) score += 55;
+    if (author === qLower) score += 50;
+    else if (author.startsWith(qLower)) score += 35;
+    else if (author.includes(qLower)) score += 22;
+  }
+
+  for (const term of terms) {
+    if (title.includes(term)) score += 28;
+    if (author.includes(term)) score += 18;
+    if (related.includes(term)) score += 12;
+    if (body.includes(term)) score += 8;
+  }
+
+  score += Math.min(24, row.commentCount * 2);
+  score += Math.min(18, reactionTotal);
+  const ageDays = (Date.now() - row.createdAt.getTime()) / (24 * 60 * 60 * 1000);
+  score += Math.max(0, 18 - ageDays * 0.6);
+  return score;
+}
+
+function scorePersonRelevance(row: SpotlightUserRow, terms: string[], q: string): number {
+  let score = 0;
+  const name = row.name.toLowerCase();
+  const qLower = q.toLowerCase().trim();
+
+  if (qLower) {
+    if (name === qLower) score += 100;
+    else if (name.startsWith(qLower)) score += 70;
+    else if (name.includes(qLower)) score += 40;
+  }
+  for (const term of terms) {
+    if (name.includes(term)) score += 25;
+  }
+  score += Math.min(30, row._count.communityPosts * 3);
+  score += Math.min(20, Math.floor(row.points / 25));
+  return score;
 }
 
 function relatedHref(topic: string, relatedSlug: string | null): string | null {
@@ -316,6 +399,313 @@ export async function getCommunityCatalog(userId: string, query: Record<string, 
       topic: filters.topic,
       scope: filters.scope,
     },
+  };
+}
+
+type SearchFilters = {
+  q: string;
+  type: CommunitySearchType;
+  kind: CommunityKind | null;
+  topic: CommunityTopic | null;
+  sort: CommunitySort;
+  peopleSort: CommunityPeopleSort;
+  when: CommunitySearchWhen;
+  experienceLevel: ExperienceLevel | null;
+  page: number;
+};
+
+function parseSearchFilters(query: Record<string, unknown>): SearchFilters {
+  const typeRaw = firstString(query.type);
+  const sortRaw = firstString(query.sort);
+  const peopleSortRaw = firstString(query.peopleSort);
+  const whenRaw = firstString(query.when);
+  const levelRaw = firstString(query.experienceLevel);
+  const kind = firstString(query.kind);
+  const topic = firstString(query.topic);
+  const page = Number.parseInt(firstString(query.page), 10);
+  const q = firstString(query.q).slice(0, COMMUNITY_LIMITS.queryMax);
+  const type: CommunitySearchType = isCommunitySearchType(typeRaw) ? typeRaw : "all";
+  const defaultSort: CommunitySort = q ? "relevant" : "newest";
+  return {
+    q,
+    type,
+    kind: isCommunityKind(kind) ? kind : null,
+    topic: isCommunityTopic(topic) ? topic : null,
+    sort: isCommunitySort(sortRaw) ? sortRaw : defaultSort,
+    peopleSort: isCommunityPeopleSort(peopleSortRaw) ? peopleSortRaw : q ? "relevant" : "posts",
+    when: isCommunitySearchWhen(whenRaw) ? whenRaw : "any",
+    experienceLevel: isExperienceLevel(levelRaw) ? levelRaw : null,
+    page: Number.isFinite(page) && page > 0 ? Math.min(page, 1000) : 1,
+  };
+}
+
+function buildSearchPostWhere(filters: SearchFilters): Prisma.CommunityPostWhereInput {
+  const and: Prisma.CommunityPostWhereInput[] = [notDeleted];
+  if (filters.kind) and.push({ kind: filters.kind });
+  if (filters.topic) and.push({ topic: filters.topic });
+  const since = whenSince(filters.when);
+  if (since) and.push({ createdAt: { gte: since } });
+
+  const terms = searchTerms(filters.q);
+  for (const term of terms) {
+    const contains = { contains: term, mode: "insensitive" as const };
+    and.push({
+      OR: [
+        { title: contains },
+        { body: contains },
+        { relatedSlug: contains },
+        { relatedTitle: contains },
+        { author: { name: contains } },
+      ],
+    });
+  }
+  return { AND: and };
+}
+
+function buildSearchPeopleWhere(
+  viewerId: string,
+  filters: SearchFilters,
+): Prisma.UserWhereInput {
+  const and: Prisma.UserWhereInput[] = [
+    { id: { not: viewerId } },
+    { onboardingCompletedAt: { not: null } },
+  ];
+  if (filters.experienceLevel) and.push({ experienceLevel: filters.experienceLevel });
+
+  const terms = searchTerms(filters.q);
+  for (const term of terms) {
+    const contains = { contains: term, mode: "insensitive" as const };
+    and.push({
+      OR: [{ name: contains }, { bio: contains }],
+    });
+  }
+  return { AND: and };
+}
+
+function personPayload(row: SpotlightUserRow) {
+  return {
+    id: row.id,
+    name: row.name,
+    avatarUrl: row.avatarUrl,
+    bio: null as string | null,
+    points: row.points,
+    experienceLevel: row.experienceLevel,
+    postCount: row._count.communityPosts,
+    projectCount: row._count.projectSubmissions,
+    note: spotlightNote(row),
+  };
+}
+
+async function searchPosts(userId: string, filters: SearchFilters) {
+  const where = buildSearchPostWhere(filters);
+  const pageSize = COMMUNITY_LIMITS.pageSize;
+  const skip = (filters.page - 1) * pageSize;
+  const terms = searchTerms(filters.q);
+  const useRelevance = filters.sort === "relevant" && terms.length > 0;
+
+  if (useRelevance) {
+    const candidates = await listCommunityPostCandidates({
+      where,
+      take: COMMUNITY_LIMITS.searchCandidateMax,
+    });
+    const postIds = candidates.rows.map((row) => row.id);
+    const { countsByPost, mineByPost } = await engagementForPosts(userId, postIds);
+    const ranked = candidates.rows
+      .map((row) => {
+        const counts = countsByPost.get(row.id) ?? emptyReactionCounts();
+        const reactionTotal = COMMUNITY_REACTION_EMOJIS.reduce(
+          (sum, emoji) => sum + (counts[emoji] ?? 0),
+          0,
+        );
+        return {
+          row,
+          score: scorePostRelevance(row, terms, filters.q, reactionTotal),
+          reactionCounts: counts,
+          myReaction: mineByPost.get(row.id) ?? null,
+        };
+      })
+      .sort((a, b) => b.score - a.score || b.row.createdAt.getTime() - a.row.createdAt.getTime());
+
+    const slice = ranked.slice(skip, skip + pageSize);
+    return {
+      posts: slice.map((item) =>
+        postPayload(item.row, userId, {
+          reactionCounts: item.reactionCounts,
+          myReaction: item.myReaction,
+        }),
+      ),
+      page: filters.page,
+      pageSize,
+      total: candidates.total,
+      hasMore: skip + slice.length < candidates.total,
+    };
+  }
+
+  const orderBy: Prisma.CommunityPostOrderByWithRelationInput[] =
+    filters.sort === "top"
+      ? [{ commentCount: "desc" }, { impressionCount: "desc" }, { createdAt: "desc" }]
+      : [{ createdAt: "desc" }];
+
+  const listed = await listCommunityPosts({ where, skip, take: pageSize, orderBy });
+  const { countsByPost, mineByPost } = await engagementForPosts(
+    userId,
+    listed.rows.map((row) => row.id),
+  );
+  return {
+    posts: listed.rows.map((row) =>
+      postPayload(row, userId, {
+        reactionCounts: countsByPost.get(row.id) ?? emptyReactionCounts(),
+        myReaction: mineByPost.get(row.id) ?? null,
+      }),
+    ),
+    page: filters.page,
+    pageSize,
+    total: listed.total,
+    hasMore: skip + listed.rows.length < listed.total,
+  };
+}
+
+async function searchPeople(viewerId: string, filters: SearchFilters) {
+  const where = buildSearchPeopleWhere(viewerId, filters);
+  const pageSize = COMMUNITY_LIMITS.peoplePageSize;
+  const skip = (filters.page - 1) * pageSize;
+  const terms = searchTerms(filters.q);
+  const useRelevance = filters.peopleSort === "relevant" && terms.length > 0;
+
+  if (useRelevance) {
+    const candidates = await searchPeopleCandidates({
+      where,
+      take: COMMUNITY_LIMITS.searchCandidateMax,
+    });
+    const ranked = candidates.rows
+      .map((row) => ({
+        row,
+        score: scorePersonRelevance(row, terms, filters.q),
+      }))
+      .sort((a, b) => b.score - a.score || b.row.points - a.row.points);
+    const slice = ranked.slice(skip, skip + pageSize);
+    const people = await attachPeopleBios(slice.map((item) => item.row));
+    return {
+      people,
+      page: filters.page,
+      pageSize,
+      total: candidates.total,
+      hasMore: skip + slice.length < candidates.total,
+    };
+  }
+
+  const orderBy: Prisma.UserOrderByWithRelationInput[] =
+    filters.peopleSort === "points"
+      ? [{ points: "desc" }, { createdAt: "desc" }]
+      : [{ communityPosts: { _count: "desc" } }, { points: "desc" }];
+
+  const listed = await searchPeopleCandidates({
+    where,
+    take: COMMUNITY_LIMITS.searchCandidateMax,
+    orderBy,
+  });
+  const slice = listed.rows.slice(skip, skip + pageSize);
+  const people = await attachPeopleBios(slice);
+  return {
+    people,
+    page: filters.page,
+    pageSize,
+    total: listed.total,
+    hasMore: skip + slice.length < listed.total,
+  };
+}
+
+async function attachPeopleBios(rows: SpotlightUserRow[]) {
+  if (rows.length === 0) return [];
+  const bios = await prisma.user.findMany({
+    where: { id: { in: rows.map((row) => row.id) } },
+    select: { id: true, bio: true },
+  });
+  const bioById = new Map(bios.map((row) => [row.id, row.bio]));
+  return rows.map((row) => ({
+    ...personPayload(row),
+    bio: bioById.get(row.id) ?? null,
+  }));
+}
+
+export async function searchCommunity(userId: string, query: Record<string, unknown>) {
+  const filters = parseSearchFilters(query);
+  const includePosts = filters.type === "all" || filters.type === "posts";
+  const includePeople = filters.type === "all" || filters.type === "people";
+
+  const emptyPosts = {
+    posts: [] as ReturnType<typeof postPayload>[],
+    page: filters.page,
+    pageSize: COMMUNITY_LIMITS.pageSize,
+    total: 0,
+    hasMore: false,
+  };
+  const emptyPeople = {
+    people: [] as Awaited<ReturnType<typeof attachPeopleBios>>,
+    page: filters.page,
+    pageSize: COMMUNITY_LIMITS.peoplePageSize,
+    total: 0,
+    hasMore: false,
+  };
+
+  const emptyResponse = {
+    posts: emptyPosts.posts,
+    people: emptyPeople.people,
+    page: filters.page,
+    pageSize: emptyPosts.pageSize,
+    total: 0,
+    hasMore: false,
+    peopleTotal: 0,
+    peopleHasMore: false,
+    peoplePageSize: emptyPeople.pageSize,
+    filters: {
+      q: filters.q,
+      type: filters.type,
+      kind: filters.kind,
+      topic: filters.topic,
+      sort: filters.sort,
+      peopleSort: filters.peopleSort,
+      when: filters.when,
+      experienceLevel: filters.experienceLevel,
+    },
+  };
+
+  // No results until the learner actually searches.
+  if (!filters.q.trim()) {
+    return emptyResponse;
+  }
+
+  // On "All", people stay a top preview (page 1); posts own pagination.
+  const peopleFilters: SearchFilters =
+    filters.type === "all" ? { ...filters, page: 1 } : filters;
+
+  const [postsResult, peopleResult] = await Promise.all([
+    includePosts ? searchPosts(userId, filters) : Promise.resolve(emptyPosts),
+    includePeople ? searchPeople(userId, peopleFilters) : Promise.resolve(emptyPeople),
+  ]);
+
+  const peoplePreview =
+    filters.type === "all"
+      ? {
+          people: peopleResult.people.slice(0, 6),
+          total: peopleResult.total,
+          hasMore: peopleResult.total > 6,
+          pageSize: 6,
+          page: 1,
+        }
+      : peopleResult;
+
+  return {
+    posts: postsResult.posts,
+    people: peoplePreview.people,
+    page: filters.page,
+    pageSize: postsResult.pageSize,
+    total: postsResult.total,
+    hasMore: postsResult.hasMore,
+    peopleTotal: peoplePreview.total,
+    peopleHasMore: peoplePreview.hasMore,
+    peoplePageSize: peoplePreview.pageSize,
+    filters: emptyResponse.filters,
   };
 }
 

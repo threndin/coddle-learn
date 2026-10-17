@@ -10,6 +10,7 @@ import {
   getCommunityPostDetail,
   getCommunityPostReactions,
   getSpotlightLearners,
+  searchCommunity,
   listRelatedOptions,
   recordCommunityImpression,
   reportCommunityComment,
@@ -36,6 +37,12 @@ function param(req: Request, name: string) {
 export async function listCommunityHandler(req: Request, res: Response) {
   const session = requireSession(req);
   const data = await getCommunityCatalog(session.sub, req.query as Record<string, unknown>);
+  res.json({ data });
+}
+
+export async function searchCommunityHandler(req: Request, res: Response) {
+  const session = requireSession(req);
+  const data = await searchCommunity(session.sub, req.query as Record<string, unknown>);
   res.json({ data });
 }
 
