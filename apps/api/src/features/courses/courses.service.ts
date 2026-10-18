@@ -155,6 +155,7 @@ function nextLessonPayload(lesson: FlatLesson | null) {
 function creatorPayload(course: CourseWithContent) {
   return {
     id: course.createdBy.id,
+    username: course.createdBy.username,
     name: course.createdBy.name,
     avatarUrl: course.createdBy.avatarUrl,
   };

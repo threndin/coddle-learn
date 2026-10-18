@@ -20,7 +20,12 @@ export type ResourceItem = {
   skills: { slug: string; name: string }[];
   bookmarked: boolean;
   bookmarkCount: number;
-  submittedBy: { id: string; name: string; avatarUrl: string | null } | null;
+  submittedBy: {
+    id: string;
+    username?: string;
+    name: string;
+    avatarUrl: string | null;
+  } | null;
   isOwner: boolean;
   usedIn: {
     roadmapSlug: string;

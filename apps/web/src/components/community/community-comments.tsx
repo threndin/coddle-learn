@@ -8,6 +8,7 @@ import {
 } from "@coddle/shared";
 import { ReportDialog } from "@/components/community/report-dialog";
 import { ProfileAvatar } from "@/components/onboarding/profile-avatar";
+import { ProfileLink } from "@/components/profile/profile-link";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Icon } from "@/components/ui/icon";
 import { Menu, type MenuItem } from "@/components/ui/menu";
@@ -366,15 +367,22 @@ function CommentCard({
   return (
     <article className="px-3 py-3.5 sm:px-4">
       <div className="flex items-start gap-3">
-        <ProfileAvatar
-          name={comment.author.name}
-          avatarUrl={comment.author.avatarUrl}
-          size="sm"
-        />
+        <ProfileLink user={comment.author} className="shrink-0">
+          <ProfileAvatar
+            name={comment.author.name}
+            avatarUrl={comment.author.avatarUrl}
+            size="sm"
+          />
+        </ProfileLink>
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-              <p className="text-sm font-semibold text-ink">{comment.author.name}</p>
+              <ProfileLink
+                user={comment.author}
+                className="text-sm font-semibold text-ink transition hover:text-brand"
+              >
+                {comment.author.name}
+              </ProfileLink>
               <p className="text-xs text-ink-muted">
                 {timeAgo(comment.createdAt)}
                 {comment.isEdited ? (

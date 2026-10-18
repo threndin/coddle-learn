@@ -234,6 +234,7 @@ function quotedPostPayload(row: CommunityPostRow["quotePost"]) {
     isDeleted: row.isDeleted,
     author: {
       id: row.author.id,
+      username: row.author.username,
       name: row.author.name,
       avatarUrl: row.author.avatarUrl,
     },
@@ -274,6 +275,7 @@ function postPayload(
     isEdited: Boolean(row.editedAt),
     author: {
       id: row.author.id,
+      username: row.author.username,
       name: row.author.name,
       avatarUrl: row.author.avatarUrl,
     },
@@ -290,7 +292,7 @@ type CommentPayload = {
   updatedAt: string;
   editedAt: string | null;
   isEdited: boolean;
-  author: { id: string; name: string; avatarUrl: string | null };
+  author: { id: string; username: string; name: string; avatarUrl: string | null };
   isMine: boolean;
   reactionCounts: ReactionCounts;
   myReaction: CommunityReactionEmoji | null;
@@ -320,6 +322,7 @@ function commentPayload(
     isEdited: Boolean(row.editedAt),
     author: {
       id: row.author.id,
+      username: row.author.username,
       name: row.author.name,
       avatarUrl: row.author.avatarUrl,
     },
@@ -474,7 +477,7 @@ function buildSearchPeopleWhere(
   for (const term of terms) {
     const contains = { contains: term, mode: "insensitive" as const };
     and.push({
-      OR: [{ name: contains }, { bio: contains }],
+      OR: [{ name: contains }, { bio: contains }, { username: contains }],
     });
   }
   return { AND: and };
@@ -483,6 +486,7 @@ function buildSearchPeopleWhere(
 function personPayload(row: SpotlightUserRow) {
   return {
     id: row.id,
+    username: row.username,
     name: row.name,
     avatarUrl: row.avatarUrl,
     bio: null as string | null,
@@ -1289,6 +1293,7 @@ export async function getCommunityPostReactions(_userId: string, postRef: string
       createdAt: row.createdAt.toISOString(),
       user: {
         id: row.user.id,
+        username: row.user.username,
         name: row.user.name,
         avatarUrl: row.user.avatarUrl,
       },
@@ -1303,6 +1308,7 @@ export async function getCommunityPostReactions(_userId: string, postRef: string
     createdAt: row.createdAt.toISOString(),
     author: {
       id: row.author.id,
+      username: row.author.username,
       name: row.author.name,
       avatarUrl: row.author.avatarUrl,
     },
@@ -1538,6 +1544,7 @@ export async function getSpotlightLearners(userId: string) {
   return {
     learners: rows.map((user) => ({
       id: user.id,
+      username: user.username,
       name: user.name,
       avatarUrl: user.avatarUrl,
       points: user.points,

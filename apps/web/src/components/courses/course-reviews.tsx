@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { COURSE_LIMITS, type ReviewSort } from "@coddle/shared";
 import { useToast } from "@/components/app/toast";
 import { ProfileAvatar } from "@/components/onboarding/profile-avatar";
+import { ProfileLink } from "@/components/profile/profile-link";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Icon } from "@/components/ui/icon";
 import { StarInput, Stars, starLabel } from "@/components/ui/stars";
@@ -403,12 +404,21 @@ function ReviewCard({
       ].join(" ")}
     >
       <div className="flex items-start gap-3">
-        <ProfileAvatar name={review.author.name} avatarUrl={review.author.avatarUrl} size="sm" />
+        <ProfileLink user={review.author} className="shrink-0">
+          <ProfileAvatar name={review.author.name} avatarUrl={review.author.avatarUrl} size="sm" />
+        </ProfileLink>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <p className="text-sm font-semibold text-ink">
-              {highlight ? "Your review" : review.author.name}
-            </p>
+            {highlight ? (
+              <p className="text-sm font-semibold text-ink">Your review</p>
+            ) : (
+              <ProfileLink
+                user={review.author}
+                className="text-sm font-semibold text-ink transition hover:text-brand"
+              >
+                {review.author.name}
+              </ProfileLink>
+            )}
             {review.completedCourse ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
                 <Icon name="check" className="h-2.5 w-2.5" strokeWidth={3} />

@@ -12,6 +12,7 @@ import {
 } from "@coddle/shared";
 import { QuotedPostEmbed } from "@/components/community/quoted-post-embed";
 import { ProfileAvatar } from "@/components/onboarding/profile-avatar";
+import { ProfileLink } from "@/components/profile/profile-link";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Icon, type IconName } from "@/components/ui/icon";
 import { Menu, type MenuItem } from "@/components/ui/menu";
@@ -235,9 +236,16 @@ export function CommunityPostCard({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
-          <ProfileAvatar name={post.author.name} avatarUrl={post.author.avatarUrl} size="sm" />
+          <ProfileLink user={post.author} className="shrink-0">
+            <ProfileAvatar name={post.author.name} avatarUrl={post.author.avatarUrl} size="sm" />
+          </ProfileLink>
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-ink">{post.author.name}</p>
+            <ProfileLink
+              user={post.author}
+              className="truncate text-sm font-semibold text-ink transition hover:text-brand"
+            >
+              {post.author.name}
+            </ProfileLink>
             <p className="text-xs text-ink-muted">
               {timeAgo(post.createdAt)}
               {post.isEdited ? <span className="ml-1.5 font-medium">· edited</span> : null}

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { RESOURCE_TYPE_LABELS, isResourceType, levelById, type ResourceType } from "@coddle/shared";
 import { ProfileAvatar } from "@/components/onboarding/profile-avatar";
+import { ProfileLink } from "@/components/profile/profile-link";
 import { Icon, type IconName } from "@/components/ui/icon";
 import type { ResourceItem } from "@/lib/resources";
 
@@ -175,16 +176,25 @@ export function ResourceCard({
         <div className="flex min-w-0 items-center gap-2">
           {resource.submittedBy ? (
             <>
-              <ProfileAvatar
-                name={resource.submittedBy.name}
-                avatarUrl={resource.submittedBy.avatarUrl}
-                size="sm"
-              />
+              <ProfileLink user={resource.submittedBy} className="shrink-0">
+                <ProfileAvatar
+                  name={resource.submittedBy.name}
+                  avatarUrl={resource.submittedBy.avatarUrl}
+                  size="sm"
+                />
+              </ProfileLink>
               <p className="truncate text-xs text-ink-muted">
                 Shared by{" "}
-                <span className="font-semibold text-ink">
-                  {resource.isOwner ? "you" : resource.submittedBy.name}
-                </span>
+                {resource.isOwner ? (
+                  <span className="font-semibold text-ink">you</span>
+                ) : (
+                  <ProfileLink
+                    user={resource.submittedBy}
+                    className="font-semibold text-ink transition hover:text-brand"
+                  >
+                    {resource.submittedBy.name}
+                  </ProfileLink>
+                )}
               </p>
             </>
           ) : (

@@ -15,6 +15,7 @@ import {
 import { coursesRouter } from "./features/courses/courses.routes.js";
 import { healthRouter } from "./features/health/health.routes.js";
 import { onboardingRouter } from "./features/onboarding/onboarding.routes.js";
+import { profilesRouter } from "./features/profiles/profiles.routes.js";
 import { projectsRouter } from "./features/projects/projects.routes.js";
 import { studioProjectsRouter } from "./features/projects/studio-projects.routes.js";
 import { resourcesRouter } from "./features/resources/resources.routes.js";
@@ -52,6 +53,7 @@ export function createApp(): Express {
   app.use("/achievements", achievementsRouter);
   app.use("/skills", skillsRouter);
   app.use("/community", communityRouter);
+  app.use("/profiles", profilesRouter);
   app.use("/verify", verifyRouter);
   app.use("/studio/projects", studioProjectsRouter);
   app.use("/studio", studioRouter);

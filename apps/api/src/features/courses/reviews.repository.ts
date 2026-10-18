@@ -50,7 +50,7 @@ export async function ratingDistribution(courseId: string): Promise<Record<1 | 2
 }
 
 const reviewInclude = {
-  user: { select: { id: true, name: true, avatarUrl: true } },
+  user: { select: { id: true, username: true, name: true, avatarUrl: true } },
 } satisfies Prisma.CourseReviewInclude;
 
 export type ReviewWithUser = Prisma.CourseReviewGetPayload<{ include: typeof reviewInclude }>;

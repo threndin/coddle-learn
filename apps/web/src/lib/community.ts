@@ -14,6 +14,7 @@ import { apiRequest } from "@/lib/api-client";
 
 export type CommunityAuthor = {
   id: string;
+  username?: string;
   name: string;
   avatarUrl: string | null;
 };
@@ -169,6 +170,7 @@ export type RelatedOption = {
 
 export type SpotlightLearner = {
   id: string;
+  username?: string;
   name: string;
   avatarUrl: string | null;
   points: number;
@@ -186,6 +188,7 @@ export const DEFAULT_COMMUNITY_FILTERS: CommunityFilters = {
 
 export type CommunitySearchPerson = {
   id: string;
+  username?: string;
   name: string;
   avatarUrl: string | null;
   bio: string | null;

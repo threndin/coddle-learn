@@ -72,6 +72,8 @@ function detailPayload(row: CredentialDetailRow) {
   return {
     ...listItem(row),
     earner: {
+      id: row.user.id,
+      username: row.user.username,
       name: row.user.name,
       avatarUrl: row.user.avatarUrl,
     },

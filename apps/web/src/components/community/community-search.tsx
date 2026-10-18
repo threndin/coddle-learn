@@ -25,6 +25,8 @@ import {
 } from "@coddle/shared";
 import { CommunityPostCard } from "@/components/community/community-post-card";
 import { ProfileAvatar } from "@/components/onboarding/profile-avatar";
+import { FollowButton } from "@/components/profile/follow-button";
+import { ProfileLink } from "@/components/profile/profile-link";
 import { Icon } from "@/components/ui/icon";
 import { errorMessage } from "@/lib/api-client";
 import {
@@ -391,26 +393,43 @@ export function CommunitySearchView({
                     <ul className="divide-y divide-border">
                       {people.map((person) => (
                         <li key={person.id} className="flex items-start gap-3 px-4 py-3.5 sm:px-5">
-                          <ProfileAvatar
-                            name={person.name}
-                            avatarUrl={person.avatarUrl}
-                            size="md"
-                          />
+                          <ProfileLink user={person} className="shrink-0">
+                            <ProfileAvatar
+                              name={person.name}
+                              avatarUrl={person.avatarUrl}
+                              size="md"
+                            />
+                          </ProfileLink>
                           <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-semibold text-ink">{person.name}</p>
+                            <ProfileLink
+                              user={person}
+                              className="truncate text-sm font-semibold text-ink transition hover:text-brand"
+                            >
+                              {person.name}
+                            </ProfileLink>
+                            {person.username ? (
+                              <p className="font-mono text-xs text-ink-muted">
+                                @{person.username}
+                              </p>
+                            ) : null}
                             <p className="text-xs text-ink-muted">{person.note}</p>
                             {person.bio ? (
                               <p className="mt-1 line-clamp-2 text-sm text-ink-muted">{person.bio}</p>
                             ) : null}
                           </div>
-                          <button
-                            type="button"
-                            disabled
-                            title="Follow comes with public profiles"
-                            className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-ink-muted"
-                          >
-                            Follow
-                          </button>
+                          {person.username ? (
+                            <FollowButton
+                              username={person.username}
+                              className="px-3 py-1.5 text-xs"
+                            />
+                          ) : (
+                            <ProfileLink
+                              user={person}
+                              className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-ink transition hover:border-border-strong"
+                            >
+                              View
+                            </ProfileLink>
+                          )}
                         </li>
                       ))}
                     </ul>

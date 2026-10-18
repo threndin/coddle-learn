@@ -156,7 +156,18 @@ export function CredentialDetailView({
             <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-muted">
               Earner
             </dt>
-            <dd className="mt-1 text-sm font-medium text-ink">{detail.earner.name}</dd>
+            <dd className="mt-1 text-sm font-medium text-ink">
+              {detail.earner.username ? (
+                <Link
+                  href={`/u/${encodeURIComponent(detail.earner.username)}`}
+                  className="transition hover:text-brand"
+                >
+                  {detail.earner.name}
+                </Link>
+              ) : (
+                detail.earner.name
+              )}
+            </dd>
           </div>
         </dl>
 

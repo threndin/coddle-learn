@@ -51,7 +51,7 @@ export type ProjectDetail = ProjectCatalogItem & {
   body: string;
   checklist: string[];
   roadmapStep: { slug: string; title: string } | null;
-  createdBy: { id: string; name: string; avatarUrl: string | null };
+  createdBy: { id: string; username?: string; name: string; avatarUrl: string | null };
   publishedAt: string | null;
   submission: ProjectSubmission | null;
 };

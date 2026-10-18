@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { levelById } from "@coddle/shared";
 import { ProfileAvatar } from "@/components/onboarding/profile-avatar";
+import { ProfileLink } from "@/components/profile/profile-link";
 import { Icon } from "@/components/ui/icon";
 import { Stars } from "@/components/ui/stars";
 import type { CourseCatalogItem } from "@/lib/courses";
@@ -268,15 +269,20 @@ export function CoursesCatalog({
                   ) : null}
 
                   <div className="mt-4 flex items-center gap-2.5">
-                    <ProfileAvatar
-                      name={course.createdBy.name}
-                      avatarUrl={course.createdBy.avatarUrl}
-                      size="sm"
-                    />
+                    <ProfileLink user={course.createdBy} className="shrink-0">
+                      <ProfileAvatar
+                        name={course.createdBy.name}
+                        avatarUrl={course.createdBy.avatarUrl}
+                        size="sm"
+                      />
+                    </ProfileLink>
                     <div className="min-w-0">
-                      <p className="truncate text-xs font-semibold text-ink">
+                      <ProfileLink
+                        user={course.createdBy}
+                        className="truncate text-xs font-semibold text-ink transition hover:text-brand"
+                      >
                         {course.createdBy.name}
-                      </p>
+                      </ProfileLink>
                       <p className="text-[11px] text-ink-muted">Created by</p>
                     </div>
                   </div>

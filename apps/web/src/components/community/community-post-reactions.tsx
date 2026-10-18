@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { COMMUNITY_REACTION_EMOJIS, type CommunityReactionEmoji } from "@coddle/shared";
 import { ProfileAvatar } from "@/components/onboarding/profile-avatar";
+import { ProfileLink } from "@/components/profile/profile-link";
 import { Icon } from "@/components/ui/icon";
 import {
   communityPostPath,
@@ -63,13 +64,20 @@ export function CommunityPostReactionsView({ data }: { data: CommunityPostReacti
           <ul className="mt-3 divide-y divide-border overflow-hidden rounded-2xl border border-border bg-surface">
             {data.reactions.map((reaction) => (
               <li key={reaction.id} className="flex items-center gap-3 px-4 py-3.5 sm:px-5">
-                <ProfileAvatar
-                  name={reaction.user.name}
-                  avatarUrl={reaction.user.avatarUrl}
-                  size="sm"
-                />
+                <ProfileLink user={reaction.user} className="shrink-0">
+                  <ProfileAvatar
+                    name={reaction.user.name}
+                    avatarUrl={reaction.user.avatarUrl}
+                    size="sm"
+                  />
+                </ProfileLink>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-ink">{reaction.user.name}</p>
+                  <ProfileLink
+                    user={reaction.user}
+                    className="truncate text-sm font-semibold text-ink transition hover:text-brand"
+                  >
+                    {reaction.user.name}
+                  </ProfileLink>
                   <p className="text-xs text-ink-muted">{timeAgo(reaction.createdAt)}</p>
                 </div>
                 <span
@@ -106,7 +114,9 @@ export function CommunityPostReactionsView({ data }: { data: CommunityPostReacti
                   />
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                      <p className="truncate text-sm font-semibold text-ink">{quote.author.name}</p>
+                      <p className="truncate text-sm font-semibold text-ink">
+                        {quote.author.name}
+                      </p>
                       <p className="text-xs text-ink-muted">{timeAgo(quote.createdAt)}</p>
                     </div>
                     <p className="mt-1 line-clamp-2 text-sm font-semibold text-ink">{quote.title}</p>

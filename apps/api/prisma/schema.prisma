@@ -11,6 +11,7 @@ model User {
   id                    String                   @id @default(cuid())
   coddleUserId          String                   @unique @map("coddle_user_id")
   email                 String                   @unique
+  username              String                   @unique
   name                  String
   avatarUrl             String?                  @map("avatar_url")
   bio                   String?
@@ -49,8 +50,24 @@ model User {
   communityCommentReactions  CommunityCommentReaction[]
   communityReports           CommunityReport[]
   pointEvents                UserPointEvent[]
+  following                  Follow[]                 @relation("UserFollowing")
+  followers                  Follow[]                 @relation("UserFollowers")
 
   @@map("users")
+}
+
+/// One user following another. `follower` watches `following`.
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String   @map("follower_id")
+  followingId String   @map("following_id")
+  follower    User     @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@unique([followerId, followingId])
+  @@index([followingId])
+  @@map("follows")
 }
 
 /// Append-only ledger of point awards and deductions.
