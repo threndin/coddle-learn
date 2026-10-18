@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 import { ProfileAvatar } from "@/components/onboarding/profile-avatar";
+import { FollowButton } from "@/components/profile/follow-button";
+import { ProfileLink } from "@/components/profile/profile-link";
 import { Icon } from "@/components/ui/icon";
 import type { SpotlightLearner } from "@/lib/community";
 
@@ -58,19 +60,28 @@ export function SponsoredPanel({
           <ul className="space-y-2.5">
             {learners.map((person) => (
               <li key={person.id} className="flex items-center gap-3">
-                <ProfileAvatar name={person.name} avatarUrl={person.avatarUrl} size="sm" />
+                <ProfileLink user={person} className="shrink-0">
+                  <ProfileAvatar name={person.name} avatarUrl={person.avatarUrl} size="sm" />
+                </ProfileLink>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-ink">{person.name}</p>
+                  <ProfileLink
+                    user={person}
+                    className="truncate text-sm font-semibold text-ink transition hover:text-brand"
+                  >
+                    {person.name}
+                  </ProfileLink>
                   <p className="truncate text-xs text-ink-muted">{person.note}</p>
                 </div>
-                <button
-                  type="button"
-                  disabled
-                  title="Follow comes with public profiles"
-                  className="shrink-0 rounded-lg border border-border px-2.5 py-1 text-[11px] font-semibold text-ink-muted"
-                >
-                  Follow
-                </button>
+                {person.username ? (
+                  <FollowButton username={person.username} />
+                ) : (
+                  <ProfileLink
+                    user={person}
+                    className="shrink-0 rounded-lg border border-border px-2.5 py-1 text-[11px] font-semibold text-ink transition hover:border-border-strong"
+                  >
+                    View
+                  </ProfileLink>
+                )}
               </li>
             ))}
           </ul>

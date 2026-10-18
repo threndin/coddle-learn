@@ -106,7 +106,7 @@ export const APP_NAV: AppNavItem[] = [
   {
     href: "/profile",
     label: "Profile",
-    description: "Your public learning profile",
+    description: "Public learning profile",
     icon: "profile",
   },
   {
@@ -118,6 +118,7 @@ export const APP_NAV: AppNavItem[] = [
 ];
 
 export function navTitleForPath(pathname: string): string {
+  if (pathname === "/profile" || pathname.startsWith("/u/")) return "Profile";
   const exact = APP_NAV.find((item) => item.href === pathname);
   if (exact) return exact.label;
   const nested = APP_NAV.find(

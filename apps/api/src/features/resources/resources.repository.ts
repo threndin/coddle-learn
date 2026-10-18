@@ -3,7 +3,7 @@ import { prisma } from "../../shared/db.js";
 
 const resourceInclude = {
   submittedBy: {
-    select: { id: true, name: true, avatarUrl: true },
+    select: { id: true, username: true, name: true, avatarUrl: true },
   },
   skills: {
     include: {

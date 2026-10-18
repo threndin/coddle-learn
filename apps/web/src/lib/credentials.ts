@@ -25,6 +25,8 @@ export type CredentialSummary = {
 
 export type CredentialDetail = CredentialSummary & {
   earner: {
+    id?: string;
+    username?: string;
     name: string;
     avatarUrl: string | null;
   };

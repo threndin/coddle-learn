@@ -5,6 +5,7 @@ const courseInclude = {
   createdBy: {
     select: {
       id: true,
+      username: true,
       name: true,
       avatarUrl: true,
     },

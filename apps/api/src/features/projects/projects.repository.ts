@@ -8,7 +8,7 @@ export const projectInclude = {
   skills: {
     include: { skill: { select: { slug: true, name: true, category: true } } },
   },
-  createdBy: { select: { id: true, name: true, avatarUrl: true } },
+  createdBy: { select: { id: true, username: true, name: true, avatarUrl: true } },
   _count: { select: { submissions: true } },
 } satisfies Prisma.ProjectInclude;
 

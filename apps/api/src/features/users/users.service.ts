@@ -25,6 +25,7 @@ export function toPublicUser(user: User & { skills?: UserWithSkills["skills"] })
   return {
     id: user.id,
     email: user.email,
+    username: user.username,
     name: user.name,
     avatarUrl: user.avatarUrl,
     bio: user.bio,

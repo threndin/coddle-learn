@@ -10,6 +10,7 @@ import { apiFetch, apiRequest, csrfHeaders } from "@/lib/api-client";
 
 export type CourseCreator = {
   id: string;
+  username?: string;
   name: string;
   avatarUrl: string | null;
 };

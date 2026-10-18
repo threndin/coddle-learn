@@ -3,6 +3,7 @@ import { prisma } from "../../shared/db.js";
 
 const authorSelect = {
   id: true,
+  username: true,
   name: true,
   avatarUrl: true,
 } satisfies Prisma.UserSelect;
@@ -417,6 +418,7 @@ const activePosts = { isDeleted: false } as const;
 
 const spotlightSelect = {
   id: true,
+  username: true,
   name: true,
   avatarUrl: true,
   points: true,
@@ -431,6 +433,7 @@ const spotlightSelect = {
 
 export type SpotlightUserRow = {
   id: string;
+  username: string;
   name: string;
   avatarUrl: string | null;
   points: number;

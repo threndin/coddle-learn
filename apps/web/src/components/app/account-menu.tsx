@@ -8,19 +8,23 @@ import { ProfileAvatar } from "@/components/onboarding/profile-avatar";
 import { Icon, type IconName } from "@/components/ui/icon";
 import { useAppUser } from "@/components/app/app-user-context";
 import { logout } from "@/lib/auth";
-
-const ACCOUNT_LINKS: { href: string; label: string; icon: IconName }[] = [
-  { href: "/profile", label: "Profile", icon: "users" },
-  { href: "/credentials", label: "Credentials", icon: "checkCircle" },
-  { href: "/achievements", label: "Achievements", icon: "star" },
-  { href: "/notifications", label: "Notifications", icon: "message" },
-  { href: "/studio", label: "Studio", icon: "layers" },
-  { href: "/settings", label: "Settings", icon: "settings" },
-];
+import { profilePath } from "@/lib/profiles";
 
 export function AccountMenu() {
   const user = useAppUser();
   const router = useRouter();
+  const ACCOUNT_LINKS: { href: string; label: string; icon: IconName }[] = [
+    {
+      href: user.username ? profilePath(user.username) : "/profile",
+      label: "Profile",
+      icon: "users",
+    },
+    { href: "/credentials", label: "Credentials", icon: "checkCircle" },
+    { href: "/achievements", label: "Achievements", icon: "star" },
+    { href: "/notifications", label: "Notifications", icon: "message" },
+    { href: "/studio", label: "Studio", icon: "layers" },
+    { href: "/settings", label: "Settings", icon: "settings" },
+  ];
   const rootRef = useRef<HTMLDivElement>(null);
   const cancelRef = useRef<HTMLButtonElement>(null);
   const titleId = useId();

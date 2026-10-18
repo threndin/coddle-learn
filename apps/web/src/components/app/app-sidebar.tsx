@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { ProfileAvatar } from "@/components/onboarding/profile-avatar";
 import { APP_NAV, NavIcon } from "@/components/app/nav-config";
 import { useAppUser } from "@/components/app/app-user-context";
+import { profilePath } from "@/lib/profiles";
 
 export function AppSidebar({
   collapsed,
@@ -71,8 +72,10 @@ export function AppSidebar({
           <ul className="space-y-0.5">
             {APP_NAV.map((item) => {
               const active =
-                pathname === item.href ||
-                (item.href !== "/dashboard" && pathname.startsWith(`${item.href}/`));
+                item.href === "/profile"
+                  ? pathname === "/profile" || pathname.startsWith("/u/")
+                  : pathname === item.href ||
+                    (item.href !== "/dashboard" && pathname.startsWith(`${item.href}/`));
               return (
                 <li key={item.href}>
                   <Link
@@ -102,9 +105,11 @@ export function AppSidebar({
             collapsed ? "lg:px-2" : "",
           ].join(" ")}
         >
-          <div
+          <Link
+            href={user.username ? profilePath(user.username) : "/profile"}
+            onClick={onNavigate}
             className={[
-              "flex items-center gap-3 rounded-xl bg-surface-subtle px-3 py-2.5",
+              "flex items-center gap-3 rounded-xl bg-surface-subtle px-3 py-2.5 transition hover:bg-brand-soft/50",
               collapsed ? "lg:justify-center lg:px-2" : "",
             ].join(" ")}
           >
@@ -112,10 +117,12 @@ export function AppSidebar({
             <div className={["min-w-0 flex-1", collapsed ? "lg:hidden" : ""].join(" ")}>
               <p className="truncate text-sm font-semibold text-ink">{firstName}</p>
               <p className="truncate font-mono text-xs text-ink-muted">
-                {user.points.toLocaleString()} pts
+                {user.username
+                  ? `@${user.username}`
+                  : `${user.points.toLocaleString()} pts`}
               </p>
             </div>
-          </div>
+          </Link>
         </div>
       </aside>
     </>

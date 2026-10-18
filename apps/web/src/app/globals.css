@@ -121,6 +121,33 @@ body {
   }
 }
 
+@keyframes profile-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.profile-avatar-enter {
+  animation: profile-rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.profile-copy-enter {
+  animation: profile-rise 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.08s both;
+}
+
+.profile-actions-enter {
+  animation: profile-rise 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.16s both;
+}
+
+.profile-metrics-enter {
+  animation: profile-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.22s both;
+}
+
 @keyframes marquee {
   from {
     transform: translateX(0);
@@ -169,7 +196,11 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .animate-marquee,
   .pulse-node,
-  .draw-line {
+  .draw-line,
+  .profile-avatar-enter,
+  .profile-copy-enter,
+  .profile-actions-enter,
+  .profile-metrics-enter {
     animation: none;
   }
 

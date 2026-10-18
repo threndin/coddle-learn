@@ -106,6 +106,7 @@ function detailPayload(
       : null,
     createdBy: {
       id: project.createdBy.id,
+      username: project.createdBy.username,
       name: project.createdBy.name,
       avatarUrl: project.createdBy.avatarUrl,
     },

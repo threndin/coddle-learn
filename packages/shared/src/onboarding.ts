@@ -76,6 +76,7 @@ export const ONBOARDING_POINTS = 50;
 export type LearnUser = {
   id: string;
   email: string;
+  username: string;
   name: string;
   avatarUrl: string | null;
   bio: string | null;

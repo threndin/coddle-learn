@@ -18,6 +18,7 @@ import { CourseReviews } from "@/components/courses/course-reviews";
 import { LessonExercises, type ExerciseAccess } from "@/components/courses/lesson-exercises";
 import { LessonMarkdown } from "@/components/courses/lesson-markdown";
 import { ProfileAvatar } from "@/components/onboarding/profile-avatar";
+import { ProfileLink } from "@/components/profile/profile-link";
 import { Icon } from "@/components/ui/icon";
 import { Stars } from "@/components/ui/stars";
 import { errorMessage } from "@/lib/api-client";
@@ -395,13 +396,20 @@ export function CourseDetailView({
 
           <div className="mt-5 flex flex-wrap items-center gap-4">
             <div className="flex items-center gap-2.5">
-              <ProfileAvatar
-                name={course.createdBy.name}
-                avatarUrl={course.createdBy.avatarUrl}
-                size="sm"
-              />
+              <ProfileLink user={course.createdBy} className="shrink-0">
+                <ProfileAvatar
+                  name={course.createdBy.name}
+                  avatarUrl={course.createdBy.avatarUrl}
+                  size="sm"
+                />
+              </ProfileLink>
               <div>
-                <p className="text-sm font-semibold text-ink">{course.createdBy.name}</p>
+                <ProfileLink
+                  user={course.createdBy}
+                  className="text-sm font-semibold text-ink transition hover:text-brand"
+                >
+                  {course.createdBy.name}
+                </ProfileLink>
                 <p className="text-xs text-ink-muted">Created by</p>
               </div>
             </div>

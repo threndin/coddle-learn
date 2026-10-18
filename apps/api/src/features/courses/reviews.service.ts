@@ -42,6 +42,7 @@ function reviewPayload(review: ReviewWithUser, userId: string, completed: Set<st
     edited: review.updatedAt.getTime() - review.createdAt.getTime() > 60_000,
     author: {
       id: review.user.id,
+      username: review.user.username,
       name: review.user.name,
       avatarUrl: review.user.avatarUrl,
     },
