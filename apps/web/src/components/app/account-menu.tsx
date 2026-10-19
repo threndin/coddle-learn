@@ -16,9 +16,10 @@ export function AccountMenu() {
   const ACCOUNT_LINKS: { href: string; label: string; icon: IconName }[] = [
     {
       href: user.username ? profilePath(user.username) : "/profile",
-      label: "Profile",
+      label: "View profile",
       icon: "users",
     },
+    { href: "/profile", label: "Edit profile", icon: "pencil" },
     { href: "/credentials", label: "Credentials", icon: "checkCircle" },
     { href: "/achievements", label: "Achievements", icon: "star" },
     { href: "/notifications", label: "Notifications", icon: "message" },

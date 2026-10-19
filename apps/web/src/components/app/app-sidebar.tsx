@@ -73,7 +73,7 @@ export function AppSidebar({
             {APP_NAV.map((item) => {
               const active =
                 item.href === "/profile"
-                  ? pathname === "/profile" || pathname.startsWith("/u/")
+                  ? pathname === "/profile"
                   : pathname === item.href ||
                     (item.href !== "/dashboard" && pathname.startsWith(`${item.href}/`));
               return (

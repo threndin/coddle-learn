@@ -21,6 +21,13 @@ model User {
   startingRoadmapSlug   String?                  @map("starting_roadmap_slug")
   onboardingCompletedAt DateTime?                @map("onboarding_completed_at")
   points                Int                      @default(0)
+  /// Public profile section visibility (profile editor).
+  showRoadmapsPublic      Boolean                  @default(true) @map("show_roadmaps_public")
+  showProjectsPublic      Boolean                  @default(true) @map("show_projects_public")
+  showPostsPublic         Boolean                  @default(true) @map("show_posts_public")
+  showSkillsPublic        Boolean                  @default(true) @map("show_skills_public")
+  showCredentialsPublic   Boolean                  @default(true) @map("show_credentials_public")
+  showAchievementsPublic  Boolean                  @default(true) @map("show_achievements_public")
   createdAt             DateTime                 @default(now()) @map("created_at")
   updatedAt             DateTime                 @updatedAt @map("updated_at")
   lastLoginAt           DateTime?                @map("last_login_at")

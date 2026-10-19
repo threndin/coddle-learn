@@ -16,11 +16,14 @@ export function SkillsStep({
   skills,
   experienceLevel,
   onChange,
+  variant = "onboarding",
 }: {
   skills: SkillChoice[];
   experienceLevel: ExperienceLevel | null;
   onChange: (skills: SkillChoice[]) => void;
+  variant?: "onboarding" | "editor";
 }) {
+  const isEditor = variant === "editor";
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<SkillCategory>("All");
   const selected = useMemo(() => new Set(skills.map((skill) => skill.slug)), [skills]);
@@ -96,12 +99,18 @@ export function SkillsStep({
       <p className="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-brand">
         Skills
       </p>
-      <h1 className="mt-3 font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">
-        Add the skills you want to grow
+      <h1
+        className={[
+          "mt-3 font-display font-bold tracking-tight text-ink",
+          isEditor ? "text-2xl sm:text-3xl" : "text-3xl sm:text-4xl",
+        ].join(" ")}
+      >
+        {isEditor ? "Skills you want to grow" : "Add the skills you want to grow"}
       </h1>
       <p className="mt-3 max-w-xl text-base leading-relaxed text-ink-muted">
-        Pick from the list or type your own. These shape the roadmap we suggest. You can
-        change them later.
+        {isEditor
+          ? "Pick from the catalog or type your own. These show as interests on your public profile."
+          : "Pick from the list or type your own. These shape the roadmap we suggest. You can change them later."}
       </p>
 
       <div className="mt-8 rounded-2xl border border-border bg-surface p-4 sm:p-5">

@@ -34,6 +34,19 @@ const SECTIONS: { id: SectionId; label: string; hint: string }[] = [
   { id: "proof", label: "Proof", hint: "Credentials" },
 ];
 
+function sectionsForProfile(profile: PublicProfilePayload["profile"]): typeof SECTIONS {
+  if (profile.isOwn) return SECTIONS;
+  const visibility = profile.visibility;
+  if (!visibility) return SECTIONS;
+  return SECTIONS.filter((item) => {
+    if (item.id === "activity") return visibility.roadmaps || visibility.posts;
+    if (item.id === "showcase") return visibility.projects;
+    if (item.id === "skills") return visibility.skills;
+    if (item.id === "proof") return visibility.credentials || visibility.achievements;
+    return true;
+  });
+}
+
 const STATUS_LABEL: Record<string, string> = {
   credentialed: "Completed",
   demonstrated: "Demonstrated",
@@ -204,6 +217,11 @@ export function PublicProfileView({
   const level = levelLabel(profile.experienceLevel);
   const featured = projects[0] ?? null;
   const restProjects = projects.slice(1);
+  const visibleSections = sectionsForProfile(profile);
+  const activeSection =
+    visibleSections.find((item) => item.id === section)?.id ??
+    visibleSections[0]?.id ??
+    "activity";
 
   return (
     <div className="min-h-full bg-surface-subtle">
@@ -279,11 +297,11 @@ export function PublicProfileView({
               </button>
               {profile.isOwn ? (
                 <Link
-                  href="/skills"
+                  href="/profile"
                   className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand/25 transition hover:brightness-110"
                 >
-                  <Icon name="layers" className="h-4 w-4" />
-                  Manage skills
+                  <Icon name="pencil" className="h-4 w-4" />
+                  Edit profile
                 </Link>
               ) : (
                 <button
@@ -333,8 +351,8 @@ export function PublicProfileView({
             aria-label="Profile sections"
             className="flex gap-1 overflow-x-auto pb-3 lg:flex-col lg:gap-0.5 lg:overflow-visible lg:pb-0"
           >
-            {SECTIONS.map((item) => {
-              const active = section === item.id;
+            {visibleSections.map((item) => {
+              const active = activeSection === item.id;
               return (
                 <button
                   key={item.id}
@@ -363,10 +381,20 @@ export function PublicProfileView({
         </aside>
 
         <main className="min-w-0">
-          {section === "activity" ? (
-            <ActivityStage posts={posts} roadmaps={roadmaps} />
+          {visibleSections.length === 0 ? (
+            <p className="rounded-2xl border border-dashed border-border bg-surface px-6 py-12 text-center text-sm text-ink-muted">
+              This learner has not shared activity sections yet.
+            </p>
           ) : null}
-          {section === "showcase" ? (
+          {activeSection === "activity" ? (
+            <ActivityStage
+              showRoadmaps={profile.isOwn || profile.visibility?.roadmaps !== false}
+              showPosts={profile.isOwn || profile.visibility?.posts !== false}
+              posts={posts}
+              roadmaps={roadmaps}
+            />
+          ) : null}
+          {activeSection === "showcase" ? (
             <ShowcaseStage
               featured={featured}
               projects={restProjects}
@@ -374,7 +402,7 @@ export function PublicProfileView({
               onBrowseSkills={() => setSection("skills")}
             />
           ) : null}
-          {section === "skills" ? (
+          {activeSection === "skills" ? (
             <SkillsStage
               skillGraph={skillGraph}
               interests={profile.skills}
@@ -382,9 +410,15 @@ export function PublicProfileView({
               isOwn={profile.isOwn}
             />
           ) : null}
-          {section === "proof" ? (
+          {activeSection === "proof" ? (
             <ProofStage
               earnerName={profile.name}
+              showCredentials={
+                profile.isOwn || profile.visibility?.credentials !== false
+              }
+              showAchievements={
+                profile.isOwn || profile.visibility?.achievements !== false
+              }
               credentials={credentials}
               achievements={achievements}
               catalogSize={data.achievementCatalogSize}
@@ -779,82 +813,90 @@ function ProofStage({
   credentials,
   achievements,
   catalogSize,
+  showCredentials = true,
+  showAchievements = true,
 }: {
   earnerName: string;
   credentials: PublicProfilePayload["credentials"];
   achievements: PublicProfileAchievement[];
   catalogSize: number;
+  showCredentials?: boolean;
+  showAchievements?: boolean;
 }) {
   return (
     <div className="space-y-10">
-      <section>
-        <StageEyebrow>Verified</StageEyebrow>
-        <StageTitle
-          aside={
-            credentials.length > 0
-              ? pluralize(credentials.length, "credential")
-              : undefined
-          }
-        >
-          Credentials
-        </StageTitle>
+      {showCredentials ? (
+        <section>
+          <StageEyebrow>Verified</StageEyebrow>
+          <StageTitle
+            aside={
+              credentials.length > 0
+                ? pluralize(credentials.length, "credential")
+                : undefined
+            }
+          >
+            Credentials
+          </StageTitle>
 
-        {credentials.length === 0 ? (
-          <p className="mt-4 text-sm text-ink-muted">No credentials earned yet.</p>
-        ) : (
-          <ul className="mt-5 grid gap-4 sm:grid-cols-2">
-            {credentials.map((item) => (
-              <li key={item.id}>
-                <Link
-                  href={`/credentials/${encodeURIComponent(item.id)}`}
-                  className="group block overflow-hidden rounded-2xl border border-border bg-surface-subtle p-2.5 transition hover:border-brand/40"
-                >
-                  <CredentialCertificate
-                    compact
-                    data={{
-                      earnerName,
-                      title: item.title,
-                      kind: item.kind,
-                      issuedAt: item.issuedAt,
-                      code: item.code,
-                      verifyUrl: item.verifyUrl,
-                      assessmentTitle: item.source.assessmentTitle,
-                      courseTitle: item.source.courseTitle,
-                      projectTitle: item.source.projectTitle,
-                      pathLabel: item.source.pathLabel,
-                    }}
-                  />
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+          {credentials.length === 0 ? (
+            <p className="mt-4 text-sm text-ink-muted">No credentials earned yet.</p>
+          ) : (
+            <ul className="mt-5 grid gap-4 sm:grid-cols-2">
+              {credentials.map((item) => (
+                <li key={item.id}>
+                  <Link
+                    href={`/credentials/${encodeURIComponent(item.id)}`}
+                    className="group block overflow-hidden rounded-2xl border border-border bg-surface-subtle p-2.5 transition hover:border-brand/40"
+                  >
+                    <CredentialCertificate
+                      compact
+                      data={{
+                        earnerName,
+                        title: item.title,
+                        kind: item.kind,
+                        issuedAt: item.issuedAt,
+                        code: item.code,
+                        verifyUrl: item.verifyUrl,
+                        assessmentTitle: item.source.assessmentTitle,
+                        courseTitle: item.source.courseTitle,
+                        projectTitle: item.source.projectTitle,
+                        pathLabel: item.source.pathLabel,
+                      }}
+                    />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      ) : null}
 
-      <section>
-        <StageEyebrow>Milestones</StageEyebrow>
-        <StageTitle aside={`${achievements.length} of ${catalogSize}`}>
-          Achievements
-        </StageTitle>
+      {showAchievements ? (
+        <section>
+          <StageEyebrow>Milestones</StageEyebrow>
+          <StageTitle aside={`${achievements.length} of ${catalogSize}`}>
+            Achievements
+          </StageTitle>
 
-        {achievements.length === 0 ? (
-          <p className="mt-4 text-sm text-ink-muted">No achievements unlocked yet.</p>
-        ) : (
-          <ul className="mt-5 flex flex-wrap gap-6 sm:gap-8">
-            {achievements.map((item) => (
-              <li key={item.slug} className="w-[5.5rem] text-center sm:w-24">
-                <AchievementMedallion item={item} />
-                <Link
-                  href={`/achievements/${encodeURIComponent(item.slug)}`}
-                  className="mt-3 block text-xs font-semibold leading-snug text-ink transition hover:text-brand"
-                >
-                  {item.title}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+          {achievements.length === 0 ? (
+            <p className="mt-4 text-sm text-ink-muted">No achievements unlocked yet.</p>
+          ) : (
+            <ul className="mt-5 flex flex-wrap gap-6 sm:gap-8">
+              {achievements.map((item) => (
+                <li key={item.slug} className="w-[5.5rem] text-center sm:w-24">
+                  <AchievementMedallion item={item} />
+                  <Link
+                    href={`/achievements/${encodeURIComponent(item.slug)}`}
+                    className="mt-3 block text-xs font-semibold leading-snug text-ink transition hover:text-brand"
+                  >
+                    {item.title}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      ) : null}
     </div>
   );
 }
@@ -912,110 +954,117 @@ function PostThumb({ imageUrl }: { imageUrl: string }) {
 function ActivityStage({
   posts,
   roadmaps,
+  showRoadmaps = true,
+  showPosts = true,
 }: {
   posts: PublicProfilePayload["posts"];
   roadmaps: PublicProfilePayload["roadmaps"];
+  showRoadmaps?: boolean;
+  showPosts?: boolean;
 }) {
   return (
     <div className="space-y-12">
-      <section>
-        {/* <StageEyebrow>Learning paths</StageEyebrow> */}
-        <StageTitle
-          aside={roadmaps.length > 0 ? pluralize(roadmaps.length, "roadmap") : undefined}
-        >
-          Roadmaps
-        </StageTitle>
+      {showRoadmaps ? (
+        <section>
+          <StageTitle
+            aside={roadmaps.length > 0 ? pluralize(roadmaps.length, "roadmap") : undefined}
+          >
+            Roadmaps
+          </StageTitle>
 
-        {roadmaps.length === 0 ? (
-          <p className="mt-4 text-sm text-ink-muted">Not enrolled in a roadmap yet.</p>
-        ) : (
-          <ul className="mt-4 grid gap-3 sm:grid-cols-2">
-            {roadmaps.map((item) => (
-              <li key={item.slug}>
-                <Link
-                  href={`/roadmaps/${encodeURIComponent(item.slug)}`}
-                  className="group flex h-full flex-col rounded-2xl border border-border bg-surface p-4 shadow-sm shadow-ink/[0.03] transition hover:border-border-strong sm:p-5"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="font-display text-base font-bold tracking-tight text-ink transition group-hover:text-brand">
-                        {item.name}
-                      </p>
-                      <p className="mt-1 text-xs text-ink-muted">
-                        {item.completedAt
-                          ? `Completed ${formatDate(item.completedAt)}`
-                          : `Started ${formatDate(item.startedAt)}`}
-                        {item.isPrimary ? " · Primary" : null}
-                      </p>
-                    </div>
-                    <span className="shrink-0 rounded-full bg-brand-soft px-2.5 py-1 font-mono text-xs font-semibold tabular-nums text-brand">
-                      {item.progressPercent}%
-                    </span>
-                  </div>
-                  <div className="mt-auto pt-4">
-                    <div className="h-1.5 overflow-hidden rounded-full bg-surface-subtle">
-                      <div
-                        className="h-full rounded-full bg-gradient-to-r from-brand to-brand-light transition-[width] duration-700"
-                        style={{
-                          width: `${Math.min(100, Math.max(0, item.progressPercent))}%`,
-                        }}
-                      />
-                    </div>
-                  </div>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section>
-        <StageEyebrow>Community</StageEyebrow>
-        <StageTitle
-          aside={posts.length > 0 ? pluralize(posts.length, "post") : undefined}
-        >
-          Recent posts
-        </StageTitle>
-
-        {posts.length === 0 ? (
-          <p className="mt-4 text-sm text-ink-muted">No community posts yet.</p>
-        ) : (
-          <ul className="mt-4 divide-y divide-border border-y border-border">
-            {posts.map((item) => {
-              const imageUrl = postImageUrl(item);
-              return (
-                <li key={item.id} className="py-5">
+          {roadmaps.length === 0 ? (
+            <p className="mt-4 text-sm text-ink-muted">Not enrolled in a roadmap yet.</p>
+          ) : (
+            <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+              {roadmaps.map((item) => (
+                <li key={item.slug}>
                   <Link
-                    href={communityPostPath(item)}
-                    className="group flex items-center gap-5"
+                    href={`/roadmaps/${encodeURIComponent(item.slug)}`}
+                    className="group flex h-full flex-col rounded-2xl border border-border bg-surface p-4 shadow-sm shadow-ink/[0.03] transition hover:border-border-strong sm:p-5"
                   >
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs text-ink-muted">
-                        {kindLabel(item.kind)}
-                        <span className="mx-1.5 text-border" aria-hidden>
-                          ·
-                        </span>
-                        {timeAgo(item.createdAt)}
-                        <span className="mx-1.5 text-border" aria-hidden>
-                          ·
-                        </span>
-                        {pluralize(item.commentCount, "comment")}
-                      </p>
-                      <p className="mt-1.5 font-display text-lg font-bold tracking-tight text-ink transition group-hover:text-brand">
-                        {item.title}
-                      </p>
-                      <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-ink-muted">
-                        {item.body}
-                      </p>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-display text-base font-bold tracking-tight text-ink transition group-hover:text-brand">
+                          {item.name}
+                        </p>
+                        <p className="mt-1 text-xs text-ink-muted">
+                          {item.completedAt
+                            ? `Completed ${formatDate(item.completedAt)}`
+                            : `Started ${formatDate(item.startedAt)}`}
+                          {item.isPrimary ? " · Primary" : null}
+                        </p>
+                      </div>
+                      <span className="shrink-0 rounded-full bg-brand-soft px-2.5 py-1 font-mono text-xs font-semibold tabular-nums text-brand">
+                        {item.progressPercent}%
+                      </span>
                     </div>
-                    {imageUrl ? <PostThumb imageUrl={imageUrl} /> : null}
+                    <div className="mt-auto pt-4">
+                      <div className="h-1.5 overflow-hidden rounded-full bg-surface-subtle">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-brand to-brand-light transition-[width] duration-700"
+                          style={{
+                            width: `${Math.min(100, Math.max(0, item.progressPercent))}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
                   </Link>
                 </li>
-              );
-            })}
-          </ul>
-        )}
-      </section>
+              ))}
+            </ul>
+          )}
+        </section>
+      ) : null}
+
+      {showPosts ? (
+        <section>
+          <StageEyebrow>Community</StageEyebrow>
+          <StageTitle
+            aside={posts.length > 0 ? pluralize(posts.length, "post") : undefined}
+          >
+            Recent posts
+          </StageTitle>
+
+          {posts.length === 0 ? (
+            <p className="mt-4 text-sm text-ink-muted">No community posts yet.</p>
+          ) : (
+            <ul className="mt-4 divide-y divide-border border-y border-border">
+              {posts.map((item) => {
+                const imageUrl = postImageUrl(item);
+                return (
+                  <li key={item.id} className="py-5">
+                    <Link
+                      href={communityPostPath(item)}
+                      className="group flex items-center gap-5"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs text-ink-muted">
+                          {kindLabel(item.kind)}
+                          <span className="mx-1.5 text-border" aria-hidden>
+                            ·
+                          </span>
+                          {timeAgo(item.createdAt)}
+                          <span className="mx-1.5 text-border" aria-hidden>
+                            ·
+                          </span>
+                          {pluralize(item.commentCount, "comment")}
+                        </p>
+                        <p className="mt-1.5 font-display text-lg font-bold tracking-tight text-ink transition group-hover:text-brand">
+                          {item.title}
+                        </p>
+                        <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-ink-muted">
+                          {item.body}
+                        </p>
+                      </div>
+                      {imageUrl ? <PostThumb imageUrl={imageUrl} /> : null}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+      ) : null}
     </div>
   );
 }

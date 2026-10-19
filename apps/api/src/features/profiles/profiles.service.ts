@@ -3,6 +3,7 @@ import {
   achievementBySlug,
   isAchievementSlug,
   isExperienceLevel,
+  parseProfileUpdateInput,
   pathLabelForRoadmapSlug,
   roadmapProgressPercent,
 } from "@coddle/shared";
@@ -10,6 +11,7 @@ import { AppError } from "../../shared/errors.js";
 import { config } from "../../config.js";
 import { getMySkillGraph } from "../skills/skills.service.js";
 import { findByUsernameOrId } from "../users/users.repository.js";
+import { toPublicUser, visibilityFromUser } from "../users/users.service.js";
 import {
   countCommunityPosts,
   countCompletedCourses,
@@ -29,6 +31,17 @@ import {
   listRecentPosts,
   listSubmittedProjects,
 } from "./profiles.repository.js";
+import { saveProfileUpdate } from "./profiles-update.repository.js";
+
+const EMPTY_SKILL_GRAPH = {
+  demonstratedCount: 0,
+  learningCount: 0,
+  interestedCount: 0,
+  lockedCount: 0,
+  totalCount: 0,
+  nodes: [] as Awaited<ReturnType<typeof getMySkillGraph>>["nodes"],
+  edges: [] as Awaited<ReturnType<typeof getMySkillGraph>>["edges"],
+};
 
 function verifyUrl(code: string) {
   return `${config.webOrigin}/verify/${encodeURIComponent(code)}`;
@@ -63,6 +76,16 @@ export async function getPublicProfile(usernameOrId: string, viewerId: string | 
   }
 
   const isOwn = viewerId === user.id;
+  const visibility = visibilityFromUser(user);
+  // Owners always see their full profile; visitors respect visibility toggles.
+  const reveal = {
+    roadmaps: isOwn || visibility.roadmaps,
+    projects: isOwn || visibility.projects,
+    posts: isOwn || visibility.posts,
+    skills: isOwn || visibility.skills,
+    credentials: isOwn || visibility.credentials,
+    achievements: isOwn || visibility.achievements,
+  };
 
   const [
     followerCount,
@@ -85,15 +108,15 @@ export async function getPublicProfile(usernameOrId: string, viewerId: string | 
       ? findFollow(viewerId, user.id).then((row) => Boolean(row))
       : Promise.resolve(false),
     countCredentials(user.id),
-    listEarnedAchievements(user.id),
+    reveal.achievements ? listEarnedAchievements(user.id) : Promise.resolve([]),
     countSubmittedProjects(user.id),
     countCompletedCourses(user.id),
     countCommunityPosts(user.id),
-    listPublicCredentials(user.id, 12),
-    listSubmittedProjects(user.id, 12),
-    listEnrolledRoadmaps(user.id),
-    listRecentPosts(user.id, 6),
-    getMySkillGraph(user.id),
+    reveal.credentials ? listPublicCredentials(user.id, 12) : Promise.resolve([]),
+    reveal.projects ? listSubmittedProjects(user.id, 12) : Promise.resolve([]),
+    reveal.roadmaps ? listEnrolledRoadmaps(user.id) : Promise.resolve([]),
+    reveal.posts ? listRecentPosts(user.id, 6) : Promise.resolve([]),
+    reveal.skills ? getMySkillGraph(user.id) : Promise.resolve(EMPTY_SKILL_GRAPH),
   ]);
 
   const earnedAchievements = achievementRows
@@ -129,20 +152,22 @@ export async function getPublicProfile(usernameOrId: string, viewerId: string | 
     }),
   );
 
-  const highlightedSkills = skillGraph.nodes
-    .filter(
-      (node) =>
-        node.status === "credentialed" ||
-        node.status === "demonstrated" ||
-        node.status === "learning",
-    )
-    .slice(0, 16)
-    .map((node) => ({
-      slug: node.slug,
-      name: node.name,
-      category: node.category,
-      status: node.status,
-    }));
+  const highlightedSkills = reveal.skills
+    ? skillGraph.nodes
+        .filter(
+          (node) =>
+            node.status === "credentialed" ||
+            node.status === "demonstrated" ||
+            node.status === "learning",
+        )
+        .slice(0, 16)
+        .map((node) => ({
+          slug: node.slug,
+          name: node.name,
+          category: node.category,
+          status: node.status,
+        }))
+    : [];
 
   return {
     profile: {
@@ -154,26 +179,29 @@ export async function getPublicProfile(usernameOrId: string, viewerId: string | 
       experienceLevel: isExperienceLevel(user.experienceLevel) ? user.experienceLevel : null,
       points: user.points,
       memberSince: user.createdAt.toISOString(),
-      skills: user.skills.map((row) => ({
-        slug: row.skill.slug,
-        name: row.skill.name,
-      })),
+      skills: reveal.skills
+        ? user.skills.map((row) => ({
+            slug: row.skill.slug,
+            name: row.skill.name,
+          }))
+        : [],
       highlightedSkills,
+      visibility,
       followerCount,
       followingCount,
       isOwn,
       isFollowing,
       stats: {
-        credentials: credentialCount,
-        achievements: earnedAchievements.length,
-        projects: projectCount,
+        credentials: reveal.credentials ? credentialCount : 0,
+        achievements: reveal.achievements ? earnedAchievements.length : 0,
+        projects: reveal.projects ? projectCount : 0,
         coursesCompleted: courseCount,
-        posts: postCount,
-        roadmaps: roadmaps.length,
-        demonstratedSkills: skillGraph.demonstratedCount,
+        posts: reveal.posts ? postCount : 0,
+        roadmaps: reveal.roadmaps ? roadmaps.length : 0,
+        demonstratedSkills: reveal.skills ? skillGraph.demonstratedCount : 0,
       },
     },
-    skillGraph,
+    skillGraph: reveal.skills ? skillGraph : EMPTY_SKILL_GRAPH,
     credentials: credentials.map((row) => ({
       id: row.id,
       code: row.code,
@@ -235,6 +263,20 @@ export async function getPublicProfile(usernameOrId: string, viewerId: string | 
     })),
     achievementCatalogSize: ACHIEVEMENT_DEFINITIONS.length,
   };
+}
+
+export async function updateOwnProfile(userId: string, input: unknown) {
+  const parsed = parseProfileUpdateInput(input);
+  if (!parsed.ok) {
+    throw new AppError(400, "invalid_profile", parsed.message);
+  }
+
+  const updated = await saveProfileUpdate(userId, parsed.value);
+  if (!updated) {
+    throw new AppError(404, "user_missing", "Account no longer exists. Sign in again.");
+  }
+
+  return toPublicUser(updated);
 }
 
 export async function followProfile(viewerId: string, usernameOrId: string) {

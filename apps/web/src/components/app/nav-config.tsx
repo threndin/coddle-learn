@@ -106,7 +106,7 @@ export const APP_NAV: AppNavItem[] = [
   {
     href: "/profile",
     label: "Profile",
-    description: "Public learning profile",
+    description: "Edit bio, skills, and visibility",
     icon: "profile",
   },
   {

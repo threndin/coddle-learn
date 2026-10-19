@@ -171,6 +171,7 @@ Locally, Learn web defaults to port `3002` so Coddle can stay on `3000`. Point `
 - Course final assessments (`Assessment`, `AssessmentQuestion`, `AssessmentAttempt`) with MCQ, true/false, and short answer; gated until lessons and exercises are done; required for course completion when present
 - Studio assessment authoring (`PUT /studio/courses/:id/assessment`) and learner routes `/assessments`, `/assessments/:id`, `/assessments/:id/attempts/:attemptId`
 - Credentials (`Credential`) issued on assessment pass and project submit; `/credentials`, `/credentials/:id`, public `/verify/:code`
-- Skill graph (`SkillEdge`, `UserSkillProgress`) with `GET /skills` and interactive `/skills` UI; evidence from assessments, projects, and credentials (not course completion alone); section on `/profile`
+- Skill graph (`SkillEdge`, `UserSkillProgress`) with `GET /skills` and interactive `/skills` UI; evidence from assessments, projects, and credentials (not course completion alone); section on public `/u/[username]` profiles
+- Profile editor (`PATCH /profiles/me`) for bio, experience level, interest skills, and public section visibility; `/profile` UI
 - Learn `/login`, `/onboarding`, and `/dashboard`
 - Coddle `/sso/learn` bridge page
