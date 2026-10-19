@@ -7,10 +7,12 @@ import {
   followingHandler,
   getProfileHandler,
   unfollowHandler,
+  updateMeHandler,
 } from "./profiles.controller.js";
 
 export const profilesRouter: Router = Router();
 
+profilesRouter.patch("/me", requireAuth, requireCsrf, asyncHandler(updateMeHandler));
 profilesRouter.get("/:username", optionalAuth, asyncHandler(getProfileHandler));
 profilesRouter.get("/:username/followers", optionalAuth, asyncHandler(followersHandler));
 profilesRouter.get("/:username/following", optionalAuth, asyncHandler(followingHandler));

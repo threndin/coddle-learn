@@ -1,5 +1,10 @@
 import type { User } from "@prisma/client";
-import { isExperienceLevel, normalizePracticeDays, type LearnUser } from "@coddle/shared";
+import {
+  isExperienceLevel,
+  normalizePracticeDays,
+  type LearnUser,
+  type ProfileVisibility,
+} from "@coddle/shared";
 import {
   findById,
   upsertFromCoddle as upsertFromCoddleRow,
@@ -19,6 +24,17 @@ export async function upsertFromCoddle(profile: CoddleIdentity): Promise<User> {
 
 export async function findUserById(id: string) {
   return findById(id);
+}
+
+export function visibilityFromUser(user: User): ProfileVisibility {
+  return {
+    roadmaps: user.showRoadmapsPublic,
+    projects: user.showProjectsPublic,
+    posts: user.showPostsPublic,
+    skills: user.showSkillsPublic,
+    credentials: user.showCredentialsPublic,
+    achievements: user.showAchievementsPublic,
+  };
 }
 
 export function toPublicUser(user: User & { skills?: UserWithSkills["skills"] }): LearnUser {
@@ -42,5 +58,6 @@ export function toPublicUser(user: User & { skills?: UserWithSkills["skills"] })
       slug: row.skill.slug,
       name: row.skill.name,
     })),
+    visibility: visibilityFromUser(user),
   };
 }

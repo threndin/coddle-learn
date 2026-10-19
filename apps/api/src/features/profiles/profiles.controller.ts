@@ -7,6 +7,7 @@ import {
   getProfileFollowing,
   getPublicProfile,
   unfollowProfile,
+  updateOwnProfile,
 } from "./profiles.service.js";
 
 function requireUserId(req: Request) {
@@ -23,6 +24,12 @@ function optionalUserId(req: Request) {
 
 function param(req: Request, name: string) {
   return String(req.params[name] ?? "");
+}
+
+export async function updateMeHandler(req: Request, res: Response) {
+  res.json({
+    data: { user: await updateOwnProfile(requireUserId(req), req.body) },
+  });
 }
 
 export async function getProfileHandler(req: Request, res: Response) {

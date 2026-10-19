@@ -70,6 +70,62 @@ export type LearnSkill = {
   name: string;
 };
 
+/** Which sections appear on the public `/u/[username]` profile. */
+export type ProfileVisibility = {
+  roadmaps: boolean;
+  projects: boolean;
+  posts: boolean;
+  skills: boolean;
+  credentials: boolean;
+  achievements: boolean;
+};
+
+export const DEFAULT_PROFILE_VISIBILITY: ProfileVisibility = {
+  roadmaps: true,
+  projects: true,
+  posts: true,
+  skills: true,
+  credentials: true,
+  achievements: true,
+};
+
+export const PROFILE_VISIBILITY_OPTIONS: {
+  id: keyof ProfileVisibility;
+  label: string;
+  description: string;
+}[] = [
+  {
+    id: "roadmaps",
+    label: "Roadmaps",
+    description: "Paths you are learning and your progress.",
+  },
+  {
+    id: "projects",
+    label: "Projects",
+    description: "Submitted builds in your showcase.",
+  },
+  {
+    id: "posts",
+    label: "Community posts",
+    description: "Recent questions and discussions.",
+  },
+  {
+    id: "skills",
+    label: "Skills",
+    description: "Interest list and evidence graph.",
+  },
+  {
+    id: "credentials",
+    label: "Credentials",
+    description: "Verified credentials you have earned.",
+  },
+  {
+    id: "achievements",
+    label: "Achievements",
+    description: "Milestones unlocked on the platform.",
+  },
+];
+
 /** Points awarded the first time a learner finishes onboarding. */
 export const ONBOARDING_POINTS = 50;
 
@@ -90,6 +146,14 @@ export type LearnUser = {
   onboardingCompletedAt: string | null;
   points: number;
   skills: LearnSkill[];
+  visibility: ProfileVisibility;
+};
+
+export type NormalizedProfileUpdate = {
+  bio: string | null;
+  experienceLevel: ExperienceLevel;
+  skills: { slug: string; name: string; category: string }[];
+  visibility: ProfileVisibility;
 };
 
 export type NormalizedOnboarding = {
@@ -216,14 +280,47 @@ export function parseOnboardingInput(
     return { ok: false, message: "Choose a level to continue." };
   }
 
-  if (!Array.isArray(input.skills)) {
+  const skillsParsed = parseSkillList(input.skills);
+  if (!skillsParsed.ok) return skillsParsed;
+
+  const roadmapSlug = typeof input.roadmapSlug === "string" ? input.roadmapSlug : "";
+  if (!STARTER_ROADMAPS.some((roadmap) => roadmap.slug === roadmapSlug)) {
+    return { ok: false, message: "Choose a roadmap to start." };
+  }
+
+  if (typeof input.dailyGoalMinutes !== "number" || !isValidDailyGoal(input.dailyGoalMinutes)) {
+    return { ok: false, message: "Choose a daily goal between 15 and 120 minutes." };
+  }
+
+  const practiceDays = normalizePracticeDays(input.practiceDays);
+  if (practiceDays.length < 1) {
+    return { ok: false, message: "Choose at least one day." };
+  }
+
+  return {
+    ok: true,
+    value: {
+      bio: bioRaw.length > 0 ? bioRaw : null,
+      experienceLevel: input.experienceLevel,
+      skills: skillsParsed.skills,
+      roadmapSlug,
+      dailyGoalMinutes: input.dailyGoalMinutes,
+      practiceDays,
+    },
+  };
+}
+
+function parseSkillList(
+  skillsRaw: unknown,
+): { ok: true; skills: NormalizedOnboarding["skills"] } | { ok: false; message: string } {
+  if (!Array.isArray(skillsRaw)) {
     return { ok: false, message: "Add at least one skill." };
   }
 
   const skills: NormalizedOnboarding["skills"] = [];
   const seen = new Set<string>();
 
-  for (const item of input.skills) {
+  for (const item of skillsRaw) {
     if (!isRecord(item)) {
       return { ok: false, message: "One of the skills could not be read." };
     }
@@ -258,29 +355,61 @@ export function parseOnboardingInput(
     return { ok: false, message: `Choose up to ${SKILL_MAX} skills.` };
   }
 
-  const roadmapSlug = typeof input.roadmapSlug === "string" ? input.roadmapSlug : "";
-  if (!STARTER_ROADMAPS.some((roadmap) => roadmap.slug === roadmapSlug)) {
-    return { ok: false, message: "Choose a roadmap to start." };
+  return { ok: true, skills };
+}
+
+function parseVisibilityInput(
+  raw: unknown,
+): { ok: true; value: ProfileVisibility } | { ok: false; message: string } {
+  if (raw === undefined || raw === null) {
+    return { ok: true, value: { ...DEFAULT_PROFILE_VISIBILITY } };
+  }
+  if (!isRecord(raw)) {
+    return { ok: false, message: "Visibility settings could not be read." };
   }
 
-  if (typeof input.dailyGoalMinutes !== "number" || !isValidDailyGoal(input.dailyGoalMinutes)) {
-    return { ok: false, message: "Choose a daily goal between 15 and 120 minutes." };
+  const value = { ...DEFAULT_PROFILE_VISIBILITY };
+  for (const option of PROFILE_VISIBILITY_OPTIONS) {
+    const flag = raw[option.id];
+    if (flag === undefined) continue;
+    if (typeof flag !== "boolean") {
+      return { ok: false, message: `Visibility for ${option.label.toLowerCase()} must be on or off.` };
+    }
+    value[option.id] = flag;
+  }
+  return { ok: true, value };
+}
+
+/** Partial profile editor payload (bio, level, skills, public sections). */
+export function parseProfileUpdateInput(
+  input: unknown,
+): { ok: true; value: NormalizedProfileUpdate } | { ok: false; message: string } {
+  if (!isRecord(input)) {
+    return { ok: false, message: "Profile details were missing." };
   }
 
-  const practiceDays = normalizePracticeDays(input.practiceDays);
-  if (practiceDays.length < 1) {
-    return { ok: false, message: "Choose at least one day." };
+  const bioRaw = typeof input.bio === "string" ? input.bio.trim() : "";
+  if (bioRaw.length > BIO_MAX) {
+    return { ok: false, message: `Keep your bio under ${BIO_MAX} characters.` };
   }
+
+  if (!isExperienceLevel(input.experienceLevel)) {
+    return { ok: false, message: "Choose a level to continue." };
+  }
+
+  const skillsParsed = parseSkillList(input.skills);
+  if (!skillsParsed.ok) return skillsParsed;
+
+  const visibilityParsed = parseVisibilityInput(input.visibility);
+  if (!visibilityParsed.ok) return visibilityParsed;
 
   return {
     ok: true,
     value: {
       bio: bioRaw.length > 0 ? bioRaw : null,
       experienceLevel: input.experienceLevel,
-      skills,
-      roadmapSlug,
-      dailyGoalMinutes: input.dailyGoalMinutes,
-      practiceDays,
+      skills: skillsParsed.skills,
+      visibility: visibilityParsed.value,
     },
   };
 }

@@ -9,6 +9,7 @@ export function ProfileStep({
   experienceLevel,
   onBio,
   onLevel,
+  variant = "onboarding",
 }: {
   name: string;
   email: string;
@@ -17,8 +18,10 @@ export function ProfileStep({
   experienceLevel: ExperienceLevel | null;
   onBio: (bio: string) => void;
   onLevel: (level: ExperienceLevel) => void;
+  variant?: "onboarding" | "editor";
 }) {
   const level = EXPERIENCE_LEVELS.find((item) => item.id === experienceLevel) ?? null;
+  const isEditor = variant === "editor";
 
   return (
     <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_280px]">
@@ -26,12 +29,18 @@ export function ProfileStep({
         <p className="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-brand">
           Profile
         </p>
-        <h1 className="mt-3 font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">
-          This is your learning profile
+        <h1
+          className={[
+            "mt-3 font-display font-bold tracking-tight text-ink",
+            isEditor ? "text-2xl sm:text-3xl" : "text-3xl sm:text-4xl",
+          ].join(" ")}
+        >
+          {isEditor ? "About you" : "This is your learning profile"}
         </h1>
         <p className="mt-3 max-w-xl text-base leading-relaxed text-ink-muted">
-          Name, email, and photo come from your Coddle account. Add a short bio and
-          choose the level that fits where you are starting.
+          {isEditor
+            ? "Name, email, and photo sync from your Coddle account. Update your bio and experience level anytime."
+            : "Name, email, and photo come from your Coddle account. Add a short bio and choose the level that fits where you are starting."}
         </p>
 
         <label className="mt-8 block">
@@ -50,7 +59,9 @@ export function ProfileStep({
         </label>
 
         <fieldset className="mt-6">
-          <legend className="text-sm font-semibold text-ink">Where are you starting?</legend>
+          <legend className="text-sm font-semibold text-ink">
+            {isEditor ? "Experience level" : "Where are you starting?"}
+          </legend>
           <div className="mt-3 grid gap-3 sm:grid-cols-3" role="radiogroup" aria-label="Experience level">
             {EXPERIENCE_LEVELS.map((item) => {
               const selected = item.id === experienceLevel;

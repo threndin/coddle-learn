@@ -1,4 +1,4 @@
-import type { ExperienceLevel, SkillStatus } from "@coddle/shared";
+import type { ExperienceLevel, ProfileVisibility, SkillStatus } from "@coddle/shared";
 import { profilePath } from "@coddle/shared";
 import { apiRequest } from "@/lib/api-client";
 import type { SkillGraph } from "@/lib/skills";
@@ -107,6 +107,7 @@ export type PublicProfile = {
   memberSince: string;
   skills: { slug: string; name: string }[];
   highlightedSkills: PublicProfileSkill[];
+  visibility: ProfileVisibility;
   followerCount: number;
   followingCount: number;
   isOwn: boolean;

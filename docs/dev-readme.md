@@ -31,8 +31,10 @@ First visit after sign-in goes to **onboarding**. Every later visit goes to the 
 | Projects     | `/projects`, `/projects/[slug]`, Studio `/studio/projects/*` | Built (path + level catalog, briefs, start/submit, contributor editor)                                 |
 | Credentials  | `/credentials`, `/credentials/[id]`, `/verify/[code]`        | Built (issued on assessment pass + first project submit; public verify)                                |
 | Achievements | `/achievements`, `/achievements/[slug]`                      | Built (earned + locked catalog; backfill job for existing users)                                       |
-| Skill graph  | `/skills` (also section on `/profile`)                       | Built (interactive graph; evidence from assessments, projects, credentials; locked nodes stay visible) |
+| Skill graph  | `/skills` (also section on public profile)                   | Built (interactive graph; evidence from assessments, projects, credentials; locked nodes stay visible) |
 | Community    | `/community`                                                 | Built (feed: questions, discussions, project shares; compose; filters). Thread detail not yet.         |
+| Public profile | `/u/[username]`                                            | Built (follow, activity, showcase, skills, proof)                                                      |
+| Profile editor | `/profile`                                                 | Built (bio, level, skills, public section visibility)                                                  |
 
 
 
@@ -171,10 +173,10 @@ Skill relationships built from assessments, projects, and credentials (for examp
 ### Profile and community
 
 **27. Public profile** — `/u/[username]`  
-The shareable learning profile: bio, skills, skill graph, roadmaps and progress, projects, credentials, achievements, contributions, and community activity. Follow and unfollow live on this page.
+The shareable learning profile: bio, skills, skill graph, roadmaps and progress, projects, credentials, achievements, contributions, and community activity. Follow and unfollow live on this page. Built.
 
 **28. Profile editor** — `/profile`  
-Edit bio, skills, and which activity is public. Distinct from onboarding: onboarding runs once, this screen is the ongoing editor.
+Edit bio, skills, and which activity is public. Distinct from onboarding: onboarding runs once, this screen is the ongoing editor. Built.
 
 **29. Community** — `/community`  
 Questions and discussions about courses, roadmaps, and projects. Ask a question or share a project. Built (list + compose; no thread detail yet).
