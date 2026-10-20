@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="750" viewBox="0 0 1200 750" role="img" aria-label="Vercel">
+  <rect width="1200" height="750" fill="#000000"/>
+  <circle cx="1020" cy="90" r="220" fill="rgba(255,255,255,0.08)"/>
+  <circle cx="120" cy="680" r="260" fill="rgba(255,255,255,0.06)"/>
+  <g transform="translate(480 175) scale(10)">
+    <path fill="#FFFFFF" d="m12 1.608 12 20.784H0Z"/>
+  </g>
+  <text x="600" y="620" text-anchor="middle" fill="#FFFFFF" font-family="ui-sans-serif, system-ui, sans-serif" font-size="44" font-weight="800">Vercel</text>
+  <text x="600" y="662" text-anchor="middle" fill="rgba(255,255,255,0.78)" font-family="ui-sans-serif, system-ui, sans-serif" font-size="18" font-weight="600" letter-spacing="3">CODDLE LEARN</text>
+</svg>

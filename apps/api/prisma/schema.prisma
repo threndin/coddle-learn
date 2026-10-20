@@ -37,6 +37,8 @@ model User {
   stepProgress          UserStepProgress[]
   resourceBookmarks     UserResourceBookmark[]
   submittedResources    Resource[]               @relation("ResourceSubmitter")
+  toolBookmarks         UserToolBookmark[]
+  submittedTools        Tool[]                   @relation("ToolSubmitter")
   createdCourses        Course[]                 @relation("CourseCreator")
   reviewedCourses       Course[]                 @relation("CourseReviewer")
   courseEnrollments     UserCourse[]
@@ -104,6 +106,7 @@ model Skill {
   courses   CourseSkill[]
   resources ResourceSkill[]
   projects  ProjectSkill[]
+  tools     ToolSkill[]
   edgesFrom SkillEdge[]        @relation("SkillEdgeFrom")
   edgesTo   SkillEdge[]        @relation("SkillEdgeTo")
   progress  UserSkillProgress[]
@@ -290,6 +293,61 @@ model UserResourceBookmark {
   @@unique([userId, resourceId])
   @@index([resourceId])
   @@map("user_resource_bookmarks")
+}
+
+/// Community-submitted developer products. `url` is normalized like resources.
+/// `status`: pending | published | rejected. Seeded tools have no submitter.
+model Tool {
+  id                String             @id @default(cuid())
+  slug              String             @unique
+  url               String             @unique
+  title             String
+  summary           String
+  imageUrl          String             @map("image_url")
+  category          String
+  pricing           String
+  platforms         String[]           @default([])
+  status            String             @default("pending")
+  submittedByUserId String?            @map("submitted_by_user_id")
+  submittedBy       User?              @relation("ToolSubmitter", fields: [submittedByUserId], references: [id], onDelete: SetNull)
+  reviewNote        String?            @map("review_note")
+  publishedAt       DateTime?          @map("published_at")
+  sortOrder         Int                @default(100) @map("sort_order")
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @updatedAt @map("updated_at")
+  skills            ToolSkill[]
+  bookmarks         UserToolBookmark[]
+
+  @@index([status, publishedAt])
+  @@index([submittedByUserId, createdAt])
+  @@index([category])
+  @@index([sortOrder])
+  @@map("tools")
+}
+
+model ToolSkill {
+  toolId    String   @map("tool_id")
+  skillId   String   @map("skill_id")
+  tool      Tool     @relation(fields: [toolId], references: [id], onDelete: Cascade)
+  skill     Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@id([toolId, skillId])
+  @@index([skillId])
+  @@map("tool_skills")
+}
+
+model UserToolBookmark {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  toolId    String   @map("tool_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tool      Tool     @relation(fields: [toolId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([userId, toolId])
+  @@index([toolId])
+  @@map("user_tool_bookmarks")
 }
 
 model Session {

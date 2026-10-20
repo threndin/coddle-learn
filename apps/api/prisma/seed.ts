@@ -10,6 +10,7 @@ import {
   STARTER_PROJECTS,
   STARTER_RESOURCES,
   STARTER_ROADMAPS,
+  STARTER_TOOLS,
   TRUE_FALSE_OPTIONS,
   type AssessmentQuestionConfig,
   type CourseExerciseSeed,
@@ -90,6 +91,44 @@ async function seedResources(): Promise<Map<string, string>> {
   }
 
   return resourceIdByUrl;
+}
+
+/** Upserts by URL and never deletes, so community submissions are untouched. */
+async function seedTools() {
+  const skills = await prisma.skill.findMany();
+  const skillIdBySlug = new Map(skills.map((skill) => [skill.slug, skill.id]));
+
+  for (const [index, tool] of STARTER_TOOLS.entries()) {
+    const data = {
+      title: tool.title,
+      summary: tool.summary,
+      imageUrl: tool.imageUrl,
+      category: tool.category,
+      pricing: tool.pricing,
+      platforms: [...tool.platforms],
+      status: "published",
+      sortOrder: index,
+    };
+    const saved = await prisma.tool.upsert({
+      where: { url: tool.url },
+      create: {
+        ...data,
+        slug: tool.slug,
+        url: tool.url,
+        publishedAt: new Date(),
+      },
+      update: { ...data, slug: tool.slug },
+    });
+
+    await prisma.toolSkill.deleteMany({ where: { toolId: saved.id } });
+    for (const skillSlug of tool.skillSlugs) {
+      const skillId = skillIdBySlug.get(skillSlug);
+      if (!skillId) {
+        throw new Error(`Missing skill slug for tool seed: ${skillSlug}`);
+      }
+      await prisma.toolSkill.create({ data: { toolId: saved.id, skillId } });
+    }
+  }
 }
 
 async function seedRoadmaps(resourceIdByUrl: Map<string, string>) {
@@ -556,6 +595,8 @@ async function main() {
   await seedSkills();
   const resourceIdByUrl = await seedResources();
   console.log(`Seeded ${STARTER_RESOURCES.length} resources.`);
+  await seedTools();
+  console.log(`Seeded ${STARTER_TOOLS.length} tools.`);
   await seedRoadmaps(resourceIdByUrl);
   console.log(`Seeded ${STARTER_ROADMAPS.length} roadmaps.`);
   await seedCourses();
