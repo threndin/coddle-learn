@@ -20,6 +20,7 @@ const RESERVED_USERNAMES = new Set([
   "settings",
   "studio",
   "support",
+  "tools",
   "system",
   "undefined",
   "verify",

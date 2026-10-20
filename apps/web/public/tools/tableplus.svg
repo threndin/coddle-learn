@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="750" viewBox="0 0 1200 750" role="img" aria-label="TablePlus">
+  <rect width="1200" height="750" fill="#1A90FF"/>
+  <circle cx="1020" cy="90" r="220" fill="rgba(255,255,255,0.08)"/>
+  <circle cx="120" cy="680" r="260" fill="rgba(255,255,255,0.06)"/>
+  <g transform="translate(430 190)" fill="none" stroke="#FFFFFF" stroke-width="14" stroke-linejoin="round">
+    <ellipse cx="170" cy="70" rx="150" ry="55"/>
+    <path d="M20 70v150c0 30 67 55 150 55s150-25 150-55V70"/>
+    <path d="M20 145c0 30 67 55 150 55s150-25 150-55"/>
+  </g>
+  <text x="600" y="620" text-anchor="middle" fill="#FFFFFF" font-family="ui-sans-serif, system-ui, sans-serif" font-size="44" font-weight="800">TablePlus</text>
+  <text x="600" y="662" text-anchor="middle" fill="rgba(255,255,255,0.78)" font-family="ui-sans-serif, system-ui, sans-serif" font-size="18" font-weight="600" letter-spacing="3">CODDLE LEARN</text>
+</svg>

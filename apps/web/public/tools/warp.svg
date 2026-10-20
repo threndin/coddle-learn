@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="750" viewBox="0 0 1200 750" role="img" aria-label="Warp">
+  <rect width="1200" height="750" fill="#01A4FF"/>
+  <circle cx="1020" cy="90" r="220" fill="rgba(255,255,255,0.08)"/>
+  <circle cx="120" cy="680" r="260" fill="rgba(255,255,255,0.06)"/>
+  <g transform="translate(480 175) scale(10)">
+    <path fill="#FFFFFF" d="M12.035 2.723h9.253A2.712 2.712 0 0 1 24 5.435v10.529a2.712 2.712 0 0 1-2.712 2.713H8.047Zm-1.681 2.6L6.766 19.677h5.598l-.399 1.6H2.712A2.712 2.712 0 0 1 0 18.565V8.036a2.712 2.712 0 0 1 2.712-2.712Z"/>
+  </g>
+  <text x="600" y="620" text-anchor="middle" fill="#FFFFFF" font-family="ui-sans-serif, system-ui, sans-serif" font-size="44" font-weight="800">Warp</text>
+  <text x="600" y="662" text-anchor="middle" fill="rgba(255,255,255,0.78)" font-family="ui-sans-serif, system-ui, sans-serif" font-size="18" font-weight="600" letter-spacing="3">CODDLE LEARN</text>
+</svg>

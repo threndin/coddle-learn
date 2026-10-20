@@ -12,6 +12,7 @@ export type NavIconId =
   | "roadmaps"
   | "courses"
   | "resources"
+  | "tools"
   | "projects"
   | "assessments"
   | "credentials"
@@ -48,6 +49,12 @@ export const APP_NAV: AppNavItem[] = [
     label: "Resources",
     description: "Curated external links",
     icon: "resources",
+  },
+  {
+    href: "/tools",
+    label: "Tools",
+    description: "Products developers use",
+    icon: "tools",
   },
   {
     href: "/projects",
@@ -178,6 +185,12 @@ export function NavIcon({
         <svg {...common}>
           <path d="M9.5 14.5a3.8 3.8 0 0 0 5.4.3l2-2a3.8 3.8 0 1 0-5.4-5.4l-1.1 1.1" />
           <path d="M14.5 9.5a3.8 3.8 0 0 0-5.4-.3l-2 2a3.8 3.8 0 1 0 5.4 5.4l1.1-1.1" />
+        </svg>
+      );
+    case "tools":
+      return (
+        <svg {...common}>
+          <path d="M14.7 6.3a3.8 3.8 0 0 0-5.4 5.4L4 17l3 3 5.3-5.3a3.8 3.8 0 0 0 5.4-5.4L16 11l-3-3 1.7-1.7Z" />
         </svg>
       );
     case "projects":
