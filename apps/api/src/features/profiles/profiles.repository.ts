@@ -173,6 +173,18 @@ export async function listFollowers(userId: string, take = 24) {
   });
 }
 
+export async function findPublicMentorSummary(userId: string) {
+  return prisma.mentorProfile.findUnique({
+    where: { userId },
+    select: {
+      headline: true,
+      availability: true,
+      topics: true,
+      _count: { select: { programs: { where: { status: "open" } } } },
+    },
+  });
+}
+
 export async function listFollowing(userId: string, take = 24) {
   return prisma.follow.findMany({
     where: { followerId: userId },

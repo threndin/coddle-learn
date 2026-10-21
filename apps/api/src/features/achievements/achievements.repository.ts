@@ -127,6 +127,20 @@ export async function firstReviewedContentAt(userId: string) {
   return dates.reduce((earliest, date) => (date < earliest ? date : earliest));
 }
 
+/** Earliest completed mentorship this user ran as a mentor. */
+export async function firstCompletedMentorshipAt(userId: string) {
+  const row = await prisma.mentorshipApplication.findFirst({
+    where: {
+      status: "completed",
+      completedAt: { not: null },
+      program: { mentorProfile: { userId } },
+    },
+    orderBy: { completedAt: "asc" },
+    select: { completedAt: true },
+  });
+  return row?.completedAt ?? null;
+}
+
 /** Distinct UTC calendar days with learning activity, newest first. */
 export async function listActivityDayKeys(userId: string, limitDays = 90): Promise<string[]> {
   const since = new Date();

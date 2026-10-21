@@ -81,8 +81,8 @@ export const APP_NAV: AppNavItem[] = [
     icon: "community",
   },
   {
-    href: "/mentorship",
-    label: "Mentorship",
+    href: "/mentors",
+    label: "Mentors",
     description: "Learn with experienced developers",
     icon: "mentorship",
   },

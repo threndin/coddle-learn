@@ -68,6 +68,14 @@ function stepsForUser(user: PublicUser): Step[] {
       cta: "Visit community",
       icon: "community",
     },
+    {
+      id: "find-mentor",
+      label: "Find a mentor",
+      why: "Apply to a mentorship program. Mentors approve who they work with.",
+      href: "/mentors",
+      cta: "Browse mentors",
+      icon: "mentorship",
+    },
   ];
 }
 
@@ -129,7 +137,7 @@ export function NextStepsGuide({ user }: { user: PublicUser }) {
         </p>
       </div>
 
-      <ol className="mt-6 grid w-full gap-3 sm:grid-cols-2 xl:grid-cols-5">
+      <ol className="mt-6 grid w-full gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {steps.map((step, index) => {
           const isDone = Boolean(done[step.id]);
           return (

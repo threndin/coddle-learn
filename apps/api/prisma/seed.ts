@@ -8,6 +8,7 @@ import {
   STARTER_COURSES,
   STARTER_EXERCISES,
   STARTER_PROJECTS,
+  STARTER_MENTOR,
   STARTER_RESOURCES,
   STARTER_ROADMAPS,
   STARTER_TOOLS,
@@ -591,6 +592,81 @@ async function seedCommunity() {
   console.log(`Seeded ${STARTER_COMMUNITY_POSTS.length} community posts (author: ${author.email}).`);
 }
 
+/** Attaches a mentor profile to the signed-in Learn user. */
+async function seedMentors() {
+  const email = config.seedMentorEmail.toLowerCase();
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user) {
+    console.log(`Skipped mentor seed (no Learn user ${email}). Sign in once, then re-run seed.`);
+    return;
+  }
+
+  const skills = await prisma.skill.findMany({ select: { id: true, slug: true } });
+  const skillIdBySlug = new Map(skills.map((skill) => [skill.slug, skill.id]));
+  const mentor = STARTER_MENTOR;
+
+  const profile = await prisma.mentorProfile.upsert({
+    where: { userId: user.id },
+    create: {
+      userId: user.id,
+      headline: mentor.headline,
+      about: mentor.about,
+      experienceYears: mentor.experienceYears,
+      availability: mentor.availability,
+      timezone: mentor.timezone,
+      topics: [...mentor.topics],
+    },
+    update: {
+      headline: mentor.headline,
+      about: mentor.about,
+      experienceYears: mentor.experienceYears,
+      availability: mentor.availability,
+      timezone: mentor.timezone,
+      topics: [...mentor.topics],
+    },
+  });
+
+  await prisma.mentorProfileSkill.deleteMany({ where: { mentorProfileId: profile.id } });
+  const skillIds = mentor.skillSlugs
+    .map((slug) => skillIdBySlug.get(slug))
+    .filter((id): id is string => Boolean(id));
+  if (skillIds.length > 0) {
+    await prisma.mentorProfileSkill.createMany({
+      data: skillIds.map((skillId) => ({ mentorProfileId: profile.id, skillId })),
+    });
+  }
+
+  for (const program of mentor.programs) {
+    await prisma.mentorshipProgram.upsert({
+      where: {
+        mentorProfileId_slug: { mentorProfileId: profile.id, slug: program.slug },
+      },
+      create: {
+        mentorProfileId: profile.id,
+        slug: program.slug,
+        title: program.title,
+        summary: program.summary,
+        description: program.description,
+        kind: program.kind,
+        capacity: program.capacity,
+        durationWeeks: program.durationWeeks,
+        status: "open",
+      },
+      update: {
+        title: program.title,
+        summary: program.summary,
+        description: program.description,
+        kind: program.kind,
+        capacity: program.capacity,
+        durationWeeks: program.durationWeeks,
+        status: "open",
+      },
+    });
+  }
+
+  console.log(`Seeded mentor profile for ${user.email}.`);
+}
+
 async function main() {
   await seedSkills();
   const resourceIdByUrl = await seedResources();
@@ -602,6 +678,7 @@ async function main() {
   await seedCourses();
   await seedProjects();
   await seedCommunity();
+  await seedMentors();
 }
 
 main()

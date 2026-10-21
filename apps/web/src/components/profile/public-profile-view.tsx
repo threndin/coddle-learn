@@ -272,6 +272,15 @@ export function PublicProfileView({
                   </span>
                   <span>Joined {memberSinceLabel(profile.memberSince)}</span>
                 </p>
+                {profile.mentorship ? (
+                  <Link
+                    href={`/mentors/${encodeURIComponent(profile.username)}`}
+                    className="mt-3 inline-flex items-center gap-2 rounded-full bg-brand-soft px-3 py-1 text-xs font-semibold text-brand transition hover:bg-brand hover:text-white"
+                  >
+                    <Icon name="users" className="h-3.5 w-3.5" />
+                    Mentoring · {profile.mentorship.headline}
+                  </Link>
+                ) : null}
                 {profile.bio ? (
                   <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink/90">
                     {profile.bio}

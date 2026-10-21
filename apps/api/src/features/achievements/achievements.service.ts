@@ -14,6 +14,7 @@ import {
   firstPublishedResourceAt,
   firstReviewedContentAt,
   firstRoadmapCompletedAt,
+  firstCompletedMentorshipAt,
   listActivityDayKeys,
   listAwardsForUser,
   listUserIds,
@@ -102,7 +103,7 @@ async function resolveEarnedAt(
     case "roadmap-completed":
       return firstRoadmapCompletedAt(userId);
     case "mentor":
-      return null;
+      return firstCompletedMentorshipAt(userId);
     case "course-creator":
       return firstPublishedCourseAt(userId);
     case "resource-reviewer":

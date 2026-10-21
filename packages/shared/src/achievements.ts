@@ -81,7 +81,7 @@ export const ACHIEVEMENT_DEFINITIONS: readonly AchievementDefinition[] = [
     slug: "mentor",
     title: "Mentor",
     summary: "Helped another learner through mentorship.",
-    howToEarn: "Complete a mentorship session once mentorship is live.",
+    howToEarn: "Approve a learner and complete a mentorship program with them.",
     category: "community",
     icon: "users",
     sortOrder: 60,
