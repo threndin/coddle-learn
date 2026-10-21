@@ -57,6 +57,7 @@ export const config = {
     | "manual",
   seedCourseCreatorEmail:
     process.env.SEED_COURSE_CREATOR_EMAIL ?? "kvngjohnny10@gmail.com",
+  seedMentorEmail: process.env.SEED_MENTOR_EMAIL ?? "kingjohneycodey@gmail.com",
   r2: {
     accountId: process.env.R2_ACCOUNT_ID ?? "",
     accessKeyId: process.env.R2_ACCESS_KEY_ID ?? "",

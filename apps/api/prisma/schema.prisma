@@ -61,6 +61,8 @@ model User {
   pointEvents                UserPointEvent[]
   following                  Follow[]                 @relation("UserFollowing")
   followers                  Follow[]                 @relation("UserFollowers")
+  mentorProfile              MentorProfile?
+  mentorshipApplications     MentorshipApplication[]  @relation("MenteeApplications")
 
   @@map("users")
 }
@@ -107,6 +109,7 @@ model Skill {
   resources ResourceSkill[]
   projects  ProjectSkill[]
   tools     ToolSkill[]
+  mentors   MentorProfileSkill[]
   edgesFrom SkillEdge[]        @relation("SkillEdgeFrom")
   edgesTo   SkillEdge[]        @relation("SkillEdgeTo")
   progress  UserSkillProgress[]
@@ -862,4 +865,83 @@ model CommunityPostReaction {
   @@index([postId, emoji])
   @@index([userId])
   @@map("community_post_reactions")
+}
+
+/// Public mentor listing. One profile per user.
+/// `availability`: open | limited | waitlist | paused.
+model MentorProfile {
+  id              String               @id @default(cuid())
+  userId          String               @unique @map("user_id")
+  user            User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  headline        String
+  about           String               @default("")
+  experienceYears Int?                 @map("experience_years")
+  availability    String
+  timezone        String?
+  topics          String[]             @default([])
+  createdAt       DateTime             @default(now()) @map("created_at")
+  updatedAt       DateTime             @updatedAt @map("updated_at")
+  skills          MentorProfileSkill[]
+  programs        MentorshipProgram[]
+
+  @@index([availability, createdAt])
+  @@map("mentor_profiles")
+}
+
+model MentorProfileSkill {
+  mentorProfileId String        @map("mentor_profile_id")
+  skillId         String        @map("skill_id")
+  mentorProfile   MentorProfile @relation(fields: [mentorProfileId], references: [id], onDelete: Cascade)
+  skill           Skill         @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  createdAt       DateTime      @default(now()) @map("created_at")
+
+  @@id([mentorProfileId, skillId])
+  @@index([skillId])
+  @@map("mentor_profile_skills")
+}
+
+/// A mentor-offered program. Learners apply; the mentor approves who joins.
+/// `kind` matches MENTOR_TOPICS. `status`: open | closed | archived.
+model MentorshipProgram {
+  id              String                   @id @default(cuid())
+  mentorProfileId String                   @map("mentor_profile_id")
+  mentorProfile   MentorProfile            @relation(fields: [mentorProfileId], references: [id], onDelete: Cascade)
+  slug            String
+  title           String
+  summary         String
+  description     String                   @default("")
+  kind            String
+  capacity        Int?
+  durationWeeks   Int?                     @map("duration_weeks")
+  status          String                   @default("open")
+  createdAt       DateTime                 @default(now()) @map("created_at")
+  updatedAt       DateTime                 @updatedAt @map("updated_at")
+  applications    MentorshipApplication[]
+
+  @@unique([mentorProfileId, slug])
+  @@index([mentorProfileId, status])
+  @@index([kind, status])
+  @@map("mentorship_programs")
+}
+
+/// `status`: pending | approved | declined | withdrawn | completed.
+model MentorshipApplication {
+  id          String            @id @default(cuid())
+  programId   String            @map("program_id")
+  program     MentorshipProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+  menteeId    String            @map("mentee_id")
+  mentee      User              @relation("MenteeApplications", fields: [menteeId], references: [id], onDelete: Cascade)
+  message     String
+  goals       String            @default("")
+  status      String            @default("pending")
+  mentorNote  String?           @map("mentor_note")
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+  reviewedAt  DateTime?         @map("reviewed_at")
+  completedAt DateTime?         @map("completed_at")
+
+  @@unique([programId, menteeId])
+  @@index([menteeId, status, createdAt])
+  @@index([programId, status])
+  @@map("mentorship_applications")
 }

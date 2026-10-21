@@ -28,6 +28,7 @@ import {
   listFollowers,
   listFollowing,
   listPublicCredentials,
+  findPublicMentorSummary,
   listRecentPosts,
   listSubmittedProjects,
 } from "./profiles.repository.js";
@@ -101,6 +102,7 @@ export async function getPublicProfile(usernameOrId: string, viewerId: string | 
     roadmaps,
     posts,
     skillGraph,
+    mentor,
   ] = await Promise.all([
     countFollowers(user.id),
     countFollowing(user.id),
@@ -117,6 +119,7 @@ export async function getPublicProfile(usernameOrId: string, viewerId: string | 
     reveal.roadmaps ? listEnrolledRoadmaps(user.id) : Promise.resolve([]),
     reveal.posts ? listRecentPosts(user.id, 6) : Promise.resolve([]),
     reveal.skills ? getMySkillGraph(user.id) : Promise.resolve(EMPTY_SKILL_GRAPH),
+    findPublicMentorSummary(user.id),
   ]);
 
   const earnedAchievements = achievementRows
@@ -191,6 +194,14 @@ export async function getPublicProfile(usernameOrId: string, viewerId: string | 
       followingCount,
       isOwn,
       isFollowing,
+      mentorship: mentor
+        ? {
+            headline: mentor.headline,
+            availability: mentor.availability,
+            topics: mentor.topics,
+            openProgramCount: mentor._count.programs,
+          }
+        : null,
       stats: {
         credentials: reveal.credentials ? credentialCount : 0,
         achievements: reveal.achievements ? earnedAchievements.length : 0,

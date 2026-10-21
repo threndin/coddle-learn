@@ -112,6 +112,12 @@ export type PublicProfile = {
   followingCount: number;
   isOwn: boolean;
   isFollowing: boolean;
+  mentorship: {
+    headline: string;
+    availability: string;
+    topics: string[];
+    openProgramCount: number;
+  } | null;
   stats: {
     credentials: number;
     achievements: number;
