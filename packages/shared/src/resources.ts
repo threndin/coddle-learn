@@ -15,7 +15,7 @@ export function isResourceType(value: unknown): value is ResourceType {
 
 /**
  * Lifecycle: pending -> published | rejected. `pending` only exists when
- * `RESOURCE_REVIEW_MODE=manual`; moderation tooling will move items on.
+ * `REVIEW_MODE=manual`; reviewers move items on from /reviewers.
  */
 export const RESOURCE_STATUSES = ["pending", "published", "rejected"] as const;
 export type ResourceStatus = (typeof RESOURCE_STATUSES)[number];

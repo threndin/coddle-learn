@@ -189,7 +189,7 @@ function studioPayload(project: ProjectRow) {
     publishedAt: project.publishedAt?.toISOString() ?? null,
     createdAt: project.createdAt.toISOString(),
     updatedAt: project.updatedAt.toISOString(),
-    reviewMode: config.courseReviewMode,
+    reviewMode: config.reviewMode,
     skills: project.skills.map((row) => ({
       slug: row.skill.slug,
       name: row.skill.name,
@@ -216,7 +216,7 @@ function studioPayload(project: ProjectRow) {
 export async function listStudioProjects(userId: string) {
   const projects = await listCreatorProjects(userId);
   return {
-    reviewMode: config.courseReviewMode,
+    reviewMode: config.reviewMode,
     projects: projects.map((project) => ({
       id: project.id,
       slug: project.slug,
@@ -534,7 +534,7 @@ export async function submitStudioProject(userId: string, projectId: string) {
   }
 
   const now = new Date();
-  if (config.courseReviewMode === "auto") {
+  if (config.reviewMode === "auto") {
     const updated = await updateProject(project.id, {
       status: "published",
       submittedAt: now,

@@ -29,6 +29,13 @@ export async function findPublishedProjectBySlug(slug: string): Promise<ProjectR
   });
 }
 
+export async function findProjectBySlug(slug: string): Promise<ProjectRow | null> {
+  return prisma.project.findUnique({
+    where: { slug },
+    include: projectInclude,
+  });
+}
+
 export async function findProjectById(id: string): Promise<ProjectRow | null> {
   return prisma.project.findUnique({
     where: { id },

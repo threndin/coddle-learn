@@ -215,7 +215,10 @@ async function seedRoadmaps(resourceIdByUrl: Map<string, string>) {
 }
 
 async function resolveCourseCreator() {
-  const email = config.seedCourseCreatorEmail.toLowerCase();
+  const email = config.seedCourseCreatorEmail.trim().toLowerCase();
+  if (!email) {
+    throw new Error("Set SEED_COURSE_CREATOR_EMAIL, sign in once, then re-run seed.");
+  }
   const creator = await prisma.user.findUnique({ where: { email } });
   if (!creator) {
     throw new Error(
@@ -667,6 +670,102 @@ async function seedMentors() {
   console.log(`Seeded mentor profile for ${user.email}.`);
 }
 
+async function seedReviewerRoles() {
+  const emails = [...config.reviewerEmails, ...config.adminEmails];
+  if (emails.length === 0) return;
+  const users = await prisma.user.findMany({
+    where: { email: { in: emails } },
+    select: { id: true, email: true, role: true },
+  });
+  for (const user of users) {
+    const next = config.adminEmails.has(user.email.toLowerCase()) ? "admin" : "reviewer";
+    if (user.role === next || user.role === "admin") continue;
+    await prisma.user.update({ where: { id: user.id }, data: { role: next } });
+  }
+  if (users.length > 0) {
+    console.log(`Promoted ${users.length} user(s) from the reviewer allowlist.`);
+  }
+}
+
+/** Sample queue items. Left alone after a reviewer has already decided. */
+async function seedReviewQueue() {
+  const submitter =
+    (await prisma.user.findUnique({
+      where: { email: config.seedMentorEmail.toLowerCase() },
+    })) ??
+    (await prisma.user.findUnique({
+      where: { email: config.seedCourseCreatorEmail.toLowerCase() },
+    }));
+  if (!submitter) {
+    console.log("Skipped review-queue seed (no submitter user). Sign in once, then re-run seed.");
+    return;
+  }
+
+  const css = await prisma.skill.findUnique({ where: { slug: "css" } });
+  const git = await prisma.skill.findUnique({ where: { slug: "git" } });
+
+  const resourceUrl = "https://web.dev/learn/css/specificity/";
+  const existingResource = await prisma.resource.findUnique({ where: { url: resourceUrl } });
+  if (!existingResource) {
+    const resource = await prisma.resource.create({
+      data: {
+        url: resourceUrl,
+        title: "CSS specificity, explained",
+        description:
+          "A clear walkthrough of how browsers decide which CSS rule wins. Helpful after the first stylesheet, before debugging layout surprises.",
+        type: "article",
+        level: "beginner",
+        status: "pending",
+        submittedByUserId: submitter.id,
+      },
+    });
+    if (css) {
+      await prisma.resourceSkill.create({ data: { resourceId: resource.id, skillId: css.id } });
+    }
+  } else if (existingResource.status === "pending") {
+    await prisma.resource.update({
+      where: { id: existingResource.id },
+      data: {
+        title: "CSS specificity, explained",
+        description:
+          "A clear walkthrough of how browsers decide which CSS rule wins. Helpful after the first stylesheet, before debugging layout surprises.",
+        submittedByUserId: submitter.id,
+      },
+    });
+  }
+
+  const toolUrl = "https://jqlang.org/";
+  const existingTool = await prisma.tool.findUnique({ where: { url: toolUrl } });
+  if (!existingTool) {
+    const tool = await prisma.tool.create({
+      data: {
+        slug: "jq-review",
+        url: toolUrl,
+        title: "jq",
+        summary:
+          "A command-line JSON processor. Slice, filter, and reshape API responses without opening a browser.",
+        imageUrl: "/tools/github.svg",
+        category: "cli",
+        pricing: "free",
+        platforms: ["mac", "linux", "windows", "cli"],
+        status: "pending",
+        submittedByUserId: submitter.id,
+        sortOrder: 200,
+      },
+    });
+    if (git) {
+      await prisma.toolSkill.create({ data: { toolId: tool.id, skillId: git.id } });
+    }
+  } else if (existingTool.status === "pending") {
+    await prisma.tool.update({
+      where: { id: existingTool.id },
+      data: { submittedByUserId: submitter.id },
+    });
+  }
+
+  console.log("Seeded pending review-queue samples.");
+}
+
 async function main() {
   await seedSkills();
   const resourceIdByUrl = await seedResources();
@@ -679,6 +778,8 @@ async function main() {
   await seedProjects();
   await seedCommunity();
   await seedMentors();
+  await seedReviewerRoles();
+  await seedReviewQueue();
 }
 
 main()

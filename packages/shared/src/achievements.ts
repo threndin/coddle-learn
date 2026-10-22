@@ -90,7 +90,7 @@ export const ACHIEVEMENT_DEFINITIONS: readonly AchievementDefinition[] = [
     slug: "resource-reviewer",
     title: "Resource reviewer",
     summary: "Reviewed community learning content.",
-    howToEarn: "Review a submitted course or project once moderation review is available.",
+    howToEarn: "Approve, decline, or flag a submitted course, project, resource, or tool.",
     category: "contribution",
     icon: "eye",
     sortOrder: 70,

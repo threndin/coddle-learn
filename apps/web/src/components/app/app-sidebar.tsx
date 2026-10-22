@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ProfileAvatar } from "@/components/onboarding/profile-avatar";
-import { APP_NAV, NavIcon } from "@/components/app/nav-config";
+import { navItemsForRole, NavIcon } from "@/components/app/nav-config";
 import { useAppUser } from "@/components/app/app-user-context";
 import { profilePath } from "@/lib/profiles";
 
@@ -70,7 +70,7 @@ export function AppSidebar({
 
         <nav className="flex-1 overflow-y-auto px-2 py-3" aria-label="Main">
           <ul className="space-y-0.5">
-            {APP_NAV.map((item) => {
+            {navItemsForRole(user.role).map((item) => {
               const active =
                 item.href === "/profile"
                   ? pathname === "/profile"

@@ -1,12 +1,15 @@
 import type { User } from "@prisma/client";
 import {
+  canReviewContent,
   isExperienceLevel,
   normalizePracticeDays,
+  parseUserRole,
   type LearnUser,
   type ProfileVisibility,
 } from "@coddle/shared";
 import {
   findById,
+  syncRoleFromAllowlist,
   upsertFromCoddle as upsertFromCoddleRow,
   type UserWithSkills,
 } from "./users.repository.js";
@@ -26,6 +29,17 @@ export async function findUserById(id: string) {
   return findById(id);
 }
 
+export async function syncUserRole(user: User): Promise<User> {
+  return syncRoleFromAllowlist(user);
+}
+
+export async function isReviewerUser(userId: string): Promise<boolean> {
+  const user = await findById(userId);
+  if (!user) return false;
+  const synced = await syncRoleFromAllowlist(user);
+  return canReviewContent(synced.role);
+}
+
 export function visibilityFromUser(user: User): ProfileVisibility {
   return {
     roadmaps: user.showRoadmapsPublic,
@@ -43,6 +57,7 @@ export function toPublicUser(user: User & { skills?: UserWithSkills["skills"] })
     email: user.email,
     username: user.username,
     name: user.name,
+    role: parseUserRole(user.role),
     avatarUrl: user.avatarUrl,
     bio: user.bio,
     coddleUserId: user.coddleUserId,

@@ -271,7 +271,7 @@ export async function submitResource(userId: string, input: unknown) {
     );
   }
 
-  const autoPublish = config.resourceReviewMode === "auto";
+  const autoPublish = config.reviewMode === "auto";
   const created = await createResource({
     url,
     title,

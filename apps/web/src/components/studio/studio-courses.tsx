@@ -467,7 +467,7 @@ function EmptyStudio({ reviewMode }: { reviewMode: "auto" | "manual" }) {
             </div>
             <p className="mt-1.5 text-xs leading-relaxed text-ink-muted">
               {step.title === "Publish" && reviewMode === "auto"
-                ? "Submitted courses publish right away while admin review is being built."
+                ? "Submitted courses publish right away when review mode is auto."
                 : step.body}
             </p>
           </li>
@@ -482,8 +482,8 @@ function ReviewModeNote({ reviewMode }: { reviewMode: "auto" | "manual" }) {
     <p className="mt-8 flex items-start gap-2 text-xs leading-relaxed text-ink-muted">
       <Icon name="info" className="mt-0.5 h-3.5 w-3.5 shrink-0" />
       {reviewMode === "auto"
-        ? "Submitted courses are published automatically for now. Moderator review is coming soon, and your published courses will stay live."
-        : "Submitted courses are reviewed by a moderator before they appear in the catalog. You can withdraw a submission to keep editing."}
+        ? "Submitted courses are published automatically. Reviewers can still flag or take down a listing from the Reviewers page."
+        : "Submitted courses are reviewed before they appear in the catalog. You can withdraw a submission to keep editing."}
     </p>
   );
 }

@@ -12,7 +12,9 @@ import {
   issueProjectCredential,
   type IssuedCredential,
 } from "../credentials/credentials.service.js";
+import { isReviewerUser } from "../users/users.service.js";
 import {
+  findProjectBySlug,
   findPublishedProjectBySlug,
   findSubmission,
   incrementUserPoints,
@@ -128,8 +130,14 @@ export async function listProjects(userId: string) {
 }
 
 export async function getProject(userId: string, slug: string) {
-  const project = await findPublishedProjectBySlug(slug);
-  if (!project) {
+  const project = await findProjectBySlug(slug);
+  const visible =
+    project &&
+    (project.status === "published" ||
+      project.createdByUserId === userId ||
+      ((project.status === "in_review" || project.status === "changes_requested") &&
+        (await isReviewerUser(userId))));
+  if (!visible) {
     throw new AppError(404, "project_missing", "That project could not be found.");
   }
   const submission = await findSubmission(userId, project.id);

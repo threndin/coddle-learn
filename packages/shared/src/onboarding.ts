@@ -1,3 +1,5 @@
+import type { UserRole } from "./roles.js";
+
 export const BIO_MAX = 200;
 export const SKILL_MIN = 1;
 export const SKILL_MAX = 12;
@@ -134,6 +136,7 @@ export type LearnUser = {
   email: string;
   username: string;
   name: string;
+  role: UserRole;
   avatarUrl: string | null;
   bio: string | null;
   coddleUserId: string;

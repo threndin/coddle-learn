@@ -18,6 +18,7 @@ import {
 import type { Prisma } from "@prisma/client";
 import { config, isR2Configured } from "../../config.js";
 import { AppError } from "../../shared/errors.js";
+import { isReviewerUser } from "../users/users.service.js";
 import { imageExtension, uploadToR2 } from "../../shared/r2.js";
 import {
   countSubmissionsSince,
@@ -185,7 +186,11 @@ export async function getToolCatalog(userId: string, query: Record<string, unkno
 
 export async function getToolBySlug(userId: string, slug: string) {
   const tool = await findToolBySlug(slug);
-  const visible = tool && (tool.status === "published" || tool.submittedByUserId === userId);
+  const visible =
+    tool &&
+    (tool.status === "published" ||
+      tool.submittedByUserId === userId ||
+      (tool.status !== "published" && (await isReviewerUser(userId))));
   if (!visible) {
     throw new AppError(404, "tool_missing", "That tool could not be found.");
   }
@@ -291,7 +296,7 @@ export async function submitTool(userId: string, input: unknown) {
     );
   }
 
-  const autoPublish = config.toolReviewMode === "auto";
+  const autoPublish = config.reviewMode === "auto";
   const slugBase = toolSlugFromTitle(title, []);
   const slug = toolSlugFromTitle(title, await toolSlugsLike(slugBase));
 

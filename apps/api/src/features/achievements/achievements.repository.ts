@@ -108,7 +108,7 @@ export async function firstPublishedResourceAt(userId: string) {
 
 /** Earliest review timestamp where this user was the reviewer, or null. */
 export async function firstReviewedContentAt(userId: string) {
-  const [course, project] = await Promise.all([
+  const [course, project, resource, tool] = await Promise.all([
     prisma.course.findFirst({
       where: { reviewedByUserId: userId, reviewedAt: { not: null } },
       orderBy: { reviewedAt: "asc" },
@@ -119,8 +119,18 @@ export async function firstReviewedContentAt(userId: string) {
       orderBy: { reviewedAt: "asc" },
       select: { reviewedAt: true },
     }),
+    prisma.resource.findFirst({
+      where: { reviewedByUserId: userId, reviewedAt: { not: null } },
+      orderBy: { reviewedAt: "asc" },
+      select: { reviewedAt: true },
+    }),
+    prisma.tool.findFirst({
+      where: { reviewedByUserId: userId, reviewedAt: { not: null } },
+      orderBy: { reviewedAt: "asc" },
+      select: { reviewedAt: true },
+    }),
   ]);
-  const dates = [course?.reviewedAt, project?.reviewedAt].filter(
+  const dates = [course?.reviewedAt, project?.reviewedAt, resource?.reviewedAt, tool?.reviewedAt].filter(
     (value): value is Date => value instanceof Date,
   );
   if (dates.length === 0) return null;
