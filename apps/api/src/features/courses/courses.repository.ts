@@ -170,9 +170,13 @@ export function canViewCourse(
   course: { status: string; createdByUserId: string },
   userId: string,
   enrolled: boolean,
+  options: { reviewer?: boolean } = {},
 ): boolean {
   if (course.status === "published") return true;
   if (course.createdByUserId === userId) return true;
+  if (options.reviewer && (course.status === "in_review" || course.status === "changes_requested")) {
+    return true;
+  }
   return course.status === "archived" && enrolled;
 }
 

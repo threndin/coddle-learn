@@ -16,6 +16,7 @@ import {
   hasPassedAssessment,
 } from "../assessments/assessments.repository.js";
 import { ratingSummaries, summaryFor, type RatingSummary } from "./reviews.repository.js";
+import { isReviewerUser } from "../users/users.service.js";
 import {
   canViewCourse,
   clearUserCourseCompleted,
@@ -355,7 +356,10 @@ export async function getCourseCatalog(userId: string) {
 export async function loadVisibleCourse(userId: string, slug: string) {
   const course = await findCourseBySlug(slug);
   const enrollment = course ? await findUserCourse(userId, course.id) : null;
-  if (!course || !canViewCourse(course, userId, Boolean(enrollment))) {
+  const reviewer = course && !canViewCourse(course, userId, Boolean(enrollment))
+    ? await isReviewerUser(userId)
+    : false;
+  if (!course || !canViewCourse(course, userId, Boolean(enrollment), { reviewer })) {
     throw new AppError(404, "course_missing", "That course could not be found.");
   }
   return { course, enrollment };

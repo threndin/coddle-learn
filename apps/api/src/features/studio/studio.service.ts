@@ -275,7 +275,7 @@ async function toStudioCourse(course: StudioCourse) {
     publishedAt: course.publishedAt?.toISOString() ?? null,
     createdAt: course.createdAt.toISOString(),
     updatedAt: course.updatedAt.toISOString(),
-    reviewMode: config.courseReviewMode,
+    reviewMode: config.reviewMode,
     uploadsEnabled: isR2Configured(),
     skills: course.skills.map((row) => ({
       slug: row.skill.slug,
@@ -324,7 +324,7 @@ export async function listStudioCourses(userId: string) {
   const [ratings, completed] = await Promise.all([ratingSummaries(ids), completedCounts(ids)]);
 
   return {
-    reviewMode: config.courseReviewMode,
+    reviewMode: config.reviewMode,
     courses: courses.map((course) => {
       const lessons = course.modules.flatMap((courseModule) => courseModule.lessons);
       const rating = summaryFor(ratings, course.id);
@@ -500,7 +500,7 @@ export async function submitStudioCourse(userId: string, courseId: string) {
   }
 
   const now = new Date();
-  if (config.courseReviewMode === "auto") {
+  if (config.reviewMode === "auto") {
     await updateCourse(course.id, {
       status: "published",
       submittedAt: now,

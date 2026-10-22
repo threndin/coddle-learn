@@ -1,7 +1,9 @@
 import { timingSafeEqual } from "node:crypto";
 import type { NextFunction, Request, Response } from "express";
+import { canReviewContent } from "@coddle/shared";
 import { COOKIE } from "../../config.js";
 import { AppError, isAppError } from "../../shared/errors.js";
+import { findUserById, syncUserRole } from "../users/users.service.js";
 import { readCsrfCookie } from "./cookies.js";
 import { verifySession, type SessionClaims } from "./session.js";
 
@@ -68,4 +70,25 @@ export function requireCsrf(req: Request, _res: Response, next: NextFunction) {
     return;
   }
   next();
+}
+
+/** Requires a signed-in reviewer or admin. Use after `requireAuth`. */
+export async function requireReviewer(req: AuthedRequest, _res: Response, next: NextFunction) {
+  try {
+    const userId = req.session?.sub;
+    if (!userId) {
+      throw new AppError(401, "unauthenticated", "Sign in with your Coddle account to continue");
+    }
+    const user = await findUserById(userId);
+    if (!user) {
+      throw new AppError(401, "user_missing", "Account no longer exists. Sign in again.");
+    }
+    const synced = await syncUserRole(user);
+    if (!canReviewContent(synced.role)) {
+      throw new AppError(403, "forbidden", "Reviewer access is required for this page.");
+    }
+    next();
+  } catch (error) {
+    next(isAppError(error) ? error : new AppError(403, "forbidden", "Reviewer access is required."));
+  }
 }

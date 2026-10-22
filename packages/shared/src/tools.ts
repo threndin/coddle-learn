@@ -72,7 +72,7 @@ export function isToolPlatform(value: unknown): value is ToolPlatform {
 
 /**
  * Lifecycle: pending -> published | rejected. `pending` only exists when
- * `TOOL_REVIEW_MODE=manual`; moderation tooling will move items on.
+ * `REVIEW_MODE=manual`; reviewers move items on from /reviewers.
  */
 export const TOOL_STATUSES = ["pending", "published", "rejected"] as const;
 export type ToolStatus = (typeof TOOL_STATUSES)[number];

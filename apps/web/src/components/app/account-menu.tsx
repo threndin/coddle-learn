@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { ProfileAvatar } from "@/components/onboarding/profile-avatar";
 import { Icon, type IconName } from "@/components/ui/icon";
 import { useAppUser } from "@/components/app/app-user-context";
+import { canReviewContent } from "@coddle/shared";
 import { logout } from "@/lib/auth";
 import { profilePath } from "@/lib/profiles";
 
@@ -24,6 +25,9 @@ export function AccountMenu() {
     { href: "/achievements", label: "Achievements", icon: "star" },
     { href: "/notifications", label: "Notifications", icon: "message" },
     { href: "/studio", label: "Studio", icon: "layers" },
+    ...(canReviewContent(user.role)
+      ? [{ href: "/reviewers", label: "Reviewers", icon: "checkCircle" as const }]
+      : []),
     { href: "/settings", label: "Settings", icon: "settings" },
   ];
   const rootRef = useRef<HTMLDivElement>(null);

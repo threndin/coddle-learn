@@ -1,10 +1,13 @@
 import type { ReactNode } from "react";
+import { canReviewContent, type UserRole } from "@coddle/shared";
 
 export type AppNavItem = {
   href: string;
   label: string;
   description: string;
   icon: NavIconId;
+  /** When set, only reviewers/admins see the item. */
+  reviewerOnly?: boolean;
 };
 
 export type NavIconId =
@@ -23,6 +26,7 @@ export type NavIconId =
   | "notifications"
   | "profile"
   | "studio"
+  | "reviewers"
   | "settings";
 
 export const APP_NAV: AppNavItem[] = [
@@ -111,6 +115,13 @@ export const APP_NAV: AppNavItem[] = [
     icon: "studio",
   },
   {
+    href: "/reviewers",
+    label: "Reviewers",
+    description: "Approve courses, resources, and tools",
+    icon: "reviewers",
+    reviewerOnly: true,
+  },
+  {
     href: "/profile",
     label: "Profile",
     description: "Edit bio, skills, and visibility",
@@ -123,6 +134,10 @@ export const APP_NAV: AppNavItem[] = [
     icon: "settings",
   },
 ];
+
+export function navItemsForRole(role: UserRole | undefined): AppNavItem[] {
+  return APP_NAV.filter((item) => !item.reviewerOnly || canReviewContent(role));
+}
 
 export function navTitleForPath(pathname: string): string {
   if (pathname === "/profile" || pathname.startsWith("/u/")) return "Profile";
@@ -269,6 +284,13 @@ export function NavIcon({
           <path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4Z" />
           <path d="m13.5 6.5 4 4" />
           <path d="M14 20h6" />
+        </svg>
+      );
+    case "reviewers":
+      return (
+        <svg {...common}>
+          <path d="M8 4.5h8a2 2 0 0 1 2 2v13l-3-1.8-3 1.8-3-1.8-3 1.8v-13a2 2 0 0 1 2-2Z" />
+          <path d="m9 11.5 2 2 4-4" />
         </svg>
       );
     case "settings":

@@ -6,6 +6,19 @@ function required(name: string, fallback?: string): string {
   return value;
 }
 
+function emailSet(
+  value: string | undefined,
+  fallback: Array<string | undefined> = [],
+): Set<string> {
+  const raw = (value ?? "").split(",").concat(fallback);
+  return new Set(
+    raw
+      .filter((email): email is string => typeof email === "string")
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean),
+  );
+}
+
 const isProd = process.env.NODE_ENV === "production";
 
 export const config = {
@@ -41,23 +54,14 @@ export const config = {
   cookieSecure: process.env.COOKIE_SECURE === "true" || isProd,
   isProd,
   /**
-   * `auto` publishes a course as soon as it is submitted. Switch to `manual`
-   * once admin review exists; submissions then wait in `in_review`.
+   * `auto` publishes courses, projects, resources, and tools on submit.
+   * `manual` leaves them in the reviewer queue.
    */
-  courseReviewMode: (process.env.COURSE_REVIEW_MODE === "manual" ? "manual" : "auto") as
-    | "auto"
-    | "manual",
-  /** Same switch for submitted resources; `manual` leaves them `pending`. */
-  resourceReviewMode: (process.env.RESOURCE_REVIEW_MODE === "manual" ? "manual" : "auto") as
-    | "auto"
-    | "manual",
-  /** Same switch for submitted tools; `manual` leaves them `pending`. */
-  toolReviewMode: (process.env.TOOL_REVIEW_MODE === "manual" ? "manual" : "auto") as
-    | "auto"
-    | "manual",
-  seedCourseCreatorEmail:
-    process.env.SEED_COURSE_CREATOR_EMAIL ?? "kvngjohnny10@gmail.com",
-  seedMentorEmail: process.env.SEED_MENTOR_EMAIL ?? "kingjohneycodey@gmail.com",
+  reviewMode: (process.env.REVIEW_MODE === "manual" ? "manual" : "auto") as "auto" | "manual",
+  seedCourseCreatorEmail: process.env.SEED_COURSE_CREATOR_EMAIL ?? "",
+  seedMentorEmail: process.env.SEED_MENTOR_EMAIL ?? "",
+  reviewerEmails: emailSet(process.env.LEARN_REVIEWER_EMAILS),
+  adminEmails: emailSet(process.env.LEARN_ADMIN_EMAILS),
   r2: {
     accountId: process.env.R2_ACCOUNT_ID ?? "",
     accessKeyId: process.env.R2_ACCESS_KEY_ID ?? "",

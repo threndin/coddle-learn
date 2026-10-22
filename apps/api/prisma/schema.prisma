@@ -13,6 +13,8 @@ model User {
   email                 String                   @unique
   username              String                   @unique
   name                  String
+  /// learner | reviewer | admin. Reviewers moderate the content queue.
+  role                  String                   @default("learner")
   avatarUrl             String?                  @map("avatar_url")
   bio                   String?
   experienceLevel       String?                  @map("experience_level")
@@ -37,10 +39,15 @@ model User {
   stepProgress          UserStepProgress[]
   resourceBookmarks     UserResourceBookmark[]
   submittedResources    Resource[]               @relation("ResourceSubmitter")
+  reviewedResources     Resource[]               @relation("ResourceReviewer")
+  flaggedResources      Resource[]               @relation("ResourceFlagger")
   toolBookmarks         UserToolBookmark[]
   submittedTools        Tool[]                   @relation("ToolSubmitter")
+  reviewedTools         Tool[]                   @relation("ToolReviewer")
+  flaggedTools          Tool[]                   @relation("ToolFlagger")
   createdCourses        Course[]                 @relation("CourseCreator")
   reviewedCourses       Course[]                 @relation("CourseReviewer")
+  flaggedCourses        Course[]                 @relation("CourseFlagger")
   courseEnrollments     UserCourse[]
   lessonProgress        UserLessonProgress[]
   exerciseSubmissions   UserExerciseSubmission[]
@@ -48,6 +55,7 @@ model User {
   assessmentAttempts    AssessmentAttempt[]
   createdProjects       Project[]                @relation("ProjectCreator")
   reviewedProjects      Project[]                @relation("ProjectReviewer")
+  flaggedProjects       Project[]                @relation("ProjectFlagger")
   projectSubmissions    ProjectSubmission[]
   credentials           Credential[]
   achievements          UserAchievement[]
@@ -64,6 +72,7 @@ model User {
   mentorProfile              MentorProfile?
   mentorshipApplications     MentorshipApplication[]  @relation("MenteeApplications")
 
+  @@index([role])
   @@map("users")
 }
 
@@ -248,7 +257,14 @@ model Resource {
   status            String                 @default("pending")
   submittedByUserId String?                @map("submitted_by_user_id")
   submittedBy       User?                  @relation("ResourceSubmitter", fields: [submittedByUserId], references: [id], onDelete: SetNull)
+  reviewedAt        DateTime?              @map("reviewed_at")
+  reviewedByUserId  String?                @map("reviewed_by_user_id")
+  reviewedBy        User?                  @relation("ResourceReviewer", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
   reviewNote        String?                @map("review_note")
+  flaggedAt         DateTime?              @map("flagged_at")
+  flaggedByUserId   String?                @map("flagged_by_user_id")
+  flaggedBy         User?                  @relation("ResourceFlagger", fields: [flaggedByUserId], references: [id], onDelete: SetNull)
+  flagNote          String?                @map("flag_note")
   publishedAt       DateTime?              @map("published_at")
   createdAt         DateTime               @default(now()) @map("created_at")
   updatedAt         DateTime               @updatedAt @map("updated_at")
@@ -258,6 +274,8 @@ model Resource {
 
   @@index([status, publishedAt])
   @@index([submittedByUserId, createdAt])
+  @@index([flaggedAt])
+  @@index([reviewedByUserId])
   @@map("resources")
 }
 
@@ -313,7 +331,14 @@ model Tool {
   status            String             @default("pending")
   submittedByUserId String?            @map("submitted_by_user_id")
   submittedBy       User?              @relation("ToolSubmitter", fields: [submittedByUserId], references: [id], onDelete: SetNull)
+  reviewedAt        DateTime?          @map("reviewed_at")
+  reviewedByUserId  String?            @map("reviewed_by_user_id")
+  reviewedBy        User?              @relation("ToolReviewer", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
   reviewNote        String?            @map("review_note")
+  flaggedAt         DateTime?          @map("flagged_at")
+  flaggedByUserId   String?            @map("flagged_by_user_id")
+  flaggedBy         User?              @relation("ToolFlagger", fields: [flaggedByUserId], references: [id], onDelete: SetNull)
+  flagNote          String?            @map("flag_note")
   publishedAt       DateTime?          @map("published_at")
   sortOrder         Int                @default(100) @map("sort_order")
   createdAt         DateTime           @default(now()) @map("created_at")
@@ -325,6 +350,8 @@ model Tool {
   @@index([submittedByUserId, createdAt])
   @@index([category])
   @@index([sortOrder])
+  @@index([flaggedAt])
+  @@index([reviewedByUserId])
   @@map("tools")
 }
 
@@ -395,6 +422,10 @@ model Course {
   reviewedByUserId String?        @map("reviewed_by_user_id")
   reviewedBy       User?          @relation("CourseReviewer", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
   reviewNote       String?        @map("review_note")
+  flaggedAt        DateTime?      @map("flagged_at")
+  flaggedByUserId  String?        @map("flagged_by_user_id")
+  flaggedBy        User?          @relation("CourseFlagger", fields: [flaggedByUserId], references: [id], onDelete: SetNull)
+  flagNote         String?        @map("flag_note")
   publishedAt      DateTime?      @map("published_at")
   createdByUserId  String         @map("created_by_user_id")
   createdBy        User           @relation("CourseCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
@@ -410,6 +441,7 @@ model Course {
   @@index([createdByUserId])
   @@index([status, sortOrder])
   @@index([sortOrder])
+  @@index([flaggedAt])
   @@map("courses")
 }
 
@@ -636,6 +668,10 @@ model Project {
   reviewedByUserId String?             @map("reviewed_by_user_id")
   reviewedBy       User?               @relation("ProjectReviewer", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
   reviewNote       String?             @map("review_note")
+  flaggedAt        DateTime?           @map("flagged_at")
+  flaggedByUserId  String?             @map("flagged_by_user_id")
+  flaggedBy        User?               @relation("ProjectFlagger", fields: [flaggedByUserId], references: [id], onDelete: SetNull)
+  flagNote         String?             @map("flag_note")
   publishedAt      DateTime?           @map("published_at")
   createdByUserId  String              @map("created_by_user_id")
   createdBy        User                @relation("ProjectCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
@@ -650,6 +686,7 @@ model Project {
   @@index([status, sortOrder])
   @@index([roadmapStepId])
   @@index([courseId])
+  @@index([flaggedAt])
   @@map("projects")
 }
 

@@ -1,6 +1,16 @@
 import type { User } from "@prisma/client";
-import { usernameFromName } from "@coddle/shared";
+import { parseUserRole, usernameFromName, type UserRole } from "@coddle/shared";
+import { config } from "../../config.js";
 import { prisma } from "../../shared/db.js";
+
+function roleForEmail(email: string, current?: string | null): UserRole {
+  const lower = email.toLowerCase();
+  if (config.adminEmails.has(lower)) return "admin";
+  if (config.reviewerEmails.has(lower)) {
+    return current === "admin" ? "admin" : "reviewer";
+  }
+  return parseUserRole(current);
+}
 
 export type UserWithSkills = User & {
   skills: {
@@ -56,6 +66,7 @@ export async function upsertFromCoddle(profile: {
         name: profile.name,
         avatarUrl: profile.avatarUrl,
         lastLoginAt: now,
+        role: roleForEmail(profile.email, existing.role),
       },
     });
   }
@@ -70,7 +81,18 @@ export async function upsertFromCoddle(profile: {
       name: profile.name,
       avatarUrl: profile.avatarUrl,
       lastLoginAt: now,
+      role: roleForEmail(profile.email),
     },
+  });
+}
+
+/** Promote from the allowlist without waiting for the next sign-in. */
+export async function syncRoleFromAllowlist(user: User): Promise<User> {
+  const next = roleForEmail(user.email, user.role);
+  if (next === user.role) return user;
+  return prisma.user.update({
+    where: { id: user.id },
+    data: { role: next },
   });
 }
 

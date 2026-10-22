@@ -1,6 +1,11 @@
 import { config } from "../../config.js";
 import { AppError } from "../../shared/errors.js";
-import { findUserById, toPublicUser, upsertFromCoddle } from "../users/users.service.js";
+import {
+  findUserById,
+  syncUserRole,
+  toPublicUser,
+  upsertFromCoddle,
+} from "../users/users.service.js";
 import type { AuthedRequest } from "./auth.middleware.js";
 import { exchangeCoddleSsoCode } from "./coddle.client.js";
 import {
@@ -49,7 +54,7 @@ export async function getCurrentUser(req: AuthedRequest) {
   if (!user) {
     throw new AppError(401, "user_missing", "Account no longer exists. Sign in again.");
   }
-  return toPublicUser(user);
+  return toPublicUser(await syncUserRole(user));
 }
 
 export async function rotateRefreshToken(refreshToken: string): Promise<SessionTokens> {
