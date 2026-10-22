@@ -6,14 +6,10 @@ function required(name: string, fallback?: string): string {
   return value;
 }
 
-function emailSet(
-  value: string | undefined,
-  fallback: Array<string | undefined> = [],
-): Set<string> {
-  const raw = (value ?? "").split(",").concat(fallback);
+function emailSet(value: string | undefined): Set<string> {
   return new Set(
-    raw
-      .filter((email): email is string => typeof email === "string")
+    (value ?? "")
+      .split(",")
       .map((email) => email.trim().toLowerCase())
       .filter(Boolean),
   );
