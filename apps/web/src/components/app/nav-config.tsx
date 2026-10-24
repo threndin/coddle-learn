@@ -18,6 +18,7 @@ export type NavIconId =
   | "tools"
   | "projects"
   | "assessments"
+  | "challenges"
   | "credentials"
   | "community"
   | "mentorship"
@@ -71,6 +72,12 @@ export const APP_NAV: AppNavItem[] = [
     label: "Assessments",
     description: "Prove what you know",
     icon: "assessments",
+  },
+  {
+    href: "/challenges",
+    label: "Challenges",
+    description: "Compete and earn points",
+    icon: "challenges",
   },
   {
     href: "/credentials",
@@ -221,6 +228,14 @@ export function NavIcon({
         <svg {...common}>
           <path d="M8 3.5h8a2 2 0 0 1 2 2v13l-3-1.8-3 1.8-3-1.8-3 1.8v-13a2 2 0 0 1 2-2Z" />
           <path d="M9 10.5h6M9 14h4" />
+        </svg>
+      );
+    case "challenges":
+      return (
+        <svg {...common}>
+          <path d="M8 8 4.5 12 8 16" />
+          <path d="m16 8 3.5 4L16 16" />
+          <path d="m13 6.5-2 11" />
         </svg>
       );
     case "credentials":

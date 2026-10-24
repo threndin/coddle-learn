@@ -5,6 +5,7 @@ import helmet from "helmet";
 import morgan from "morgan";
 import { config } from "./config.js";
 import { achievementsRouter } from "./features/achievements/achievements.routes.js";
+import { challengesRouter } from "./features/challenges/challenges.routes.js";
 import { assessmentsRouter } from "./features/assessments/assessments.routes.js";
 import { authRouter } from "./features/auth/auth.routes.js";
 import { communityRouter } from "./features/community/community.routes.js";
@@ -52,6 +53,7 @@ export function createApp(): Express {
   app.use("/resources", resourcesRouter);
   app.use("/tools", toolsRouter);
   app.use("/assessments", assessmentsRouter);
+  app.use("/challenges", challengesRouter);
   app.use("/projects", projectsRouter);
   app.use("/credentials", credentialsRouter);
   app.use("/achievements", achievementsRouter);

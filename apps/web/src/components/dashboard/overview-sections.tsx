@@ -20,6 +20,7 @@ import { AchievementCard } from "@/components/achievements/achievement-card";
 import { fetchAchievements, type AchievementItem } from "@/lib/achievements";
 import { fetchCredentials, type CredentialSummary } from "@/lib/credentials";
 import { fetchMyProjects, type ProjectActivityItem } from "@/lib/projects";
+import { fetchChallengeCatalog, type ChallengeCatalog } from "@/lib/challenges";
 import { useToast } from "@/components/app/toast";
 
 type ContinueCourse = {
@@ -45,6 +46,7 @@ export function OverviewSections({ user }: { user: PublicUser }) {
   const [credentials, setCredentials] = useState<CredentialSummary[]>([]);
   const [achievements, setAchievements] = useState<AchievementItem[]>([]);
   const [achievementTotals, setAchievementTotals] = useState({ earned: 0, total: 0 });
+  const [arena, setArena] = useState<ChallengeCatalog | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [busyPrimary, setBusyPrimary] = useState<string | null>(null);
 
@@ -52,7 +54,7 @@ export function OverviewSections({ user }: { user: PublicUser }) {
     let cancelled = false;
     void (async () => {
       try {
-        const [roadmapValue, courseRes, projectsValue, credentialsValue, achievementsValue] =
+        const [roadmapValue, courseRes, projectsValue, credentialsValue, achievementsValue, arenaValue] =
           await Promise.all([
             fetchContinueLearning(),
             fetch("/api/courses/continue", {
@@ -66,6 +68,7 @@ export function OverviewSections({ user }: { user: PublicUser }) {
               totalCount: 0,
               achievements: [] as AchievementItem[],
             })),
+            fetchChallengeCatalog().catch(() => null),
           ]);
         if (cancelled) return;
         setContinueLearning(roadmapValue.continue);
@@ -79,6 +82,7 @@ export function OverviewSections({ user }: { user: PublicUser }) {
         setAchievements(
           achievementsValue.achievements.filter((item) => item.earned).slice(0, 4),
         );
+        setArena(arenaValue);
         if (courseRes.ok) {
           const body = (await courseRes.json()) as {
             data: { continue: ContinueCourse | null };
@@ -96,6 +100,7 @@ export function OverviewSections({ user }: { user: PublicUser }) {
           setCredentials([]);
           setAchievements([]);
           setAchievementTotals({ earned: 0, total: 0 });
+          setArena(null);
         }
       } finally {
         if (!cancelled) setLoaded(true);
@@ -132,6 +137,7 @@ export function OverviewSections({ user }: { user: PublicUser }) {
     : fallback
       ? "Open roadmap"
       : "Browse roadmaps";
+  const nextChallenge = arena?.challenges.find((item) => !item.solved) ?? null;
 
   async function makePrimary(slug: string) {
     setBusyPrimary(slug);
@@ -271,6 +277,34 @@ export function OverviewSections({ user }: { user: PublicUser }) {
       ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {loaded && arena ? (
+          <article className="rounded-2xl border border-border bg-surface p-5">
+            <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-brand">
+              Challenges
+            </p>
+            <h2 className="mt-2 font-display text-lg font-bold text-ink">
+              {arena.you.rank ? `Ranked #${arena.you.rank}` : "Enter the arena"}
+            </h2>
+            <p className="mt-2 text-sm text-ink-muted">
+              {arena.you.challengePoints.toLocaleString()} challenge points · {arena.you.solvedCount}{" "}
+              solved
+              {nextChallenge ? ` · Next: ${nextChallenge.title}` : ""}
+            </p>
+            <Link
+              href={nextChallenge ? `/challenges/${nextChallenge.slug}` : "/challenges"}
+              className="mt-4 inline-flex rounded-xl bg-brand px-3 py-2 text-xs font-semibold text-white"
+            >
+              {arena.you.solvedCount ? "Keep competing" : "Solve a challenge"}
+            </Link>
+          </article>
+        ) : loaded ? (
+          <EmptyPanel
+            title="Challenges"
+            body="Compete on coding problems and earn points for your place."
+            href="/challenges"
+            cta="Open challenges"
+          />
+        ) : null}
         {continueCourse ? (
           <article className="rounded-2xl border border-border bg-surface p-5">
             <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-brand">

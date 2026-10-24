@@ -19,6 +19,10 @@ import {
 } from "@coddle/shared";
 import { PrismaClient } from "@prisma/client";
 import { config } from "../src/config.js";
+import {
+  STARTER_CHALLENGES,
+  verifyStarterChallenges,
+} from "../src/features/challenges/starter-challenges.js";
 import { courseThumbnailSvg, uploadToR2 } from "../src/shared/r2.js";
 
 const prisma = new PrismaClient();
@@ -766,12 +770,39 @@ async function seedReviewQueue() {
   console.log("Seeded pending review-queue samples.");
 }
 
+async function seedChallenges() {
+  await verifyStarterChallenges();
+  for (const [index, challenge] of STARTER_CHALLENGES.entries()) {
+    const data = {
+      title: challenge.title,
+      summary: challenge.summary,
+      statement: challenge.statement,
+      difficulty: challenge.difficulty,
+      language: "javascript",
+      functionName: challenge.functionName,
+      starterCode: challenge.starterCode,
+      points: challenge.points,
+      examples: challenge.examples,
+      tests: challenge.tests,
+      sortOrder: index,
+      published: true,
+    };
+    await prisma.challenge.upsert({
+      where: { slug: challenge.slug },
+      create: { ...data, slug: challenge.slug },
+      update: data,
+    });
+  }
+}
+
 async function main() {
   await seedSkills();
   const resourceIdByUrl = await seedResources();
   console.log(`Seeded ${STARTER_RESOURCES.length} resources.`);
   await seedTools();
   console.log(`Seeded ${STARTER_TOOLS.length} tools.`);
+  await seedChallenges();
+  console.log(`Seeded ${STARTER_CHALLENGES.length} coding challenges.`);
   await seedRoadmaps(resourceIdByUrl);
   console.log(`Seeded ${STARTER_ROADMAPS.length} roadmaps.`);
   await seedCourses();
