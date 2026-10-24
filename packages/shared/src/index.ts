@@ -30,6 +30,7 @@ export * from "./mentors.js";
 export * from "./starter-mentors.js";
 export * from "./roles.js";
 export * from "./reviewers.js";
+export * from "./challenges.js";
 
 /** Public repository URL. Empty until the remote exists. */
 export const GITHUB_URL = "https://github.com/threndin/coddle-learn";

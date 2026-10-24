@@ -71,6 +71,8 @@ model User {
   followers                  Follow[]                 @relation("UserFollowers")
   mentorProfile              MentorProfile?
   mentorshipApplications     MentorshipApplication[]  @relation("MenteeApplications")
+  challengeSubmissions       ChallengeSubmission[]
+  challengeSolves            ChallengeSolve[]
 
   @@index([role])
   @@map("users")
@@ -981,4 +983,73 @@ model MentorshipApplication {
   @@index([menteeId, status, createdAt])
   @@index([programId, status])
   @@map("mentorship_applications")
+}
+
+/// Competitive coding problem. `difficulty`: easy | medium | hard.
+/// `examples` are public. `tests` stay on the server.
+model Challenge {
+  id           String                @id @default(cuid())
+  slug         String                @unique
+  title        String
+  summary      String
+  statement    String
+  difficulty   String
+  language     String                @default("javascript")
+  functionName String                @map("function_name")
+  starterCode  String                @map("starter_code")
+  points       Int
+  examples     Json
+  tests        Json
+  sortOrder    Int                   @map("sort_order")
+  published    Boolean               @default(true)
+  createdAt    DateTime              @default(now()) @map("created_at")
+  updatedAt    DateTime              @updatedAt @map("updated_at")
+  submissions  ChallengeSubmission[]
+  solves       ChallengeSolve[]
+
+  @@index([published, sortOrder])
+  @@map("challenges")
+}
+
+/// One run of a learner's solution. `status`: passed | failed.
+model ChallengeSubmission {
+  id           String          @id @default(cuid())
+  userId       String          @map("user_id")
+  challengeId  String          @map("challenge_id")
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challenge    Challenge       @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  code         String
+  status       String
+  testsPassed  Int             @map("tests_passed")
+  testsTotal   Int             @map("tests_total")
+  runtimeError String?         @map("runtime_error")
+  results      Json            @default("[]")
+  createdAt    DateTime        @default(now()) @map("created_at")
+  solve        ChallengeSolve?
+
+  @@index([userId, challengeId, createdAt])
+  @@index([challengeId, createdAt])
+  @@map("challenge_submissions")
+}
+
+/// First passing solution. Rank and points are locked in at solve time.
+model ChallengeSolve {
+  id            String              @id @default(cuid())
+  userId        String              @map("user_id")
+  challengeId   String              @map("challenge_id")
+  user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challenge     Challenge           @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  submissionId  String              @unique @map("submission_id")
+  submission    ChallengeSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  attempts      Int
+  rank          Int
+  basePoints    Int                 @map("base_points")
+  rankBonus     Int                 @map("rank_bonus")
+  pointsAwarded Int                 @map("points_awarded")
+  solvedAt      DateTime            @default(now()) @map("solved_at")
+
+  @@unique([userId, challengeId])
+  @@index([challengeId, rank])
+  @@index([userId])
+  @@map("challenge_solves")
 }
