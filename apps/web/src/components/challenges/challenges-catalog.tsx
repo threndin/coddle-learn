@@ -67,8 +67,8 @@ export function ChallengesCatalog({
           Compete, then collect the points
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-ink-muted sm:text-base">
-          Solve the same JavaScript problems as everyone else. Passing earns the challenge
-          points, and earlier solvers pick up a rank bonus that stays on the board.
+          Each challenge is a coding problem with examples and hidden cases. Implement the
+          function it names, submit it, and earn points when you pass.
         </p>
       </div>
 
@@ -219,7 +219,7 @@ function ChallengeCard({ item }: { item: ChallengeListItem }) {
         href={`/challenges/${item.slug}`}
         className="mt-5 inline-flex items-center justify-center rounded-xl bg-brand px-3 py-2.5 text-sm font-semibold text-white transition hover:brightness-110"
       >
-        {item.solved ? "Review solution" : "Solve"}
+        {item.solved ? "Open" : "Solve"}
       </Link>
     </article>
   );

@@ -17,7 +17,7 @@ import {
   type CourseExerciseSeed,
   type ExerciseConfig,
 } from "@coddle/shared";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, type Prisma } from "@prisma/client";
 import { config } from "../src/config.js";
 import {
   STARTER_CHALLENGES,
@@ -782,8 +782,8 @@ async function seedChallenges() {
       functionName: challenge.functionName,
       starterCode: challenge.starterCode,
       points: challenge.points,
-      examples: challenge.examples,
-      tests: challenge.tests,
+      examples: challenge.examples as Prisma.InputJsonValue,
+      tests: challenge.tests as Prisma.InputJsonValue,
       sortOrder: index,
       published: true,
     };
