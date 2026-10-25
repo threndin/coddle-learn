@@ -303,9 +303,9 @@ export function CommunityFeed({
         <img
           src="/images/community-hero.jpg"
           alt=""
-          className="absolute inset-0 h-full w-full object-cover"
+          className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.65]"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-ink/85 via-ink/70 to-ink/45" />
+        <div className="absolute inset-0 bg-gradient-to-r from-brand-navy/90 via-brand-navy/75 to-brand-navy/45" />
         <div className="relative mx-auto flex w-full max-w-7xl flex-col gap-6 px-5 py-12 sm:px-8 sm:py-16 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
             <p className="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-white/70">
@@ -323,7 +323,7 @@ export function CommunityFeed({
             <button
               type="button"
               onClick={() => openCompose("question")}
-              className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-ink transition hover:bg-white/90"
+              className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-brand-navy transition hover:bg-white/90"
             >
               <Icon name="question" className="h-4 w-4" />
               Ask a question

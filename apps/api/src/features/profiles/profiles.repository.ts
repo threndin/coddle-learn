@@ -8,6 +8,15 @@ export async function countFollowing(userId: string) {
   return prisma.follow.count({ where: { followerId: userId } });
 }
 
+export async function listFollowingIds(followerId: string, userIds: string[]) {
+  if (userIds.length === 0) return new Set<string>();
+  const rows = await prisma.follow.findMany({
+    where: { followerId, followingId: { in: userIds } },
+    select: { followingId: true },
+  });
+  return new Set(rows.map((row) => row.followingId));
+}
+
 export async function findFollow(followerId: string, followingId: string) {
   return prisma.follow.findUnique({
     where: {

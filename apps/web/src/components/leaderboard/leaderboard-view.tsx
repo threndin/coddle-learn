@@ -18,11 +18,7 @@ import {
 } from "@/lib/leaderboard";
 
 const PODIUM_PLACES = [1, 2, 3] as const;
-const PODIUM_ORDER = [
-  "order-1 sm:order-2",
-  "order-2 sm:order-1",
-  "order-3 sm:order-3",
-] as const;
+const PODIUM_ORDER = ["order-2", "order-1", "order-3"] as const;
 
 const PODIUM_RING = [
   "ring-4 ring-amber-300 shadow-[0_16px_40px_-16px_rgb(251_191_36_/_0.7)]",
@@ -64,34 +60,36 @@ export function LeaderboardView({
     <div className="min-h-full">
       <section className="relative overflow-hidden border-b border-border gradient-primary">
         <div className="relative mx-auto flex w-full max-w-7xl flex-col gap-4 px-5 py-5 sm:px-8 sm:py-6">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
               <h1 className="inline-flex items-center gap-2 font-display text-2xl font-bold tracking-tight text-white sm:text-3xl">
-                <Icon name="trophy" className="h-5 w-5 text-amber-300" />
+                <Icon name="trophy" className="h-5 w-5 shrink-0 text-amber-300" />
                 Leaderboard
               </h1>
-              <p className="mt-1 text-sm text-white/70">{subtitle}</p>
+              <p className="mt-1 truncate text-sm text-white/70">{subtitle}</p>
             </div>
             {catalog?.you ? (
               <Link
                 href={leaderboardPath({ period, page: catalog.you.page })}
-                className="inline-flex items-center gap-2.5 self-start rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-white backdrop-blur-sm transition hover:bg-white/15"
+                className="inline-flex shrink-0 flex-col items-center gap-1 rounded-xl border border-white/15 bg-white/10 px-2.5 py-1.5 text-white backdrop-blur-sm transition hover:bg-white/15 sm:flex-row sm:gap-2.5 sm:px-3 sm:py-2"
               >
                 <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-300 font-display text-sm font-bold text-amber-950">
                   #{catalog.you.rank}
                 </span>
-                <span>
-                  <span className="block text-[11px] font-semibold uppercase tracking-[0.14em] text-white/60">
+                <span className="text-center sm:text-left">
+                  <span className="hidden text-[11px] font-semibold uppercase tracking-[0.14em] text-white/60 sm:block">
                     Your place
                   </span>
-                  <span className="block text-sm font-semibold">
+                  <span className="block text-xs font-semibold sm:text-sm">
                     {catalog.you.points.toLocaleString()} pts
-                    {catalog.you.page !== page ? " · Jump to you" : ""}
+                    {catalog.you.page !== page ? (
+                      <span className="hidden sm:inline"> · Jump to you</span>
+                    ) : null}
                   </span>
                 </span>
               </Link>
             ) : catalog ? (
-              <p className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/70">
+              <p className="hidden rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/70 sm:block">
                 Earn points to take a place on this board.
               </p>
             ) : null}
@@ -100,7 +98,7 @@ export function LeaderboardView({
           <div
             role="tablist"
             aria-label="Leaderboard period"
-            className="flex w-max max-w-full items-center gap-1 overflow-x-auto rounded-xl border border-white/15 bg-white/10 p-1"
+            className="flex w-max max-w-full items-center gap-1 overflow-x-auto rounded-xl border border-white/15 bg-white/10 p-1 mt-4"
           >
             {LEADERBOARD_PERIODS.map((item) => {
               const active = item === period;
@@ -197,7 +195,7 @@ function EmptyPeriod({ period }: { period: LeaderboardPeriod }) {
 
 function Podium({ entries }: { entries: LeaderboardEntry[] }) {
   return (
-    <ol className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-4">
+    <ol className="flex items-end gap-2 sm:gap-4">
       {PODIUM_PLACES.map((rank) => {
         const entry = entries.find((item) => item.rank === rank);
         if (!entry) return null;
@@ -207,15 +205,16 @@ function Podium({ entries }: { entries: LeaderboardEntry[] }) {
           <li
             key={entry.username ?? `${entry.rank}-${entry.name}`}
             className={[
-              "relative min-w-0 flex-1 overflow-visible rounded-3xl border border-border bg-surface px-4 py-4 text-center transition duration-200 hover:-translate-y-0.5 hover:border-brand/40 hover:bg-surface-subtle hover:shadow-[0_12px_28px_-18px_rgb(0_76_200_/_0.45)]",
+              "relative min-w-0 flex-1 overflow-visible text-center",
+              "sm:rounded-3xl sm:border sm:border-border sm:bg-surface sm:px-4 sm:py-4 sm:transition sm:duration-200 sm:hover:-translate-y-0.5 sm:hover:border-brand/40 sm:hover:bg-surface-subtle sm:hover:shadow-[0_12px_28px_-18px_rgb(0_76_200_/_0.45)]",
               PODIUM_ORDER[place],
               PODIUM_HEIGHT[place],
-              entry.you ? "ring-2 ring-brand/40" : "",
+              entry.you ? "sm:ring-2 sm:ring-brand/40" : "",
             ].join(" ")}
           >
             {first ? (
               <div
-                className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl"
+                className="pointer-events-none absolute inset-0 hidden overflow-hidden rounded-3xl sm:block"
                 aria-hidden
               >
                 <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-amber-300/20 to-transparent" />
@@ -224,7 +223,7 @@ function Podium({ entries }: { entries: LeaderboardEntry[] }) {
             <p
               className={[
                 "mx-auto flex items-center justify-center rounded-full font-display font-bold",
-                first ? "h-8 w-8 text-sm" : "h-7 w-7 text-xs",
+                first ? "h-7 w-7 text-xs sm:h-8 sm:w-8 sm:text-sm" : "h-6 w-6 text-[11px] sm:h-7 sm:w-7 sm:text-xs",
                 PODIUM_BADGE[place] ?? "bg-brand-soft text-brand",
               ].join(" ")}
             >
@@ -232,7 +231,7 @@ function Podium({ entries }: { entries: LeaderboardEntry[] }) {
             </p>
             <PersonLink
               entry={entry}
-              className={["mx-auto block w-max", first ? "mt-6" : "mt-3"].join(" ")}
+              className={["mx-auto block w-max", first ? "mt-4 sm:mt-6" : "mt-2 sm:mt-3"].join(" ")}
             >
               <span
                 className={["relative block rounded-full", PODIUM_RING[place] ?? ""].join(" ")}
@@ -244,25 +243,27 @@ function Podium({ entries }: { entries: LeaderboardEntry[] }) {
                 />
                 {first ? (
                   <span
-                    className="absolute -top-4 left-1/2 z-10 flex h-7 w-7 -translate-x-1/2 items-center justify-center rounded-full bg-amber-300 text-amber-950 shadow-[0_4px_12px_-2px_rgb(251_191_36_/_0.8)]"
+                    className="absolute -top-3 left-1/2 z-10 flex h-6 w-6 -translate-x-1/2 items-center justify-center rounded-full bg-amber-300 text-amber-950 shadow-[0_4px_12px_-2px_rgb(251_191_36_/_0.8)] sm:-top-4 sm:h-7 sm:w-7"
                     aria-hidden
                   >
-                    <Icon name="trophy" className="h-3.5 w-3.5" />
+                    <Icon name="trophy" className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                   </span>
                 ) : null}
               </span>
             </PersonLink>
             <PersonLink
               entry={entry}
-              className="mt-3 block truncate font-display text-lg font-bold tracking-tight text-ink transition hover:text-brand"
+              className="mt-2 block truncate font-display text-sm font-bold tracking-tight text-ink transition hover:text-brand sm:mt-3 sm:text-lg"
             >
               {entry.name}
               {entry.you ? " · You" : ""}
             </PersonLink>
-            <p className="mt-1 text-xs text-ink-muted">{levelLabel(entry.experienceLevel)}</p>
-            <p className="mt-2 font-display text-2xl font-bold tracking-tight text-brand">
+            <p className="mt-1 hidden text-xs text-ink-muted sm:block">
+              {levelLabel(entry.experienceLevel)}
+            </p>
+            <p className="mt-1 font-display text-base font-bold tracking-tight text-brand sm:mt-2 sm:text-2xl">
               {entry.points.toLocaleString()}
-              <span className="ml-1 text-sm font-semibold text-ink-muted">pts</span>
+              <span className="ml-1 text-xs font-semibold text-ink-muted sm:text-sm">pts</span>
             </p>
           </li>
         );
