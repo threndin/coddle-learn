@@ -172,10 +172,3 @@ export async function deleteAssessment(courseId: string) {
   return prisma.assessment.deleteMany({ where: { courseId } });
 }
 
-export async function incrementUserPoints(userId: string, delta: number) {
-  if (delta === 0) return;
-  await prisma.user.update({
-    where: { id: userId },
-    data: { points: { increment: delta } },
-  });
-}

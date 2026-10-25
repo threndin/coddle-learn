@@ -1,8 +1,10 @@
 import {
+  COURSE_COMPLETE_POINT_REASON,
   COURSE_COMPLETE_POINTS,
   courseProgressPercent,
   isExerciseDone,
   isLessonProgressStatus,
+  LESSON_COMPLETE_POINT_REASON,
   LESSON_COMPLETE_POINTS,
   matchedSkillSlugs,
   readExerciseConfig,
@@ -17,6 +19,7 @@ import {
 } from "../assessments/assessments.repository.js";
 import { ratingSummaries, summaryFor, type RatingSummary } from "./reviews.repository.js";
 import { isReviewerUser } from "../users/users.service.js";
+import { awardUserPoints } from "../points/points.repository.js";
 import {
   canViewCourse,
   clearUserCourseCompleted,
@@ -27,7 +30,6 @@ import {
   findUserCourse,
   flattenExercises,
   flattenLessons,
-  incrementUserPoints,
   listExerciseSubmissions,
   listLessonProgressForLessons,
   listPublishedCourses,
@@ -403,13 +405,25 @@ export async function syncCourseCompletion(
 
   if (nowComplete && !wasComplete) {
     await markUserCourseCompleted(userId, course.id);
-    await incrementUserPoints(userId, COURSE_COMPLETE_POINTS);
+    await awardUserPoints({
+      userId,
+      amount: COURSE_COMPLETE_POINTS,
+      reason: COURSE_COMPLETE_POINT_REASON,
+      refType: "course",
+      refId: course.id,
+    });
     scheduleAchievementEvaluation(userId);
     return COURSE_COMPLETE_POINTS;
   }
   if (!nowComplete && wasComplete) {
     await clearUserCourseCompleted(userId, course.id);
-    await incrementUserPoints(userId, -COURSE_COMPLETE_POINTS);
+    await awardUserPoints({
+      userId,
+      amount: -COURSE_COMPLETE_POINTS,
+      reason: COURSE_COMPLETE_POINT_REASON,
+      refType: "course",
+      refId: course.id,
+    });
   }
   return 0;
 }
@@ -504,7 +518,13 @@ export async function updateCourseProgress(
       throw new AppError(400, "lesson_not_done", "That lesson is not marked done yet.");
     }
     if (existing.pointsAwarded) {
-      await incrementUserPoints(userId, -existing.pointsAwarded);
+      await awardUserPoints({
+        userId,
+        amount: -existing.pointsAwarded,
+        reason: LESSON_COMPLETE_POINT_REASON,
+        refType: "lesson",
+        refId: lesson.id,
+      });
     }
     await deleteLessonProgress(userId, lesson.id);
   } else {
@@ -520,7 +540,13 @@ export async function updateCourseProgress(
     let pointsAwarded = existing?.pointsAwarded ?? 0;
     if (action === "completed" && pointsAwarded <= 0) {
       pointsAwarded = LESSON_COMPLETE_POINTS;
-      await incrementUserPoints(userId, LESSON_COMPLETE_POINTS);
+      await awardUserPoints({
+        userId,
+        amount: LESSON_COMPLETE_POINTS,
+        reason: LESSON_COMPLETE_POINT_REASON,
+        refType: "lesson",
+        refId: lesson.id,
+      });
     }
 
     await upsertLessonProgress(userId, lesson.id, action, pointsAwarded);

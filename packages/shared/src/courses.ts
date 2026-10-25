@@ -14,6 +14,8 @@ export function isLessonProgressStatus(
 
 export const LESSON_COMPLETE_POINTS = 8;
 export const COURSE_COMPLETE_POINTS = 30;
+export const LESSON_COMPLETE_POINT_REASON = "lesson_complete" as const;
+export const COURSE_COMPLETE_POINT_REASON = "course_complete" as const;
 
 export function courseProgressPercent(doneCount: number, totalCount: number): number {
   if (totalCount <= 0) return 0;

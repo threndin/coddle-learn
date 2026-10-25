@@ -1,5 +1,6 @@
 import {
   ASSESSMENT_LIMITS,
+  ASSESSMENT_PASS_POINT_REASON,
   ASSESSMENT_PASS_POINTS,
   TRUE_FALSE_OPTIONS,
   assessmentPassed,
@@ -32,13 +33,13 @@ import {
   issueAssessmentCredential,
   type IssuedCredential,
 } from "../credentials/credentials.service.js";
+import { awardUserPoints } from "../points/points.repository.js";
 import {
   createAttempt,
   findAssessmentById,
   findAttempt,
   findInProgressAttempt,
   hasPassedAssessment,
-  incrementUserPoints,
   listAssessmentsForPublishedCourses,
   listAttemptsForAssessment,
   listAttemptsForUser,
@@ -366,7 +367,13 @@ export async function submitAssessmentAttempt(
   let pointsAwarded = 0;
   if (firstPass) {
     pointsAwarded = ASSESSMENT_PASS_POINTS;
-    await incrementUserPoints(userId, ASSESSMENT_PASS_POINTS);
+    await awardUserPoints({
+      userId,
+      amount: ASSESSMENT_PASS_POINTS,
+      reason: ASSESSMENT_PASS_POINT_REASON,
+      refType: "assessment",
+      refId: assessment.id,
+    });
   }
 
   const submitted = await submitAttempt(attempt.id, {

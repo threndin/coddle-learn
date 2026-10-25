@@ -130,6 +130,7 @@ export const PROFILE_VISIBILITY_OPTIONS: {
 
 /** Points awarded the first time a learner finishes onboarding. */
 export const ONBOARDING_POINTS = 50;
+export const ONBOARDING_POINT_REASON = "onboarding" as const;
 
 export type LearnUser = {
   id: string;

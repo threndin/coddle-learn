@@ -1,8 +1,10 @@
 import {
   isStepProgressStatus,
   matchedSkillSlugs,
+  ROADMAP_COMPLETE_POINT_REASON,
   ROADMAP_COMPLETE_POINTS,
   roadmapProgressPercent,
+  STEP_COMPLETE_POINT_REASON,
   STEP_COMPLETE_POINTS,
   type StepProgressStatus,
 } from "@coddle/shared";
@@ -14,6 +16,7 @@ import {
   listBookmarkedResourceIds,
   upsertBookmark,
 } from "../resources/resources.repository.js";
+import { awardUserPoints } from "../points/points.repository.js";
 import {
   clearUserRoadmapCompleted,
   createUserRoadmap,
@@ -21,7 +24,6 @@ import {
   findRoadmapBySlug,
   findStepProgress,
   findUserRoadmap,
-  incrementUserPoints,
   listRoadmaps,
   listStepProgressForRoadmap,
   listUserRoadmaps,
@@ -405,7 +407,13 @@ export async function updateRoadmapProgress(
     }
     const existing = await findStepProgress(userId, step.id);
     if (existing?.pointsAwarded) {
-      await incrementUserPoints(userId, -existing.pointsAwarded);
+      await awardUserPoints({
+        userId,
+        amount: -existing.pointsAwarded,
+        reason: STEP_COMPLETE_POINT_REASON,
+        refType: "roadmap_step",
+        refId: step.id,
+      });
     }
     await deleteStepProgress(userId, step.id);
   } else {
@@ -421,7 +429,13 @@ export async function updateRoadmapProgress(
     let pointsAwarded = existing?.pointsAwarded ?? 0;
     if (action === "completed" && pointsAwarded <= 0) {
       pointsAwarded = STEP_COMPLETE_POINTS;
-      await incrementUserPoints(userId, STEP_COMPLETE_POINTS);
+      await awardUserPoints({
+        userId,
+        amount: STEP_COMPLETE_POINTS,
+        reason: STEP_COMPLETE_POINT_REASON,
+        refType: "roadmap_step",
+        refId: step.id,
+      });
     }
     if (action === "skipped") {
       // Skipping does not award points; keep any previously awarded amount.
@@ -442,10 +456,22 @@ export async function updateRoadmapProgress(
 
   if (nowComplete && !wasComplete) {
     await markUserRoadmapCompleted(userId, roadmap.id);
-    await incrementUserPoints(userId, ROADMAP_COMPLETE_POINTS);
+    await awardUserPoints({
+      userId,
+      amount: ROADMAP_COMPLETE_POINTS,
+      reason: ROADMAP_COMPLETE_POINT_REASON,
+      refType: "roadmap",
+      refId: roadmap.id,
+    });
   } else if (!nowComplete && wasComplete) {
     await clearUserRoadmapCompleted(userId, roadmap.id);
-    await incrementUserPoints(userId, -ROADMAP_COMPLETE_POINTS);
+    await awardUserPoints({
+      userId,
+      amount: -ROADMAP_COMPLETE_POINTS,
+      reason: ROADMAP_COMPLETE_POINT_REASON,
+      refType: "roadmap",
+      refId: roadmap.id,
+    });
   }
 
   scheduleAchievementEvaluation(userId);

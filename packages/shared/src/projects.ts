@@ -54,6 +54,7 @@ export const PROJECT_LIMITS = {
 
 /** Points for the first submitted solution on a project. */
 export const PROJECT_SUBMIT_POINTS = 25;
+export const PROJECT_SUBMIT_POINT_REASON = "project_submit" as const;
 
 export type ProjectPathFilter = {
   roadmapSlug: string;

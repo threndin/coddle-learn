@@ -36,6 +36,7 @@ export const ASSESSMENT_ATTEMPT_STATUSES = ["in_progress", "submitted"] as const
 export type AssessmentAttemptStatus = (typeof ASSESSMENT_ATTEMPT_STATUSES)[number];
 
 export const ASSESSMENT_PASS_POINTS = 25;
+export const ASSESSMENT_PASS_POINT_REASON = "assessment_pass" as const;
 
 export const ASSESSMENT_LIMITS = {
   titleMin: 4,

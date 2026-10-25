@@ -15,6 +15,7 @@ import {
 } from "./features/credentials/credentials.routes.js";
 import { coursesRouter } from "./features/courses/courses.routes.js";
 import { healthRouter } from "./features/health/health.routes.js";
+import { leaderboardRouter } from "./features/leaderboard/leaderboard.routes.js";
 import { mentorsRouter } from "./features/mentors/mentors.routes.js";
 import { onboardingRouter } from "./features/onboarding/onboarding.routes.js";
 import { profilesRouter } from "./features/profiles/profiles.routes.js";
@@ -59,6 +60,7 @@ export function createApp(): Express {
   app.use("/achievements", achievementsRouter);
   app.use("/skills", skillsRouter);
   app.use("/community", communityRouter);
+  app.use("/leaderboard", leaderboardRouter);
   app.use("/mentors", mentorsRouter);
   app.use("/profiles", profilesRouter);
   app.use("/verify", verifyRouter);

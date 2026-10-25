@@ -218,10 +218,3 @@ export async function submissionCounts(projectIds: string[]) {
   return new Map(rows.map((row) => [row.projectId, row._count._all]));
 }
 
-export async function incrementUserPoints(userId: string, delta: number) {
-  if (delta === 0) return;
-  await prisma.user.update({
-    where: { id: userId },
-    data: { points: { increment: delta } },
-  });
-}

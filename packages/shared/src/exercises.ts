@@ -42,6 +42,7 @@ export function isExerciseDone(status: string | null | undefined): boolean {
 }
 
 export const EXERCISE_COMPLETE_POINTS = 10;
+export const EXERCISE_COMPLETE_POINT_REASON = "exercise_complete" as const;
 
 export const EXERCISE_LIMITS = {
   perLessonMax: 10,

@@ -7,6 +7,7 @@ import {
 import { CommunityFeed } from "@/components/community/community-catalog";
 import { DEFAULT_COMMUNITY_FILTERS, type CommunityFilters } from "@/lib/community";
 import { loadCommunityCatalog, loadSpotlightLearners } from "@/lib/community-server";
+import { loadLeaderboardTeaser } from "@/lib/leaderboard-server";
 
 type Query = Record<string, string | string[] | undefined>;
 
@@ -33,15 +34,17 @@ export default async function CommunityPage({
   searchParams: Promise<Query>;
 }) {
   const filters = filtersFrom(await searchParams);
-  const [catalog, spotlight] = await Promise.all([
+  const [catalog, spotlight, teaser] = await Promise.all([
     loadCommunityCatalog(filters),
     loadSpotlightLearners(),
+    loadLeaderboardTeaser(),
   ]);
   return (
     <CommunityFeed
       initialFilters={filters}
       initialCatalog={catalog}
       initialSpotlight={spotlight}
+      initialLeaders={teaser?.entries ?? []}
     />
   );
 }

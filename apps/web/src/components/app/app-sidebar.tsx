@@ -74,8 +74,12 @@ export function AppSidebar({
               const active =
                 item.href === "/profile"
                   ? pathname === "/profile"
-                  : pathname === item.href ||
-                    (item.href !== "/dashboard" && pathname.startsWith(`${item.href}/`));
+                  : item.href === "/community"
+                    ? pathname === "/community" ||
+                      pathname.startsWith("/community/") ||
+                      pathname === "/leaderboard"
+                    : pathname === item.href ||
+                      (item.href !== "/dashboard" && pathname.startsWith(`${item.href}/`));
               return (
                 <li key={item.href}>
                   <Link

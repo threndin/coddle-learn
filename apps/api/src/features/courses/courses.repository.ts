@@ -150,14 +150,6 @@ export async function clearUserCourseCompleted(userId: string, courseId: string)
   });
 }
 
-export async function incrementUserPoints(userId: string, amount: number) {
-  if (amount === 0) return;
-  return prisma.user.update({
-    where: { id: userId },
-    data: { points: { increment: amount } },
-  });
-}
-
 export async function listUserSkillSlugs(userId: string): Promise<string[]> {
   const rows = await prisma.userSkill.findMany({
     where: { userId },
