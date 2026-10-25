@@ -178,6 +178,7 @@ export type SpotlightLearner = {
   postCount: number;
   projectCount: number;
   note: string;
+  isFollowing?: boolean;
 };
 
 export const DEFAULT_COMMUNITY_FILTERS: CommunityFilters = {
@@ -197,6 +198,7 @@ export type CommunitySearchPerson = {
   postCount: number;
   projectCount: number;
   note: string;
+  isFollowing?: boolean;
 };
 
 export type CommunitySearchFilters = {

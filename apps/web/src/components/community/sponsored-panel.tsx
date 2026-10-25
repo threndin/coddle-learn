@@ -83,7 +83,10 @@ export function SponsoredPanel({
                   <p className="truncate text-xs text-ink-muted">{person.note}</p>
                 </div>
                 {person.username ? (
-                  <FollowButton username={person.username} />
+                  <FollowButton
+                    username={person.username}
+                    initialFollowing={Boolean(person.isFollowing)}
+                  />
                 ) : (
                   <ProfileLink
                     user={person}

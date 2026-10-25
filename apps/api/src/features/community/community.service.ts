@@ -34,6 +34,7 @@ import { AppError } from "../../shared/errors.js";
 import { imageExtension, uploadToR2 } from "../../shared/r2.js";
 import { prisma } from "../../shared/db.js";
 import { awardUserPoints } from "../points/points.repository.js";
+import { listFollowingIds } from "../profiles/profiles.repository.js";
 import {
   countCommunityPosts,
   countCommunityPostsByKind,
@@ -586,7 +587,7 @@ async function searchPeople(viewerId: string, filters: SearchFilters) {
       }))
       .sort((a, b) => b.score - a.score || b.row.points - a.row.points);
     const slice = ranked.slice(skip, skip + pageSize);
-    const people = await attachPeopleBios(slice.map((item) => item.row));
+    const people = await attachPeopleBios(viewerId, slice.map((item) => item.row));
     return {
       people,
       page: filters.page,
@@ -607,7 +608,7 @@ async function searchPeople(viewerId: string, filters: SearchFilters) {
     orderBy,
   });
   const slice = listed.rows.slice(skip, skip + pageSize);
-  const people = await attachPeopleBios(slice);
+  const people = await attachPeopleBios(viewerId, slice);
   return {
     people,
     page: filters.page,
@@ -617,16 +618,21 @@ async function searchPeople(viewerId: string, filters: SearchFilters) {
   };
 }
 
-async function attachPeopleBios(rows: SpotlightUserRow[]) {
+async function attachPeopleBios(viewerId: string, rows: SpotlightUserRow[]) {
   if (rows.length === 0) return [];
-  const bios = await prisma.user.findMany({
-    where: { id: { in: rows.map((row) => row.id) } },
-    select: { id: true, bio: true },
-  });
+  const ids = rows.map((row) => row.id);
+  const [bios, following] = await Promise.all([
+    prisma.user.findMany({
+      where: { id: { in: ids } },
+      select: { id: true, bio: true },
+    }),
+    listFollowingIds(viewerId, ids),
+  ]);
   const bioById = new Map(bios.map((row) => [row.id, row.bio]));
   return rows.map((row) => ({
     ...personPayload(row),
     bio: bioById.get(row.id) ?? null,
+    isFollowing: following.has(row.id),
   }));
 }
 
@@ -1541,6 +1547,10 @@ function spotlightNote(user: {
 
 export async function getSpotlightLearners(userId: string) {
   const rows = await listSpotlightLearners(userId, SPOTLIGHT_TAKE);
+  const following = await listFollowingIds(
+    userId,
+    rows.map((user) => user.id),
+  );
   return {
     learners: rows.map((user) => ({
       id: user.id,
@@ -1552,6 +1562,7 @@ export async function getSpotlightLearners(userId: string) {
       postCount: user._count.communityPosts,
       projectCount: user._count.projectSubmissions,
       note: spotlightNote(user),
+      isFollowing: following.has(user.id),
     })),
   };
 }
