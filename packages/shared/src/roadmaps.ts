@@ -40,6 +40,8 @@ export function isStepProgressStatus(value: unknown): value is StepProgressStatu
 
 export const STEP_COMPLETE_POINTS = 10;
 export const ROADMAP_COMPLETE_POINTS = 40;
+export const STEP_COMPLETE_POINT_REASON = "roadmap_step_complete" as const;
+export const ROADMAP_COMPLETE_POINT_REASON = "roadmap_complete" as const;
 
 export function roadmapProgressPercent(doneCount: number, totalCount: number): number {
   if (totalCount <= 0) return 0;

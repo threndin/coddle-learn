@@ -1,5 +1,6 @@
 import {
   PROJECT_LIMITS,
+  PROJECT_SUBMIT_POINT_REASON,
   PROJECT_SUBMIT_POINTS,
   isExperienceLevel,
   isHttpUrl,
@@ -13,11 +14,11 @@ import {
   type IssuedCredential,
 } from "../credentials/credentials.service.js";
 import { isReviewerUser } from "../users/users.service.js";
+import { awardUserPoints } from "../points/points.repository.js";
 import {
   findProjectBySlug,
   findPublishedProjectBySlug,
   findSubmission,
-  incrementUserPoints,
   listPublishedProjects,
   listUserSubmissions,
   saveSubmission,
@@ -225,7 +226,13 @@ export async function submitProject(userId: string, slug: string, input: unknown
   let pointsAwarded = submission.pointsAwarded;
   if (firstSubmit && pointsAwarded === 0) {
     pointsAwarded = PROJECT_SUBMIT_POINTS;
-    await incrementUserPoints(userId, PROJECT_SUBMIT_POINTS);
+    await awardUserPoints({
+      userId,
+      amount: PROJECT_SUBMIT_POINTS,
+      reason: PROJECT_SUBMIT_POINT_REASON,
+      refType: "project",
+      refId: project.id,
+    });
   }
 
   const saved = await saveSubmission(submission.id, {

@@ -239,6 +239,13 @@ const PATHS = {
       <path d="M4.5 5.5h15a1.5 1.5 0 0 1 1.5 1.5v8a1.5 1.5 0 0 1-1.5 1.5H10l-4 3v-3H4.5A1.5 1.5 0 0 1 3 15V7a1.5 1.5 0 0 1 1.5-1.5Z" />
     </>
   ),
+  trophy: (
+    <>
+      <path d="M8 4h8v3.5a4 4 0 0 1-4 4 4 4 0 0 1-4-4V4Z" />
+      <path d="M8 6.5H5.5A2.5 2.5 0 0 0 8 9M16 6.5h2.5A2.5 2.5 0 0 1 16 9" />
+      <path d="M12 11.5V14M9 20h6M10 17h4v3h-4v-3Z" />
+    </>
+  ),
 } satisfies Record<string, ReactNode>;
 
 export type IconName = keyof typeof PATHS;

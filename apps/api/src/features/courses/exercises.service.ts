@@ -1,4 +1,5 @@
 import {
+  EXERCISE_COMPLETE_POINT_REASON,
   EXERCISE_COMPLETE_POINTS,
   EXERCISE_LIMITS,
   isExerciseDone,
@@ -11,10 +12,10 @@ import {
 import type { Prisma } from "@prisma/client";
 import { AppError } from "../../shared/errors.js";
 import { scheduleAchievementEvaluation } from "../achievements/achievements.service.js";
+import { awardUserPoints } from "../points/points.repository.js";
 import {
   deleteExerciseSubmission,
   flattenLessons,
-  incrementUserPoints,
   upsertExerciseSubmission,
   type CourseExerciseRow,
 } from "./courses.repository.js";
@@ -179,7 +180,13 @@ export async function submitExercise(
   if (done && pointsAwarded <= 0) {
     pointsAwarded = EXERCISE_COMPLETE_POINTS;
     newlyAwarded = EXERCISE_COMPLETE_POINTS;
-    await incrementUserPoints(userId, EXERCISE_COMPLETE_POINTS);
+    await awardUserPoints({
+      userId,
+      amount: EXERCISE_COMPLETE_POINTS,
+      reason: EXERCISE_COMPLETE_POINT_REASON,
+      refType: "exercise",
+      refId: exercise.id,
+    });
   }
 
   await upsertExerciseSubmission(userId, exercise.id, { ...graded, pointsAwarded });
@@ -206,7 +213,15 @@ export async function resetExercise(userId: string, slug: string, exerciseId: st
     throw new AppError(400, "exercise_not_started", "You have not started this exercise.");
   }
 
-  if (existing.pointsAwarded) await incrementUserPoints(userId, -existing.pointsAwarded);
+  if (existing.pointsAwarded) {
+    await awardUserPoints({
+      userId,
+      amount: -existing.pointsAwarded,
+      reason: EXERCISE_COMPLETE_POINT_REASON,
+      refType: "exercise",
+      refId: exercise.id,
+    });
+  }
   await deleteExerciseSubmission(userId, exercise.id);
 
   await syncCourseCompletion(userId, course, enrollment);

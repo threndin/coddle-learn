@@ -1,5 +1,6 @@
-import { ONBOARDING_POINTS, type NormalizedOnboarding } from "@coddle/shared";
+import { ONBOARDING_POINT_REASON, ONBOARDING_POINTS, type NormalizedOnboarding } from "@coddle/shared";
 import { prisma } from "../../shared/db.js";
+import { awardUserPoints } from "../points/points.repository.js";
 import { enrollRoadmapBySlug } from "../roadmaps/roadmaps.service.js";
 import { findById, type UserWithSkills } from "../users/users.repository.js";
 
@@ -41,9 +42,20 @@ export async function saveOnboarding(
         practiceDays: value.practiceDays,
         startingRoadmapSlug: value.roadmapSlug,
         onboardingCompletedAt: new Date(),
-        ...(awardOnboardingPoints ? { points: { increment: ONBOARDING_POINTS } } : {}),
       },
     });
+    if (awardOnboardingPoints) {
+      await awardUserPoints(
+        {
+          userId,
+          amount: ONBOARDING_POINTS,
+          reason: ONBOARDING_POINT_REASON,
+          refType: "user",
+          refId: userId,
+        },
+        tx,
+      );
+    }
   });
 
   try {

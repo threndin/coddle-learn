@@ -1,17 +1,27 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
 import { ProfileAvatar } from "@/components/onboarding/profile-avatar";
 import { FollowButton } from "@/components/profile/follow-button";
 import { ProfileLink } from "@/components/profile/profile-link";
 import { Icon } from "@/components/ui/icon";
 import type { SpotlightLearner } from "@/lib/community";
+import type { LeaderboardEntry } from "@/lib/leaderboard";
+
+const TEASER_BADGE = [
+  "bg-amber-300 text-amber-950",
+  "bg-slate-300 text-slate-800",
+  "bg-orange-400 text-orange-950",
+] as const;
 
 /** Right-rail / inline community spots: ads, spotlighted learners, and upcoming events. */
 export function SponsoredPanel({
   compact = false,
   learners = [],
+  leaders = [],
 }: {
   compact?: boolean;
   learners?: SpotlightLearner[];
+  leaders?: LeaderboardEntry[];
 }) {
   return (
     <div className={compact ? "space-y-3" : "space-y-4"}>
@@ -86,6 +96,63 @@ export function SponsoredPanel({
             ))}
           </ul>
         )}
+      </RailCard>
+
+      <RailCard
+        eyebrow="Leaderboard"
+        title="Top learners"
+        body="All-time points"
+        compact={compact}
+      >
+        {leaders.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-border px-3 py-4 text-center text-xs text-ink-muted">
+            Earn points to take a place on the board.
+          </p>
+        ) : (
+          <ul className="space-y-2.5">
+            {leaders.slice(0, 3).map((person) => (
+              <li key={`${person.rank}-${person.username ?? person.name}`} className="flex items-center gap-3">
+                <span
+                  className={[
+                    "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold",
+                    TEASER_BADGE[person.rank - 1] ?? "bg-brand-soft text-brand",
+                  ].join(" ")}
+                >
+                  {person.rank}
+                </span>
+                {person.username ? (
+                  <ProfileLink user={{ username: person.username }} className="shrink-0">
+                    <ProfileAvatar name={person.name} avatarUrl={person.avatarUrl} size="sm" />
+                  </ProfileLink>
+                ) : (
+                  <ProfileAvatar name={person.name} avatarUrl={person.avatarUrl} size="sm" />
+                )}
+                <div className="min-w-0 flex-1">
+                  {person.username ? (
+                    <ProfileLink
+                      user={{ username: person.username }}
+                      className="truncate text-sm font-semibold text-ink transition hover:text-brand"
+                    >
+                      {person.name}
+                    </ProfileLink>
+                  ) : (
+                    <p className="truncate text-sm font-semibold text-ink">{person.name}</p>
+                  )}
+                  <p className="truncate text-xs font-semibold text-brand">
+                    {person.points.toLocaleString()} pts
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+        <Link
+          href="/leaderboard"
+          className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-brand transition hover:underline"
+        >
+          See full leaderboard
+          <Icon name="chevronRight" className="h-3.5 w-3.5" />
+        </Link>
       </RailCard>
 
       <RailCard

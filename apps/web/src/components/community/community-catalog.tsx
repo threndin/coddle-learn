@@ -26,6 +26,7 @@ import { useAppUserActions } from "@/components/app/app-user-context";
 import { useToast } from "@/components/app/toast";
 import { Icon } from "@/components/ui/icon";
 import { errorMessage } from "@/lib/api-client";
+import type { LeaderboardEntry } from "@/lib/leaderboard";
 import {
   clearCommunitySearchReturn,
   communityQueryString,
@@ -49,10 +50,12 @@ export function CommunityFeed({
   initialFilters,
   initialCatalog,
   initialSpotlight = [],
+  initialLeaders = [],
 }: {
   initialFilters: CommunityFilters;
   initialCatalog: CommunityCatalog | null;
   initialSpotlight?: SpotlightLearner[];
+  initialLeaders?: LeaderboardEntry[];
 }) {
   const router = useRouter();
   const { pushToast, dismissToast } = useToast();
@@ -518,7 +521,7 @@ export function CommunityFeed({
                       />
                       {showMobileAd && index === MOBILE_AD_AFTER - 1 ? (
                         <div className="lg:hidden">
-                          <SponsoredPanel compact learners={spotlight} />
+                          <SponsoredPanel compact learners={spotlight} leaders={initialLeaders} />
                         </div>
                       ) : null}
                     </li>
@@ -556,7 +559,7 @@ export function CommunityFeed({
 
           <div className="hidden lg:block">
             <div className="sticky top-24 space-y-4">
-              <SponsoredPanel learners={spotlight} />
+              <SponsoredPanel learners={spotlight} leaders={initialLeaders} />
             </div>
           </div>
         </div>

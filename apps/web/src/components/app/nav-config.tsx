@@ -148,6 +148,7 @@ export function navItemsForRole(role: UserRole | undefined): AppNavItem[] {
 
 export function navTitleForPath(pathname: string): string {
   if (pathname === "/profile" || pathname.startsWith("/u/")) return "Profile";
+  if (pathname === "/leaderboard") return "Leaderboard";
   const exact = APP_NAV.find((item) => item.href === pathname);
   if (exact) return exact.label;
   const nested = APP_NAV.find(

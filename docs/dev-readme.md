@@ -33,6 +33,7 @@ First visit after sign-in goes to **onboarding**. Every later visit goes to the 
 | Achievements | `/achievements`, `/achievements/[slug]`                      | Built (earned + locked catalog; backfill job for existing users)                                       |
 | Skill graph  | `/skills` (also section on public profile)                   | Built (interactive graph; evidence from assessments, projects, credentials; locked nodes stay visible) |
 | Community    | `/community`                                                 | Built (feed: questions, discussions, project shares; compose; filters). Thread detail not yet.         |
+| Leaderboard  | `/leaderboard`                                               | Built (all-time / weekly / monthly points; numbered pages; Community rail teaser)                      |
 | Public profile | `/u/[username]`                                            | Built (follow, activity, showcase, skills, proof)                                                      |
 | Profile editor | `/profile`                                                 | Built (bio, level, skills, public section visibility)                                                  |
 
@@ -320,6 +321,7 @@ u/[username]/contributions/page.tsx
 profile/page.tsx
 community/page.tsx
 community/[id]/page.tsx
+leaderboard/page.tsx
 mentors/page.tsx
 mentors/[username]/page.tsx
 mentors/[username]/request/page.tsx
