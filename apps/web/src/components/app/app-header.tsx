@@ -1,10 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { AccountMenu } from "@/components/app/account-menu";
 import { navTitleForPath } from "@/components/app/nav-config";
 import { useAppUser } from "@/components/app/app-user-context";
+import { useUnreadNotifications } from "@/components/notifications/notifications-context";
+import { Icon } from "@/components/ui/icon";
 
 export function AppHeader({
   collapsed,
@@ -16,6 +19,8 @@ export function AppHeader({
   const user = useAppUser();
   const pathname = usePathname();
   const title = navTitleForPath(pathname);
+  const { unreadCount } = useUnreadNotifications();
+  const unreadLabel = unreadCount > 99 ? "99+" : String(unreadCount);
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b border-border bg-surface/90 px-4 backdrop-blur-md sm:px-6">
@@ -43,6 +48,22 @@ export function AppHeader({
           <span className="hidden text-xs text-ink-muted sm:inline">pts</span>
         </div>
         <ThemeToggle />
+        <Link
+          href="/notifications"
+          aria-label={
+            unreadCount > 0
+              ? `Notifications, ${unreadCount} unread`
+              : "Notifications"
+          }
+          className="relative inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border text-ink transition hover:bg-surface-subtle"
+        >
+          <Icon name="bell" className="h-[18px] w-[18px]" />
+          {unreadCount > 0 ? (
+            <span className="absolute -right-1 -top-1 inline-flex min-w-4 items-center justify-center rounded-full bg-brand px-1 py-px font-mono text-[10px] font-bold leading-4 text-white">
+              {unreadLabel}
+            </span>
+          ) : null}
+        </Link>
         <AccountMenu />
       </div>
     </header>

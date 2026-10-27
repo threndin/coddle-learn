@@ -92,22 +92,10 @@ export const APP_NAV: AppNavItem[] = [
     icon: "community",
   },
   {
-    href: "/mentors",
-    label: "Mentors",
-    description: "Learn with experienced developers",
-    icon: "mentorship",
-  },
-  {
     href: "/achievements",
     label: "Achievements",
     description: "Milestones, streaks, and contributions",
     icon: "achievements",
-  },
-  {
-    href: "/skills",
-    label: "Skills",
-    description: "Evidence-based skill graph",
-    icon: "skills",
   },
   {
     href: "/notifications",
@@ -120,13 +108,6 @@ export const APP_NAV: AppNavItem[] = [
     label: "Studio",
     description: "Create and manage your courses",
     icon: "studio",
-  },
-  {
-    href: "/reviewers",
-    label: "Reviewers",
-    description: "Approve courses, resources, and tools",
-    icon: "reviewers",
-    reviewerOnly: true,
   },
   {
     href: "/profile",
@@ -149,6 +130,9 @@ export function navItemsForRole(role: UserRole | undefined): AppNavItem[] {
 export function navTitleForPath(pathname: string): string {
   if (pathname === "/profile" || pathname.startsWith("/u/")) return "Profile";
   if (pathname === "/leaderboard") return "Leaderboard";
+  if (pathname === "/skills" || pathname.startsWith("/skills/")) return "Skills";
+  if (pathname === "/mentors" || pathname.startsWith("/mentors/")) return "Mentors";
+  if (pathname === "/reviewers" || pathname.startsWith("/reviewers/")) return "Reviewers";
   const exact = APP_NAV.find((item) => item.href === pathname);
   if (exact) return exact.label;
   const nested = APP_NAV.find(

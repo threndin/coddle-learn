@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { ProfileAvatar } from "@/components/onboarding/profile-avatar";
 import { navItemsForRole, NavIcon } from "@/components/app/nav-config";
 import { useAppUser } from "@/components/app/app-user-context";
+import { useUnreadNotifications } from "@/components/notifications/notifications-context";
 import { profilePath } from "@/lib/profiles";
 
 export function AppSidebar({
@@ -19,7 +20,9 @@ export function AppSidebar({
 }) {
   const user = useAppUser();
   const pathname = usePathname();
+  const { unreadCount } = useUnreadNotifications();
   const firstName = user.name.trim().split(/\s+/)[0] || user.name;
+  const unreadLabel = unreadCount > 99 ? "99+" : String(unreadCount);
 
   return (
     <>
@@ -94,8 +97,25 @@ export function AppSidebar({
                         : "text-ink-muted hover:bg-surface-subtle hover:text-ink",
                     ].join(" ")}
                   >
-                    <NavIcon id={item.icon} className="h-5 w-5 shrink-0" />
-                    <span className={collapsed ? "lg:hidden" : ""}>{item.label}</span>
+                    <span className="relative shrink-0">
+                      <NavIcon id={item.icon} className="h-5 w-5" />
+                      {item.href === "/notifications" && unreadCount > 0 && collapsed ? (
+                        <span className="absolute -right-1 -top-1 hidden h-2 w-2 rounded-full bg-brand lg:block" />
+                      ) : null}
+                    </span>
+                    <span
+                      className={[
+                        "flex min-w-0 flex-1 items-center justify-between gap-2",
+                        collapsed ? "lg:hidden" : "",
+                      ].join(" ")}
+                    >
+                      <span className="truncate">{item.label}</span>
+                      {item.href === "/notifications" && unreadCount > 0 ? (
+                        <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-brand px-1.5 py-0.5 font-mono text-[10px] font-bold leading-none text-white">
+                          {unreadLabel}
+                        </span>
+                      ) : null}
+                    </span>
                   </Link>
                 </li>
               );

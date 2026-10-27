@@ -33,6 +33,14 @@ import { isR2Configured } from "../../config.js";
 import { AppError } from "../../shared/errors.js";
 import { imageExtension, uploadToR2 } from "../../shared/r2.js";
 import { prisma } from "../../shared/db.js";
+import { findById } from "../users/users.repository.js";
+import {
+  notifyCommunityComment,
+  notifyCommunityPostCreated,
+  notifyCommunityQuote,
+  notifyCommunityReaction,
+  notifyCommunityReply,
+} from "../notifications/notifications.events.js";
 import { awardUserPoints } from "../points/points.repository.js";
 import { listFollowingIds } from "../profiles/profiles.repository.js";
 import {
@@ -914,17 +922,18 @@ export async function createCommunityFeedPost(
   }
 
   let quotePostId: string | null = null;
+  let quotedPost: CommunityPostRow | null = null;
   if (body.quotePostId !== undefined && body.quotePostId !== null && body.quotePostId !== "") {
     if (typeof body.quotePostId !== "string") {
       throw new AppError(400, "invalid_field", "Quote target must be a post id.", {
         field: "quotePostId",
       });
     }
-    const quoted = await findCommunityPost(body.quotePostId.trim());
-    if (!quoted) {
+    quotedPost = await findCommunityPost(body.quotePostId.trim());
+    if (!quotedPost) {
       throw new AppError(404, "quote_missing", "That post could not be quoted.");
     }
-    quotePostId = quoted.id;
+    quotePostId = quotedPost.id;
   }
 
   const related = await resolveRelated(topicRaw, relatedSlug);
@@ -982,6 +991,22 @@ export async function createCommunityFeedPost(
     reason: COMMUNITY_POST_CREATE_POINT_REASON,
     refType: "community_post",
     refId: row.id,
+  });
+
+  if (quotedPost && quotedPost.author.id !== userId) {
+    await notifyCommunityQuote({
+      recipientId: quotedPost.author.id,
+      actor: row.author,
+      postSlug: row.slug,
+      postTitle: row.title,
+    });
+  }
+
+  await notifyCommunityPostCreated({
+    userId,
+    postId: row.id,
+    postSlug: row.slug,
+    postTitle: row.title,
   });
 
   return { post: postPayload(row, userId) };
@@ -1355,13 +1380,14 @@ export async function createCommunityComment(
   );
 
   let parentId: string | null = null;
+  let parent: CommunityCommentRow | null = null;
   if (body.parentId !== undefined && body.parentId !== null && body.parentId !== "") {
     if (typeof body.parentId !== "string") {
       throw new AppError(400, "invalid_field", "Reply target must be a comment id.", {
         field: "parentId",
       });
     }
-    const parent = await findComment(body.parentId.trim());
+    parent = await findComment(body.parentId.trim());
     if (!parent || parent.postId !== post.id) {
       throw new AppError(404, "comment_missing", "That comment could not be found.");
     }
@@ -1382,6 +1408,23 @@ export async function createCommunityComment(
     parentId,
     body: text,
   });
+
+  if (parent && parent.authorId !== userId) {
+    await notifyCommunityReply({
+      recipientId: parent.authorId,
+      actor: row.author,
+      postSlug: post.slug,
+      postTitle: post.title,
+    });
+  }
+  if (post.authorId !== userId && post.authorId !== parent?.authorId) {
+    await notifyCommunityComment({
+      recipientId: post.authorId,
+      actor: row.author,
+      postSlug: post.slug,
+      postTitle: post.title,
+    });
+  }
 
   return {
     comment: commentPayload(row, userId),
@@ -1469,6 +1512,22 @@ export async function setCommunityCommentReaction(
     await deleteCommentReaction(commentId, userId);
   } else {
     await upsertCommentReaction(commentId, userId, emoji);
+    if (comment.authorId !== userId) {
+      const [post, actor] = await Promise.all([
+        findCommunityPost(comment.postId),
+        findById(userId),
+      ]);
+      if (post && actor) {
+        await notifyCommunityReaction({
+          recipientId: comment.authorId,
+          actor,
+          postSlug: post.slug,
+          postTitle: post.title,
+          target: "comment",
+          targetId: comment.id,
+        });
+      }
+    }
   }
 
   return commentReactionSnapshot(commentId, userId);
@@ -1517,6 +1576,19 @@ export async function setCommunityReaction(userId: string, postId: string, input
     await deleteReaction(postId, userId);
   } else {
     await upsertReaction(postId, userId, emoji);
+    if (post.authorId !== userId) {
+      const actor = await findById(userId);
+      if (actor) {
+        await notifyCommunityReaction({
+          recipientId: post.authorId,
+          actor,
+          postSlug: post.slug,
+          postTitle: post.title,
+          target: "post",
+          targetId: post.id,
+        });
+      }
+    }
   }
 
   return reactionSnapshot(postId, userId);

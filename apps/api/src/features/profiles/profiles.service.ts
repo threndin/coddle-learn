@@ -10,7 +10,8 @@ import {
 import { AppError } from "../../shared/errors.js";
 import { config } from "../../config.js";
 import { getMySkillGraph } from "../skills/skills.service.js";
-import { findByUsernameOrId } from "../users/users.repository.js";
+import { notifyFollow, notifyProfileUpdated } from "../notifications/notifications.events.js";
+import { findById, findByUsernameOrId } from "../users/users.repository.js";
 import { toPublicUser, visibilityFromUser } from "../users/users.service.js";
 import {
   countCommunityPosts,
@@ -287,6 +288,7 @@ export async function updateOwnProfile(userId: string, input: unknown) {
     throw new AppError(404, "user_missing", "Account no longer exists. Sign in again.");
   }
 
+  await notifyProfileUpdated(userId, updated.username);
   return toPublicUser(updated);
 }
 
@@ -302,6 +304,10 @@ export async function followProfile(viewerId: string, usernameOrId: string) {
   const existing = await findFollow(viewerId, user.id);
   if (!existing) {
     await createFollow(viewerId, user.id);
+    const follower = await findById(viewerId);
+    if (follower) {
+      await notifyFollow(user.id, follower);
+    }
   }
 
   return {

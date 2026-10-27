@@ -8,6 +8,7 @@ import {
   type ChallengeDifficulty,
 } from "@coddle/shared";
 import { AppError } from "../../shared/errors.js";
+import { notifyChallengeSolved } from "../notifications/notifications.events.js";
 import { challengeCodeIssue, runChallengeCode } from "./challenge-runner.js";
 import {
   countChallengeSolves,
@@ -392,6 +393,17 @@ export async function submitChallengeSolution(userId: string, slug: string, inpu
     boardFor(userId, challenge.id),
     findUserSolve(userId, challenge.id),
   ]);
+
+  if (pointsAwarded > 0) {
+    await notifyChallengeSolved({
+      userId,
+      challengeId: challenge.id,
+      challengeSlug: challenge.slug,
+      challengeTitle: challenge.title,
+      rank: solve?.rank ?? null,
+      pointsAwarded,
+    });
+  }
 
   return {
     status: passed ? "passed" : "failed",

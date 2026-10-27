@@ -1,6 +1,11 @@
 import { config } from "../../config.js";
 import { AppError } from "../../shared/errors.js";
 import {
+  notifyLogin,
+  notifyRoleGranted,
+  notifyWelcome,
+} from "../notifications/notifications.events.js";
+import {
   findUserById,
   syncUserRole,
   toPublicUser,
@@ -36,12 +41,24 @@ export async function completeCoddleSignIn(code: string, state: string | undefin
   await consumeOAuthState(state);
 
   const profile = await exchangeCoddleSsoCode(code, finishUrl());
-  const user = await upsertFromCoddle(profile);
+  const { user, created, previousRole } = await upsertFromCoddle(profile);
   const tokens = await createSession({
     sub: user.id,
     email: user.email,
     coddleUserId: user.coddleUserId,
   });
+
+  if (created) {
+    await notifyWelcome(user.id, user.name);
+  } else {
+    await notifyLogin(user.id);
+  }
+  if (
+    (created || previousRole !== user.role) &&
+    (user.role === "reviewer" || user.role === "admin")
+  ) {
+    await notifyRoleGranted(user.id, user.role);
+  }
 
   return { user: toPublicUser(user), tokens };
 }

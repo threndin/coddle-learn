@@ -11,6 +11,7 @@ import {
 import type { RoadmapStep, UserStepProgress } from "@prisma/client";
 import { AppError } from "../../shared/errors.js";
 import { scheduleAchievementEvaluation } from "../achievements/achievements.service.js";
+import { notifyResourceSaved, notifyRoadmapComplete } from "../notifications/notifications.events.js";
 import {
   deleteBookmark,
   listBookmarkedResourceIds,
@@ -463,6 +464,7 @@ export async function updateRoadmapProgress(
       refType: "roadmap",
       refId: roadmap.id,
     });
+    await notifyRoadmapComplete(userId, roadmap);
   } else if (!nowComplete && wasComplete) {
     await clearUserRoadmapCompleted(userId, roadmap.id);
     await awardUserPoints({
@@ -524,7 +526,15 @@ export async function toggleResourceBookmark(
   if (remove) {
     await deleteBookmark(userId, resource.id);
   } else {
+    const already = await listBookmarkedResourceIds(userId, [resource.id]);
     await upsertBookmark(userId, resource.id);
+    if (!already.has(resource.id)) {
+      await notifyResourceSaved({
+        userId,
+        resourceId: resource.id,
+        title: resource.title,
+      });
+    }
   }
 
   return getRoadmapDetail(userId, slug);

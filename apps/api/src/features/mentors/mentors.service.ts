@@ -16,6 +16,10 @@ import type { Prisma } from "@prisma/client";
 import { AppError } from "../../shared/errors.js";
 import { scheduleAchievementEvaluation } from "../achievements/achievements.service.js";
 import {
+  notifyMentorApplication,
+  notifyMentorApplicationUpdate,
+} from "../notifications/notifications.events.js";
+import {
   countApplicationsSince,
   countApprovedForProgram,
   countMentorProfiles,
@@ -596,6 +600,13 @@ export async function applyToProgram(
       })
     : await createApplication({ programId: program.id, menteeId: userId, message, goals });
 
+  await notifyMentorApplication({
+    mentorUserId: profile.userId,
+    mentee: application.mentee,
+    applicationId: application.id,
+    programTitle: program.title,
+  });
+
   return { application: toApplication(application) };
 }
 
@@ -640,6 +651,13 @@ export async function approveApplication(userId: string, applicationId: string, 
     mentorNote: requireMentorNote(body),
     reviewedAt: new Date(),
   });
+  await notifyMentorApplicationUpdate({
+    menteeId: updated.mentee.id,
+    mentor: updated.program.mentorProfile.user,
+    applicationId: updated.id,
+    programTitle: updated.program.title,
+    status: "approved",
+  });
   return { application: toApplication(updated) };
 }
 
@@ -653,6 +671,13 @@ export async function declineApplication(userId: string, applicationId: string, 
     mentorNote: requireMentorNote(body),
     reviewedAt: new Date(),
   });
+  await notifyMentorApplicationUpdate({
+    menteeId: updated.mentee.id,
+    mentor: updated.program.mentorProfile.user,
+    applicationId: updated.id,
+    programTitle: updated.program.title,
+    status: "declined",
+  });
   return { application: toApplication(updated) };
 }
 
@@ -664,6 +689,13 @@ export async function completeApplication(userId: string, applicationId: string)
   const updated = await updateApplication(application.id, {
     status: "completed",
     completedAt: new Date(),
+  });
+  await notifyMentorApplicationUpdate({
+    menteeId: updated.mentee.id,
+    mentor: updated.program.mentorProfile.user,
+    applicationId: updated.id,
+    programTitle: updated.program.title,
+    status: "completed",
   });
   scheduleAchievementEvaluation(userId);
   return { application: toApplication(updated) };

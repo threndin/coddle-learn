@@ -47,19 +47,25 @@ async function allocateUsername(name: string, prefer?: string | null): Promise<s
   return `${base.slice(0, 20)}-${Date.now().toString(36)}`;
 }
 
+export type CoddleUpsertResult = {
+  user: User;
+  created: boolean;
+  previousRole: string | null;
+};
+
 export async function upsertFromCoddle(profile: {
   id: string;
   email: string;
   name: string;
   avatarUrl: string | null;
-}): Promise<User> {
+}): Promise<CoddleUpsertResult> {
   const now = new Date();
   const existing = await prisma.user.findUnique({
     where: { coddleUserId: profile.id },
   });
 
   if (existing) {
-    return prisma.user.update({
+    const user = await prisma.user.update({
       where: { id: existing.id },
       data: {
         email: profile.email,
@@ -69,11 +75,12 @@ export async function upsertFromCoddle(profile: {
         role: roleForEmail(profile.email, existing.role),
       },
     });
+    return { user, created: false, previousRole: existing.role };
   }
 
   const username = await allocateUsername(profile.name);
 
-  return prisma.user.create({
+  const user = await prisma.user.create({
     data: {
       coddleUserId: profile.id,
       email: profile.email,
@@ -84,6 +91,7 @@ export async function upsertFromCoddle(profile: {
       role: roleForEmail(profile.email),
     },
   });
+  return { user, created: true, previousRole: null };
 }
 
 /** Promote from the allowlist without waiting for the next sign-in. */

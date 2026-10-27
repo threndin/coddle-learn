@@ -14,6 +14,7 @@ import type { Prisma } from "@prisma/client";
 import { config } from "../../config.js";
 import { AppError } from "../../shared/errors.js";
 import { scheduleAchievementEvaluation } from "../achievements/achievements.service.js";
+import { notifyResourceSaved } from "../notifications/notifications.events.js";
 import {
   countResources,
   countResourceBookmarks,
@@ -315,8 +316,19 @@ export async function setResourceBookmark(userId: string, resourceId: string, sa
     throw new AppError(404, "resource_missing", "That resource could not be found.");
   }
 
-  if (saved) await upsertBookmark(userId, resource.id);
-  else await deleteBookmark(userId, resource.id);
+  if (saved) {
+    const already = await listBookmarkedResourceIds(userId, [resource.id]);
+    await upsertBookmark(userId, resource.id);
+    if (!already.has(resource.id)) {
+      await notifyResourceSaved({
+        userId,
+        resourceId: resource.id,
+        title: resource.title,
+      });
+    }
+  } else {
+    await deleteBookmark(userId, resource.id);
+  }
 
   return {
     bookmarked: saved,

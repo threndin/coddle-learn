@@ -12,6 +12,7 @@ import {
 import type { CourseLesson, UserExerciseSubmission, UserLessonProgress } from "@prisma/client";
 import { AppError } from "../../shared/errors.js";
 import { scheduleAchievementEvaluation } from "../achievements/achievements.service.js";
+import { notifyCourseComplete, notifyCourseStarted } from "../notifications/notifications.events.js";
 import { scheduleSkillGraphEvaluation } from "../skills/skills.service.js";
 import {
   findAssessmentByCourseId,
@@ -381,7 +382,14 @@ export async function ensureEnrollment(
       "This course is not published yet, so progress cannot be tracked.",
     );
   }
-  return createUserCourse(userId, course.id);
+  const created = await createUserCourse(userId, course.id);
+  await notifyCourseStarted({
+    userId,
+    courseId: course.id,
+    courseSlug: course.slug,
+    courseTitle: course.title,
+  });
+  return created;
 }
 
 /**
@@ -413,6 +421,7 @@ export async function syncCourseCompletion(
       refId: course.id,
     });
     scheduleAchievementEvaluation(userId);
+    await notifyCourseComplete(userId, course);
     return COURSE_COMPLETE_POINTS;
   }
   if (!nowComplete && wasComplete) {
@@ -462,6 +471,12 @@ export async function startCourse(userId: string, slug: string) {
   if (!existing) {
     await createUserCourse(userId, course.id);
     scheduleSkillGraphEvaluation(userId);
+    await notifyCourseStarted({
+      userId,
+      courseId: course.id,
+      courseSlug: course.slug,
+      courseTitle: course.title,
+    });
   }
 
   return getCourseDetail(userId, slug);

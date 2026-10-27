@@ -5,6 +5,7 @@ import {
   type AchievementSlug,
 } from "@coddle/shared";
 import { AppError } from "../../shared/errors.js";
+import { notifyAchievement } from "../notifications/notifications.events.js";
 import {
   deleteAllAwards,
   firstCourseCompletedAt,
@@ -170,7 +171,11 @@ export async function awardIfEligible(
 
   const existing = await findAward(userId, slug);
   await upsertAward(userId, slug, earnedAt);
-  return !existing;
+  const isNew = !existing;
+  if (isNew) {
+    await notifyAchievement(userId, slug);
+  }
+  return isNew;
 }
 
 /** Re-check every definition for one user and award anything newly earned. */
