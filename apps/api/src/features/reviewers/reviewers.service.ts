@@ -14,6 +14,7 @@ import type { Prisma } from "@prisma/client";
 import { config } from "../../config.js";
 import { AppError } from "../../shared/errors.js";
 import { scheduleAchievementEvaluation } from "../achievements/achievements.service.js";
+import { notifyReviewDecision } from "../notifications/notifications.events.js";
 import {
   countReviewCourses,
   countReviewProjects,
@@ -383,6 +384,16 @@ async function decideCourse(
       ...clearFlag(),
     });
     scheduleAchievementEvaluation(reviewerId);
+    await notifyReviewDecision({
+      recipientId: course.createdBy.id,
+      reviewerId,
+      kind: "course",
+      action: "approve",
+      title: course.title,
+      href: `/courses/${course.slug}`,
+      itemId: course.id,
+      note,
+    });
     return courseItem(updated);
   }
 
@@ -398,6 +409,16 @@ async function decideCourse(
       ...clearFlag(),
     });
     scheduleAchievementEvaluation(reviewerId);
+    await notifyReviewDecision({
+      recipientId: course.createdBy.id,
+      reviewerId,
+      kind: "course",
+      action: "decline",
+      title: course.title,
+      href: `/studio/courses/${course.id}`,
+      itemId: course.id,
+      note,
+    });
     return courseItem(updated);
   }
 
@@ -406,6 +427,16 @@ async function decideCourse(
     flaggedAt: now,
     flaggedByUserId: reviewerId,
     flagNote: note,
+  });
+  await notifyReviewDecision({
+    recipientId: course.createdBy.id,
+    reviewerId,
+    kind: "course",
+    action: "flag",
+    title: course.title,
+    href: `/studio/courses/${course.id}`,
+    itemId: course.id,
+    note,
   });
   return courseItem(updated);
 }
@@ -432,6 +463,16 @@ async function decideProject(
       ...clearFlag(),
     });
     scheduleAchievementEvaluation(reviewerId);
+    await notifyReviewDecision({
+      recipientId: project.createdBy.id,
+      reviewerId,
+      kind: "project",
+      action: "approve",
+      title: project.title,
+      href: `/projects/${project.slug}`,
+      itemId: project.id,
+      note,
+    });
     return projectItem(updated);
   }
 
@@ -447,6 +488,16 @@ async function decideProject(
       ...clearFlag(),
     });
     scheduleAchievementEvaluation(reviewerId);
+    await notifyReviewDecision({
+      recipientId: project.createdBy.id,
+      reviewerId,
+      kind: "project",
+      action: "decline",
+      title: project.title,
+      href: `/studio/projects/${project.id}`,
+      itemId: project.id,
+      note,
+    });
     return projectItem(updated);
   }
 
@@ -455,6 +506,16 @@ async function decideProject(
     flaggedAt: now,
     flaggedByUserId: reviewerId,
     flagNote: note,
+  });
+  await notifyReviewDecision({
+    recipientId: project.createdBy.id,
+    reviewerId,
+    kind: "project",
+    action: "flag",
+    title: project.title,
+    href: `/studio/projects/${project.id}`,
+    itemId: project.id,
+    note,
   });
   return projectItem(updated);
 }
@@ -480,6 +541,18 @@ async function decideResource(
       ...clearFlag(),
     });
     scheduleAchievementEvaluation(reviewerId);
+    if (resource.submittedBy) {
+      await notifyReviewDecision({
+        recipientId: resource.submittedBy.id,
+        reviewerId,
+        kind: "resource",
+        action: "approve",
+        title: resource.title,
+        href: "/resources",
+        itemId: resource.id,
+        note,
+      });
+    }
     return resourceItem(updated);
   }
 
@@ -496,6 +569,18 @@ async function decideResource(
       ...clearFlag(),
     });
     scheduleAchievementEvaluation(reviewerId);
+    if (resource.submittedBy) {
+      await notifyReviewDecision({
+        recipientId: resource.submittedBy.id,
+        reviewerId,
+        kind: "resource",
+        action: "decline",
+        title: resource.title,
+        href: "/resources",
+        itemId: resource.id,
+        note,
+      });
+    }
     return resourceItem(updated);
   }
 
@@ -505,6 +590,18 @@ async function decideResource(
     flaggedByUserId: reviewerId,
     flagNote: note,
   });
+  if (resource.submittedBy) {
+    await notifyReviewDecision({
+      recipientId: resource.submittedBy.id,
+      reviewerId,
+      kind: "resource",
+      action: "flag",
+      title: resource.title,
+      href: "/resources",
+      itemId: resource.id,
+      note,
+    });
+  }
   return resourceItem(updated);
 }
 
@@ -529,6 +626,18 @@ async function decideTool(
       ...clearFlag(),
     });
     scheduleAchievementEvaluation(reviewerId);
+    if (tool.submittedBy) {
+      await notifyReviewDecision({
+        recipientId: tool.submittedBy.id,
+        reviewerId,
+        kind: "tool",
+        action: "approve",
+        title: tool.title,
+        href: `/tools/${tool.slug}`,
+        itemId: tool.id,
+        note,
+      });
+    }
     return toolItem(updated);
   }
 
@@ -545,6 +654,18 @@ async function decideTool(
       ...clearFlag(),
     });
     scheduleAchievementEvaluation(reviewerId);
+    if (tool.submittedBy) {
+      await notifyReviewDecision({
+        recipientId: tool.submittedBy.id,
+        reviewerId,
+        kind: "tool",
+        action: "decline",
+        title: tool.title,
+        href: "/tools",
+        itemId: tool.id,
+        note,
+      });
+    }
     return toolItem(updated);
   }
 
@@ -554,6 +675,18 @@ async function decideTool(
     flaggedByUserId: reviewerId,
     flagNote: note,
   });
+  if (tool.submittedBy) {
+    await notifyReviewDecision({
+      recipientId: tool.submittedBy.id,
+      reviewerId,
+      kind: "tool",
+      action: "flag",
+      title: tool.title,
+      href: "/tools",
+      itemId: tool.id,
+      note,
+    });
+  }
   return toolItem(updated);
 }
 

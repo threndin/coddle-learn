@@ -8,6 +8,7 @@ import {
 } from "@coddle/shared";
 import { AppError } from "../../shared/errors.js";
 import { scheduleAchievementEvaluation } from "../achievements/achievements.service.js";
+import { notifyProjectSubmitted } from "../notifications/notifications.events.js";
 import { scheduleSkillGraphEvaluation } from "../skills/skills.service.js";
 import {
   issueProjectCredential,
@@ -253,6 +254,16 @@ export async function submitProject(userId: string, slug: string, input: unknown
       projectTitle: project.title,
       pathLabel: pathLabelForRoadmapSlug(project.roadmap.slug),
       summary: project.summary,
+    });
+  }
+
+  if (firstSubmit) {
+    await notifyProjectSubmitted({
+      userId,
+      projectId: project.id,
+      projectSlug: project.slug,
+      projectTitle: project.title,
+      credentialId: credential?.id ?? null,
     });
   }
 

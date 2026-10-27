@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Icon } from "@/components/ui/icon";
+import { StudioReviewersCard } from "@/components/studio/studio-reviewers-card";
 
 export default function StudioPage() {
   return (
@@ -8,13 +9,13 @@ export default function StudioPage() {
         Studio
       </p>
       <h1 className="mt-3 font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">
-        Create learning content
+        Create & Manage learning content
       </h1>
       <p className="mt-3 max-w-2xl text-base leading-relaxed text-ink-muted">
         Contribute courses and projects. Drafts stay private until you publish them to the catalog.
       </p>
 
-      <div className="mt-10 grid gap-4 sm:grid-cols-2">
+      <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Link
           href="/studio/courses"
           className="group rounded-2xl border border-border bg-surface p-6 transition hover:border-brand/40"
@@ -43,6 +44,7 @@ export default function StudioPage() {
             Guided projects with requirements, checklists, and example previews.
           </p>
         </Link>
+        <StudioReviewersCard />
       </div>
     </div>
   );

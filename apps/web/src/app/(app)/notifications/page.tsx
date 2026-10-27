@@ -1,10 +1,7 @@
-import { ComingSoon } from "@/components/app/coming-soon";
+import { NotificationsInbox } from "@/components/notifications/notifications-inbox";
+import { loadNotifications } from "@/lib/notifications-server";
 
-export default function NotificationsPage() {
-  return (
-    <ComingSoon
-      title="Notifications"
-      description="Course updates, replies, mentor requests, and achievement alerts will show up here."
-    />
-  );
+export default async function NotificationsPage() {
+  const initial = await loadNotifications();
+  return <NotificationsInbox initial={initial} />;
 }

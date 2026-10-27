@@ -17,6 +17,7 @@ import { coursesRouter } from "./features/courses/courses.routes.js";
 import { healthRouter } from "./features/health/health.routes.js";
 import { leaderboardRouter } from "./features/leaderboard/leaderboard.routes.js";
 import { mentorsRouter } from "./features/mentors/mentors.routes.js";
+import { notificationsRouter } from "./features/notifications/notifications.routes.js";
 import { onboardingRouter } from "./features/onboarding/onboarding.routes.js";
 import { profilesRouter } from "./features/profiles/profiles.routes.js";
 import { projectsRouter } from "./features/projects/projects.routes.js";
@@ -62,6 +63,7 @@ export function createApp(): Express {
   app.use("/community", communityRouter);
   app.use("/leaderboard", leaderboardRouter);
   app.use("/mentors", mentorsRouter);
+  app.use("/notifications", notificationsRouter);
   app.use("/profiles", profilesRouter);
   app.use("/verify", verifyRouter);
   app.use("/studio/projects", studioProjectsRouter);

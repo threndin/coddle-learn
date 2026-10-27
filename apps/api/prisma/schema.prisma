@@ -73,6 +73,8 @@ model User {
   mentorshipApplications     MentorshipApplication[]  @relation("MenteeApplications")
   challengeSubmissions       ChallengeSubmission[]
   challengeSolves            ChallengeSolve[]
+  notifications              Notification[]
+  actedNotifications         Notification[]          @relation("NotificationActor")
 
   @@index([role])
   @@map("users")
@@ -1052,4 +1054,30 @@ model ChallengeSolve {
   @@index([challengeId, rank])
   @@index([userId])
   @@map("challenge_solves")
+}
+
+/// In-app inbox. `type` matches NOTIFICATION_TYPES in `@coddle/shared`.
+/// `dedupeKey` is optional; when set, the same event updates instead of duplicating.
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String    @map("user_id")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  body      String
+  href      String?
+  actorId   String?   @map("actor_id")
+  actor     User?     @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
+  refType   String?   @map("ref_type")
+  refId     String?   @map("ref_id")
+  dedupeKey String?   @map("dedupe_key")
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@unique([userId, dedupeKey])
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
+  @@index([userId, type])
+  @@index([actorId])
+  @@map("notifications")
 }

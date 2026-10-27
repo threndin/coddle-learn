@@ -1,5 +1,6 @@
 import { COURSE_LIMITS, isReviewSort, type ReviewSort } from "@coddle/shared";
 import { AppError } from "../../shared/errors.js";
+import { notifyCourseReview } from "../notifications/notifications.events.js";
 import { loadVisibleCourse } from "./courses.service.js";
 import {
   completedUserIds,
@@ -126,6 +127,15 @@ export async function saveCourseReview(userId: string, slug: string, input: unkn
   }
 
   const saved = await upsertReview({ courseId: course.id, userId, rating, body: text });
+  if (course.createdByUserId !== userId) {
+    await notifyCourseReview({
+      recipientId: course.createdByUserId,
+      actor: saved.user,
+      courseSlug: course.slug,
+      courseTitle: course.title,
+      rating,
+    });
+  }
   const completed = await completedUserIds(course.id, [userId]);
   return {
     review: reviewPayload(saved, userId, completed),

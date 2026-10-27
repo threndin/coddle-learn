@@ -11,6 +11,7 @@ import {
   findById,
   syncRoleFromAllowlist,
   upsertFromCoddle as upsertFromCoddleRow,
+  type CoddleUpsertResult,
   type UserWithSkills,
 } from "./users.repository.js";
 
@@ -21,7 +22,7 @@ type CoddleIdentity = {
   avatarUrl: string | null;
 };
 
-export async function upsertFromCoddle(profile: CoddleIdentity): Promise<User> {
+export async function upsertFromCoddle(profile: CoddleIdentity): Promise<CoddleUpsertResult> {
   return upsertFromCoddleRow(profile);
 }
 

@@ -14,6 +14,7 @@ import {
 import type { AssessmentAttempt } from "@prisma/client";
 import { AppError } from "../../shared/errors.js";
 import { scheduleAchievementEvaluation } from "../achievements/achievements.service.js";
+import { notifyAssessmentPassed } from "../notifications/notifications.events.js";
 import { scheduleSkillGraphEvaluation } from "../skills/skills.service.js";
 import {
   canViewCourse,
@@ -397,6 +398,15 @@ export async function submitAssessmentAttempt(
   }
 
   const courseCompleteBonus = await syncCourseCompletion(userId, course, enrollment);
+  if (firstPass) {
+    await notifyAssessmentPassed({
+      userId,
+      assessmentId: assessment.id,
+      assessmentTitle: assessment.title,
+      courseTitle: assessment.course.title,
+      credentialId: credential?.id ?? null,
+    });
+  }
   scheduleAchievementEvaluation(userId);
   if (passed) scheduleSkillGraphEvaluation(userId);
 

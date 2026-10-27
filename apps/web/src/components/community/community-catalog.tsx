@@ -328,14 +328,13 @@ export function CommunityFeed({
               <Icon name="question" className="h-4 w-4" />
               Ask a question
             </button>
-            <button
-              type="button"
-              onClick={() => openCompose("project_share")}
+            <Link
+              href="/mentors"
               className="inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/20"
             >
-              <Icon name="layers" className="h-4 w-4" />
-              Share a project
-            </button>
+              <Icon name="users" className="h-4 w-4" />
+              Mentorship
+            </Link>
           </div>
         </div>
       </section>

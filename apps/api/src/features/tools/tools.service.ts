@@ -18,6 +18,7 @@ import {
 import type { Prisma } from "@prisma/client";
 import { config, isR2Configured } from "../../config.js";
 import { AppError } from "../../shared/errors.js";
+import { notifyToolSaved } from "../notifications/notifications.events.js";
 import { isReviewerUser } from "../users/users.service.js";
 import { imageExtension, uploadToR2 } from "../../shared/r2.js";
 import {
@@ -334,8 +335,20 @@ export async function setToolBookmark(userId: string, toolId: string, saved: boo
     throw new AppError(404, "tool_missing", "That tool could not be found.");
   }
 
-  if (saved) await upsertBookmark(userId, tool.id);
-  else await deleteBookmark(userId, tool.id);
+  if (saved) {
+    const already = await listBookmarkedToolIds(userId, [tool.id]);
+    await upsertBookmark(userId, tool.id);
+    if (!already.has(tool.id)) {
+      await notifyToolSaved({
+        userId,
+        toolId: tool.id,
+        toolSlug: tool.slug,
+        title: tool.title,
+      });
+    }
+  } else {
+    await deleteBookmark(userId, tool.id);
+  }
 
   return {
     bookmarked: saved,
