@@ -30,6 +30,12 @@ model User {
   showSkillsPublic        Boolean                  @default(true) @map("show_skills_public")
   showCredentialsPublic   Boolean                  @default(true) @map("show_credentials_public")
   showAchievementsPublic  Boolean                  @default(true) @map("show_achievements_public")
+  /// In-app notification group mutes (settings).
+  notifyAccount           Boolean                  @default(true) @map("notify_account")
+  notifyCommunity         Boolean                  @default(true) @map("notify_community")
+  notifyLearning          Boolean                  @default(true) @map("notify_learning")
+  notifyMentorship        Boolean                  @default(true) @map("notify_mentorship")
+  notifyModeration        Boolean                  @default(true) @map("notify_moderation")
   createdAt             DateTime                 @default(now()) @map("created_at")
   updatedAt             DateTime                 @updatedAt @map("updated_at")
   lastLoginAt           DateTime?                @map("last_login_at")

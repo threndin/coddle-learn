@@ -72,6 +72,74 @@ export const NOTIFICATION_GROUP_LABELS: Record<NotificationGroup, string> = {
   moderation: "Review",
 };
 
+export type NotificationPrefs = Record<NotificationGroup, boolean>;
+
+export const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = {
+  account: true,
+  community: true,
+  learning: true,
+  mentorship: true,
+  moderation: true,
+};
+
+export const NOTIFICATION_PREF_OPTIONS: {
+  id: NotificationGroup;
+  label: string;
+  description: string;
+}[] = [
+  {
+    id: "account",
+    label: NOTIFICATION_GROUP_LABELS.account,
+    description: "Sign-in, profile updates, and role changes.",
+  },
+  {
+    id: "community",
+    label: NOTIFICATION_GROUP_LABELS.community,
+    description: "Follows, comments, replies, and reactions.",
+  },
+  {
+    id: "learning",
+    label: NOTIFICATION_GROUP_LABELS.learning,
+    description: "Courses, roadmaps, projects, achievements, and challenges.",
+  },
+  {
+    id: "mentorship",
+    label: NOTIFICATION_GROUP_LABELS.mentorship,
+    description: "Mentor applications and program updates.",
+  },
+  {
+    id: "moderation",
+    label: NOTIFICATION_GROUP_LABELS.moderation,
+    description: "Review decisions on content you submitted.",
+  },
+];
+
+export function parseNotificationPrefs(
+  raw: unknown,
+): { ok: true; value: NotificationPrefs } | { ok: false; message: string } {
+  if (!isPrefRecord(raw)) {
+    return { ok: false, message: "Notification preferences could not be read." };
+  }
+
+  const value = { ...DEFAULT_NOTIFICATION_PREFS };
+  for (const group of NOTIFICATION_GROUPS) {
+    const flag = raw[group];
+    if (flag === undefined) continue;
+    if (typeof flag !== "boolean") {
+      return {
+        ok: false,
+        message: `Preference for ${NOTIFICATION_GROUP_LABELS[group].toLowerCase()} must be on or off.`,
+      };
+    }
+    value[group] = flag;
+  }
+  return { ok: true, value };
+}
+
+function isPrefRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
 export const NOTIFICATION_FILTERS = [
   "all",
   "unread",

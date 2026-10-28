@@ -13,6 +13,7 @@ import {
   listNotifications,
   markAllNotificationsRead,
   markNotificationRead,
+  userAllowsNotificationGroup,
   type CreateNotificationInput,
   type NotificationActor,
   type NotificationRow,
@@ -64,6 +65,20 @@ function payload(row: NotificationRow) {
  */
 export async function notify(input: NotifyInput): Promise<void> {
   if (!input.userId || input.userId === input.actorId) return;
+
+  const group = notificationGroup(input.type);
+  if (group) {
+    try {
+      const allowed = await userAllowsNotificationGroup(input.userId, group);
+      if (!allowed) return;
+    } catch (error) {
+      console.error("[notifications] preference lookup failed", {
+        type: input.type,
+        userId: input.userId,
+        error,
+      });
+    }
+  }
 
   const data: CreateNotificationInput = {
     userId: input.userId,

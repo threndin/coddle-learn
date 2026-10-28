@@ -1,4 +1,5 @@
 import type { UserRole } from "./roles.js";
+import type { NotificationPrefs } from "./notifications.js";
 
 export const BIO_MAX = 200;
 export const SKILL_MIN = 1;
@@ -151,6 +152,7 @@ export type LearnUser = {
   points: number;
   skills: LearnSkill[];
   visibility: ProfileVisibility;
+  notificationPrefs: NotificationPrefs;
 };
 
 export type NormalizedProfileUpdate = {

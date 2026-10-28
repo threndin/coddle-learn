@@ -1,24 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
-const STORAGE_KEY = "theme";
-
-function applyTheme(dark: boolean) {
-  document.documentElement.classList.toggle("dark", dark);
-  localStorage.setItem(STORAGE_KEY, dark ? "dark" : "light");
-}
+import { applyThemePreference, resolvedDark, subscribeTheme } from "@/lib/theme";
 
 export function ThemeToggle() {
   const [dark, setDark] = useState(false);
 
   useEffect(() => {
-    setDark(document.documentElement.classList.contains("dark"));
+    function sync() {
+      setDark(document.documentElement.classList.contains("dark"));
+    }
+    sync();
+    return subscribeTheme(sync);
   }, []);
 
   function onToggle() {
-    const next = !document.documentElement.classList.contains("dark");
-    applyTheme(next);
+    const next = !resolvedDark();
+    applyThemePreference(next ? "dark" : "light");
     setDark(next);
   }
 
