@@ -1,3 +1,4 @@
+import type { NotificationGroup } from "@coddle/shared";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "../../shared/db.js";
 
@@ -105,6 +106,37 @@ export async function listNotifications(input: {
   ]);
 
   return { rows, total };
+}
+
+export async function userAllowsNotificationGroup(
+  userId: string,
+  group: NotificationGroup,
+): Promise<boolean> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      notifyAccount: true,
+      notifyCommunity: true,
+      notifyLearning: true,
+      notifyMentorship: true,
+      notifyModeration: true,
+    },
+  });
+  if (!user) return true;
+  switch (group) {
+    case "account":
+      return user.notifyAccount;
+    case "community":
+      return user.notifyCommunity;
+    case "learning":
+      return user.notifyLearning;
+    case "mentorship":
+      return user.notifyMentorship;
+    case "moderation":
+      return user.notifyModeration;
+    default:
+      return true;
+  }
 }
 
 export async function countUnread(userId: string) {

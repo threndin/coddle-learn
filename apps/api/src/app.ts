@@ -27,6 +27,7 @@ import { toolsRouter } from "./features/tools/tools.routes.js";
 import { roadmapsRouter } from "./features/roadmaps/roadmaps.routes.js";
 import { skillsRouter } from "./features/skills/skills.routes.js";
 import { reviewersRouter } from "./features/reviewers/reviewers.routes.js";
+import { settingsRouter } from "./features/settings/settings.routes.js";
 import { studioRouter } from "./features/studio/studio.routes.js";
 import { errorHandler } from "./shared/http/error-handler.js";
 
@@ -65,6 +66,7 @@ export function createApp(): Express {
   app.use("/mentors", mentorsRouter);
   app.use("/notifications", notificationsRouter);
   app.use("/profiles", profilesRouter);
+  app.use("/settings", settingsRouter);
   app.use("/verify", verifyRouter);
   app.use("/studio/projects", studioProjectsRouter);
   app.use("/studio", studioRouter);

@@ -1,6 +1,7 @@
 import type {
   ExperienceLevel,
   LearnUser,
+  NotificationPrefs,
   PracticeDay,
   ProfileVisibility,
 } from "@coddle/shared";
@@ -24,6 +25,12 @@ export type ProfileUpdateSubmission = {
   visibility: ProfileVisibility;
 };
 
+export type SettingsUpdateSubmission = {
+  dailyGoalMinutes?: number;
+  practiceDays?: PracticeDay[];
+  notificationPrefs?: NotificationPrefs;
+};
+
 export async function fetchMe(): Promise<PublicUser | null> {
   const res = await apiFetch("/api/auth/me");
   if (res.status === 401) return null;
@@ -34,6 +41,13 @@ export async function fetchMe(): Promise<PublicUser | null> {
 
 export async function logout(): Promise<void> {
   await apiFetch("/api/auth/logout", {
+    method: "POST",
+    headers: csrfHeaders(),
+  });
+}
+
+export async function logoutAll(): Promise<void> {
+  await apiFetch("/api/auth/logout-all", {
     method: "POST",
     headers: csrfHeaders(),
   });
@@ -91,4 +105,29 @@ export async function updateProfile(input: ProfileUpdateSubmission): Promise<Pub
 
   const body = (await res.json()) as { data: { user: PublicUser } };
   return body.data.user;
+}
+
+export async function updateSettings(input: SettingsUpdateSubmission): Promise<PublicUser> {
+  const res = await apiFetch("/api/settings", {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      ...csrfHeaders(),
+    },
+    body: JSON.stringify(input),
+  });
+
+  if (res.status === 401) {
+    throw new Error("UNAUTHENTICATED");
+  }
+
+  if (!res.ok) {
+    const payload = (await res.json().catch(() => null)) as {
+      error?: { message?: string };
+    } | null;
+    throw new Error(payload?.error?.message ?? "Could not save your settings");
+  }
+
+  const payload = (await res.json()) as { data: { user: PublicUser } };
+  return payload.data.user;
 }

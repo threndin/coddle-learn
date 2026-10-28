@@ -5,6 +5,7 @@ import type { AuthedRequest } from "./auth.middleware.js";
 import {
   completeCoddleSignIn,
   getCurrentUser,
+  logoutAllSessions,
   logoutSession,
   rotateRefreshToken,
   startCoddleSignIn,
@@ -64,6 +65,16 @@ export async function logout(req: Request, res: Response) {
     jti: (req as AuthedRequest).session?.jti,
     refreshToken: readRefreshCookie(req),
   });
+  clearAuthCookies(res);
+  res.json({ data: { ok: true } });
+}
+
+export async function logoutAll(req: Request, res: Response) {
+  const session = (req as AuthedRequest).session;
+  if (!session) {
+    throw new AppError(401, "unauthenticated", "Sign in with your Coddle account to continue");
+  }
+  await logoutAllSessions(session.sub);
   clearAuthCookies(res);
   res.json({ data: { ok: true } });
 }

@@ -18,6 +18,7 @@ import {
   createOAuthState,
   createSession,
   refreshSession,
+  revokeAllUserSessions,
   revokeSession,
   revokeSessionByRefreshToken,
   type SessionTokens,
@@ -90,4 +91,8 @@ export async function logoutSession(options: {
   if (options.refreshToken) {
     await revokeSessionByRefreshToken(options.refreshToken);
   }
+}
+
+export async function logoutAllSessions(userId: string) {
+  await revokeAllUserSessions(userId);
 }

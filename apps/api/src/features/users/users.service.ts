@@ -5,6 +5,7 @@ import {
   normalizePracticeDays,
   parseUserRole,
   type LearnUser,
+  type NotificationPrefs,
   type ProfileVisibility,
 } from "@coddle/shared";
 import {
@@ -52,6 +53,16 @@ export function visibilityFromUser(user: User): ProfileVisibility {
   };
 }
 
+export function notificationPrefsFromUser(user: User): NotificationPrefs {
+  return {
+    account: user.notifyAccount,
+    community: user.notifyCommunity,
+    learning: user.notifyLearning,
+    mentorship: user.notifyMentorship,
+    moderation: user.notifyModeration,
+  };
+}
+
 export function toPublicUser(user: User & { skills?: UserWithSkills["skills"] }): LearnUser {
   return {
     id: user.id,
@@ -75,5 +86,6 @@ export function toPublicUser(user: User & { skills?: UserWithSkills["skills"] })
       name: row.skill.name,
     })),
     visibility: visibilityFromUser(user),
+    notificationPrefs: notificationPrefsFromUser(user),
   };
 }

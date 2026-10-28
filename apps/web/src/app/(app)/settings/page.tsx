@@ -1,10 +1,18 @@
-import { ComingSoon } from "@/components/app/coming-soon";
+import { DEFAULT_SETTINGS_TAB, isSettingsTab, type SettingsTab } from "@coddle/shared";
+import { SettingsPage } from "@/components/settings/settings-page";
 
-export default function SettingsPage() {
-  return (
-    <ComingSoon
-      title="Settings"
-      description="Update your daily goal, practice days, preferences, and account options from one place."
-    />
-  );
+type Query = Record<string, string | string[] | undefined>;
+
+function first(value: string | string[] | undefined): string {
+  return (Array.isArray(value) ? value[0] : value)?.trim() ?? "";
+}
+
+export default async function SettingsRoute({
+  searchParams,
+}: {
+  searchParams: Promise<Query>;
+}) {
+  const tab = first((await searchParams).tab);
+  const initialTab: SettingsTab = isSettingsTab(tab) ? tab : DEFAULT_SETTINGS_TAB;
+  return <SettingsPage initialTab={initialTab} />;
 }
