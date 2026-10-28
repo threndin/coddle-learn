@@ -388,41 +388,6 @@ export function OverviewSections({ user }: { user: PublicUser }) {
             cta="See projects"
           />
         )}
-        {credentials.length > 0 ? (
-          <article className="rounded-2xl border border-border bg-surface p-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-ink-muted">
-              Credentials
-            </p>
-            <ul className="mt-3 space-y-3">
-              {credentials.map((item) => (
-                <li key={item.id}>
-                  <Link
-                    href={`/credentials/${item.id}`}
-                    className="block rounded-xl transition hover:bg-surface-subtle"
-                  >
-                    <p className="text-sm font-semibold text-ink">{item.title}</p>
-                    <p className="mt-0.5 text-xs text-ink-muted">
-                      {item.kind === "assessment" ? "Assessment" : "Project"}
-                    </p>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-            <Link
-              href="/credentials"
-              className="mt-4 inline-flex rounded-xl bg-brand px-3 py-2 text-xs font-semibold text-white"
-            >
-              All credentials
-            </Link>
-          </article>
-        ) : (
-          <EmptyPanel
-            title="Credentials"
-            body="Verifiable proof from assessments and builds."
-            href="/credentials"
-            cta="View credentials"
-          />
-        )}
       </div>
 
       {achievements.length > 0 ? (
