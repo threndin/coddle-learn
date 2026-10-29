@@ -3,6 +3,7 @@ import { Figtree, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { APP_NAME, APP_TAGLINE } from "@coddle/shared";
 import Script from "next/script";
+import { SupportChat } from "@/components/support-chat";
 import "./globals.css";
 
 const themeBoot = `(function(){try{var t=localStorage.getItem("theme");var dark=t==="dark"||(t!=="light"&&matchMedia("(prefers-color-scheme: dark)").matches);if(dark)document.documentElement.classList.add("dark")}catch(e){}})();`;
@@ -63,6 +64,7 @@ export default function RootLayout({
           {themeBoot}
         </Script>
         {children}
+        <SupportChat />
         <Analytics />
       </body>
     </html>

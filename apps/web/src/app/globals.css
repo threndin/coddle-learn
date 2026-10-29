@@ -252,3 +252,22 @@ button {
 .cm-editor .cm-codeblock-line {
   background: var(--code-bg);
 }
+
+/* ChatATP widget leftovers that don't use --chatatp-primary */
+#agent-chat-widget-container .chatatp-onboarding-field input:focus {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgb(0 76 200 / 0.15);
+}
+
+#agent-chat-widget-container .chatatp-powered-by a:hover {
+  color: var(--brand);
+}
+
+#agent-chat-widget-container .chatatp-session-unread {
+  background: var(--brand);
+}
+
+#agent-chat-widget-container .chatatp-icon-btn--active {
+  color: var(--brand);
+  background: rgb(0 76 200 / 0.12);
+}
