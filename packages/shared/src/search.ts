@@ -187,6 +187,6 @@ export const SEARCH_SUGGESTIONS = [
   "Become a frontend developer",
   "TypeScript course",
   "Find a mentor for system design",
-  "PostgreSQL tools",
+  "Backend tools",
   "Beginner projects",
 ] as const;
