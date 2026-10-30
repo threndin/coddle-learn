@@ -58,6 +58,14 @@ export const config = {
   seedMentorEmail: process.env.SEED_MENTOR_EMAIL ?? "",
   reviewerEmails: emailSet(process.env.LEARN_REVIEWER_EMAILS),
   adminEmails: emailSet(process.env.LEARN_ADMIN_EMAILS),
+  /** Set `search` to skip Gemini and return ranked catalog hits only. */
+  assistantProvider: (process.env.ASSISTANT_PROVIDER === "search" ? "search" : "gemini") as
+    | "gemini"
+    | "search",
+  gemini: {
+    apiKey: process.env.GEMINI_API_KEY ?? process.env.GOOGLE_API_KEY ?? "",
+    model: process.env.GEMINI_MODEL ?? "gemini-2.5-flash",
+  },
   r2: {
     accountId: process.env.R2_ACCOUNT_ID ?? "",
     accessKeyId: process.env.R2_ACCESS_KEY_ID ?? "",

@@ -70,3 +70,14 @@ export function resourceHost(url: string): string {
     return url;
   }
 }
+
+/** Site icon for a resource URL. Used in search/assistant cards when the row has no image. */
+export function resourceFaviconUrl(url: string): string | null {
+  try {
+    const host = new URL(url).hostname;
+    if (!host.includes(".")) return null;
+    return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(host)}&sz=128`;
+  } catch {
+    return null;
+  }
+}

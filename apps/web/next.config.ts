@@ -13,6 +13,20 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: "/profile",
+        destination: "/settings?tab=profile",
+        permanent: true,
+      },
+      {
+        source: "/profile/:path*",
+        destination: "/settings?tab=profile",
+        permanent: true,
+      },
+    ];
+  },
   async rewrites() {
     return [
       {

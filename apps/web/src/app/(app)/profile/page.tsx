@@ -1,5 +1,6 @@
-import { EditProfileForm } from "@/components/profile/edit-profile-form";
+import { redirect } from "next/navigation";
+import { SETTINGS_PROFILE_HREF } from "@coddle/shared";
 
 export default function ProfileEditorPage() {
-  return <EditProfileForm />;
+  redirect(SETTINGS_PROFILE_HREF);
 }

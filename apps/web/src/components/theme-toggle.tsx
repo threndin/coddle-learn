@@ -3,7 +3,13 @@
 import { useEffect, useState } from "react";
 import { applyThemePreference, resolvedDark, subscribeTheme } from "@/lib/theme";
 
-export function ThemeToggle() {
+export function ThemeToggle({
+  variant = "icon",
+  className = "",
+}: {
+  variant?: "icon" | "menu";
+  className?: string;
+}) {
   const [dark, setDark] = useState(false);
 
   useEffect(() => {
@@ -20,13 +26,28 @@ export function ThemeToggle() {
     setDark(next);
   }
 
+  if (variant === "menu") {
+    return (
+      <button
+        type="button"
+        role="menuitem"
+        onClick={onToggle}
+        aria-pressed={dark}
+        className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-ink transition hover:bg-surface-subtle ${className}`}
+      >
+        <span className="text-ink-muted">{dark ? <SunIcon /> : <MoonIcon />}</span>
+        <span>{dark ? "Light mode" : "Dark mode"}</span>
+      </button>
+    );
+  }
+
   return (
     <button
       type="button"
       onClick={onToggle}
       aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
       aria-pressed={dark}
-      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border text-ink transition hover:bg-surface-subtle"
+      className={`inline-flex h-9 w-9 items-center justify-center rounded-full border border-border text-ink transition hover:bg-surface-subtle ${className}`}
     >
       {dark ? <SunIcon /> : <MoonIcon />}
     </button>

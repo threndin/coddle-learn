@@ -19,7 +19,7 @@ import { updateProfile } from "@/lib/auth";
 
 type SkillChoice = { slug: string; name: string };
 
-export function EditProfileForm() {
+export function EditProfileForm({ embedded = false }: { embedded?: boolean }) {
   const user = useAppUser();
   const { patchUser } = useAppUserActions();
   const { pushToast } = useToast();
@@ -75,19 +75,32 @@ export function EditProfileForm() {
   const publicHref = user.username ? profilePath(user.username) : null;
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-5 py-8 sm:px-8 sm:py-10">
+    <div className={embedded ? "" : "mx-auto w-full max-w-7xl px-5 py-8 sm:px-8 sm:py-10"}>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-brand">
-            Edit profile
-          </p>
-          <h1 className="mt-3 font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">
-            Your learning profile
-          </h1>
-          <p className="mt-3 max-w-xl text-base leading-relaxed text-ink-muted">
-            Personalize your bio, level, and skills so recommendations and your public
-            profile match your goals.
-          </p>
+          {embedded ? (
+            <>
+              <h2 className="font-display text-2xl font-bold tracking-tight text-ink sm:text-3xl">
+                Learning profile
+              </h2>
+              <p className="mt-3 max-w-xl text-base leading-relaxed text-ink-muted">
+                Bio, level, and skills so recommendations and your public profile match your goals.
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-brand">
+                Edit profile
+              </p>
+              <h1 className="mt-3 font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+                Your learning profile
+              </h1>
+              <p className="mt-3 max-w-xl text-base leading-relaxed text-ink-muted">
+                Personalize your bio, level, and skills so recommendations and your public
+                profile match your goals.
+              </p>
+            </>
+          )}
         </div>
         {publicHref ? (
           <Link
@@ -100,7 +113,7 @@ export function EditProfileForm() {
         ) : null}
       </div>
 
-      <div className="mt-10 space-y-12">
+      <div className={embedded ? "mt-8 space-y-8" : "mt-10 space-y-12"}>
         <section className="rounded-3xl border border-border bg-surface p-5 sm:p-8">
           <ProfileStep
             variant="editor"

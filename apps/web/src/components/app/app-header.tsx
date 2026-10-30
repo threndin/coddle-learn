@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -7,6 +8,7 @@ import { AccountMenu } from "@/components/app/account-menu";
 import { navTitleForPath } from "@/components/app/nav-config";
 import { useAppUser } from "@/components/app/app-user-context";
 import { useUnreadNotifications } from "@/components/notifications/notifications-context";
+import { HeaderSearch } from "@/components/search/header-search";
 import { Icon } from "@/components/ui/icon";
 
 export function AppHeader({
@@ -36,6 +38,10 @@ export function AppHeader({
         <h1 className="truncate font-display text-lg font-bold tracking-tight text-ink">{title}</h1>
       </div>
 
+      <Suspense fallback={<div className="hidden min-w-0 flex-1 md:block" />}>
+        <HeaderSearch />
+      </Suspense>
+
       <div className="flex items-center gap-2 sm:gap-3">
         <div
           className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface-subtle px-2.5 py-1.5"
@@ -47,7 +53,7 @@ export function AppHeader({
           </span>
           <span className="hidden text-xs text-ink-muted sm:inline">pts</span>
         </div>
-        <ThemeToggle />
+        <ThemeToggle className="hidden md:inline-flex" />
         <Link
           href="/notifications"
           aria-label={
@@ -55,7 +61,7 @@ export function AppHeader({
               ? `Notifications, ${unreadCount} unread`
               : "Notifications"
           }
-          className="relative inline-flex h-9 w-9 items-center justify-center rounded-xl border border-border text-ink transition hover:bg-surface-subtle"
+          className="relative hidden h-9 w-9 items-center justify-center rounded-xl border border-border text-ink transition hover:bg-surface-subtle md:inline-flex"
         >
           <Icon name="bell" className="h-[18px] w-[18px]" />
           {unreadCount > 0 ? (

@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   COMMUNITY_KIND_LABELS,
   EXPERIENCE_LEVELS,
+  SETTINGS_PROFILE_HREF,
   type CommunityKind,
   type ExperienceLevel,
 } from "@coddle/shared";
@@ -306,7 +307,7 @@ export function PublicProfileView({
               </button>
               {profile.isOwn ? (
                 <Link
-                  href="/profile"
+                  href={SETTINGS_PROFILE_HREF}
                   className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand/25 transition hover:brightness-110"
                 >
                   <Icon name="pencil" className="h-4 w-4" />
