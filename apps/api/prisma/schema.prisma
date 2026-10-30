@@ -81,6 +81,8 @@ model User {
   challengeSolves            ChallengeSolve[]
   notifications              Notification[]
   actedNotifications         Notification[]          @relation("NotificationActor")
+  assistantWeeklyUsage       AssistantWeeklyUsage[]
+  assistantConversations     AssistantConversation[]
 
   @@index([role])
   @@map("users")
@@ -1086,4 +1088,44 @@ model Notification {
   @@index([userId, type])
   @@index([actorId])
   @@map("notifications")
+}
+
+/// Assistant chat sends used in a UTC week. Catalog `/search` is not counted.
+model AssistantWeeklyUsage {
+  userId    String   @map("user_id")
+  weekStart DateTime @map("week_start")
+  used      Int      @default(0)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, weekStart])
+  @@map("assistant_weekly_usage")
+}
+
+/// One assistant thread. Always scoped to `userId` (session.sub).
+model AssistantConversation {
+  id        String              @id @default(cuid())
+  userId    String              @map("user_id")
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  createdAt DateTime            @default(now()) @map("created_at")
+  updatedAt DateTime            @updatedAt @map("updated_at")
+  messages  AssistantMessage[]
+
+  @@index([userId, updatedAt])
+  @@map("assistant_conversations")
+}
+
+model AssistantMessage {
+  id             String                 @id @default(cuid())
+  conversationId String                 @map("conversation_id")
+  conversation   AssistantConversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String
+  content        String                 @db.Text
+  hits           Json                   @default("[]")
+  followUps      String[]               @default([]) @map("follow_ups")
+  provider       String?
+  createdAt      DateTime               @default(now()) @map("created_at")
+
+  @@index([conversationId, createdAt])
+  @@map("assistant_messages")
 }

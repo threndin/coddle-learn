@@ -12,6 +12,8 @@ export type AppNavItem = {
 
 export type NavIconId =
   | "dashboard"
+  | "search"
+  | "assistant"
   | "roadmaps"
   | "courses"
   | "resources"
@@ -36,6 +38,18 @@ export const APP_NAV: AppNavItem[] = [
     label: "Dashboard",
     description: "Your learning home",
     icon: "dashboard",
+  },
+  {
+    href: "/search",
+    label: "Search",
+    description: "Find courses, people, and tools",
+    icon: "search",
+  },
+  {
+    href: "/assistant",
+    label: "AI Assistant",
+    description: "Ask what to learn next",
+    icon: "assistant",
   },
   {
     href: "/roadmaps",
@@ -110,15 +124,9 @@ export const APP_NAV: AppNavItem[] = [
     icon: "studio",
   },
   {
-    href: "/profile",
-    label: "Profile",
-    description: "Edit bio, skills, and visibility",
-    icon: "profile",
-  },
-  {
     href: "/settings",
     label: "Settings",
-    description: "Goals, preferences, and account",
+    description: "Profile, goals, and account",
     icon: "settings",
   },
 ];
@@ -128,7 +136,7 @@ export function navItemsForRole(role: UserRole | undefined): AppNavItem[] {
 }
 
 export function navTitleForPath(pathname: string): string {
-  if (pathname === "/profile" || pathname.startsWith("/u/")) return "Profile";
+  if (pathname.startsWith("/u/")) return "Profile";
   if (pathname === "/leaderboard") return "Leaderboard";
   if (pathname === "/skills" || pathname.startsWith("/skills/")) return "Skills";
   if (pathname === "/mentors" || pathname.startsWith("/mentors/")) return "Mentors";
@@ -167,6 +175,19 @@ export function NavIcon({
           <rect x="13.5" y="3.5" width="7" height="4.5" rx="1.5" />
           <rect x="13.5" y="11" width="7" height="9.5" rx="1.5" />
           <rect x="3.5" y="13.5" width="7" height="7" rx="1.5" />
+        </svg>
+      );
+    case "search":
+      return (
+        <svg {...common}>
+          <circle cx="11" cy="11" r="6.2" />
+          <path d="m20 20-4-4" />
+        </svg>
+      );
+    case "assistant":
+      return (
+        <svg {...common}>
+          <path d="M12 3.5c.6 4.2 2.3 5.9 6.5 6.5-4.2.6-5.9 2.3-6.5 6.5-.6-4.2-2.3-5.9-6.5-6.5 4.2-.6 5.9-2.3 6.5-6.5Z" />
         </svg>
       );
     case "roadmaps":

@@ -1,14 +1,16 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { DEFAULT_SETTINGS_TAB, SETTINGS_TABS, type SettingsTab } from "@coddle/shared";
 import { AccountPanel } from "@/components/settings/account-panel";
 import { LearningPanel } from "@/components/settings/learning-panel";
 import { NotificationsPanel } from "@/components/settings/notifications-panel";
+import { EditProfileForm } from "@/components/profile/edit-profile-form";
 
 const TAB_LABELS: Record<SettingsTab, string> = {
   account: "Account",
+  profile: "Profile",
   notifications: "Notifications",
   learning: "Learning",
 };
@@ -22,6 +24,10 @@ export function SettingsPage({ initialTab }: { initialTab: SettingsTab }) {
   const [, startTransition] = useTransition();
   const [tab, setTab] = useState<SettingsTab>(initialTab);
 
+  useEffect(() => {
+    setTab(initialTab);
+  }, [initialTab]);
+
   function onTab(next: SettingsTab) {
     setTab(next);
     startTransition(() => {
@@ -33,15 +39,16 @@ export function SettingsPage({ initialTab }: { initialTab: SettingsTab }) {
     <div className="mx-auto w-full max-w-7xl px-5 py-8 sm:px-8 sm:py-6">
       <div>
         <h1 className="font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">
-        Settings
+          Settings
         </h1>
         <p className="mt-3 max-w-xl text-base leading-relaxed text-ink-muted">
-          Update your daily goal, notification preferences, and how Coddle Learn looks on this device.
+          Update your profile, daily goal, notification preferences, and how Coddle Learn looks on
+          this device.
         </p>
       </div>
 
       <div
-        className="mt-4 inline-flex rounded-xl border border-border bg-surface p-0.5"
+        className="mt-4 inline-flex flex-wrap rounded-xl border border-border bg-surface p-0.5"
         role="tablist"
         aria-label="Settings sections"
       >
@@ -64,6 +71,7 @@ export function SettingsPage({ initialTab }: { initialTab: SettingsTab }) {
 
       <div className="mt-8" role="tabpanel">
         {tab === "account" ? <AccountPanel /> : null}
+        {tab === "profile" ? <EditProfileForm embedded /> : null}
         {tab === "notifications" ? <NotificationsPanel /> : null}
         {tab === "learning" ? <LearningPanel /> : null}
       </div>

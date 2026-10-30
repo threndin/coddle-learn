@@ -5,9 +5,10 @@ import {
 } from "./onboarding.js";
 import { parseNotificationPrefs, type NotificationPrefs } from "./notifications.js";
 
-export const SETTINGS_TABS = ["account", "notifications", "learning"] as const;
+export const SETTINGS_TABS = ["account", "profile", "notifications", "learning"] as const;
 export type SettingsTab = (typeof SETTINGS_TABS)[number];
 export const DEFAULT_SETTINGS_TAB: SettingsTab = "account";
+export const SETTINGS_PROFILE_HREF = "/settings?tab=profile";
 
 export type NormalizedSettingsUpdate = {
   dailyGoalMinutes?: number;

@@ -5,24 +5,27 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ProfileAvatar } from "@/components/onboarding/profile-avatar";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Icon, type IconName } from "@/components/ui/icon";
 import { useAppUser } from "@/components/app/app-user-context";
+import { useUnreadNotifications } from "@/components/notifications/notifications-context";
+import { SETTINGS_PROFILE_HREF } from "@coddle/shared";
 import { logout } from "@/lib/auth";
 import { profilePath } from "@/lib/profiles";
 
 export function AccountMenu() {
   const user = useAppUser();
   const router = useRouter();
+  const { unreadCount } = useUnreadNotifications();
+  const unreadLabel = unreadCount > 99 ? "99+" : String(unreadCount);
   const ACCOUNT_LINKS: { href: string; label: string; icon: IconName }[] = [
     {
-      href: user.username ? profilePath(user.username) : "/profile",
+      href: user.username ? profilePath(user.username) : SETTINGS_PROFILE_HREF,
       label: "View profile",
       icon: "users",
     },
-    { href: "/profile", label: "Edit profile", icon: "pencil" },
-    { href: "/credentials", label: "Credentials", icon: "checkCircle" },
+    { href: SETTINGS_PROFILE_HREF, label: "Edit profile", icon: "pencil" },
     { href: "/achievements", label: "Achievements", icon: "star" },
-    { href: "/notifications", label: "Notifications", icon: "bell" },
     { href: "/studio", label: "Studio", icon: "layers" },
     { href: "/settings", label: "Settings", icon: "settings" },
   ];
@@ -165,6 +168,32 @@ export function AccountMenu() {
             <div className="border-b border-border px-3 py-2.5">
               <p className="truncate text-sm font-semibold text-ink">{user.name}</p>
               <p className="truncate text-xs text-ink-muted">{user.email}</p>
+            </div>
+            <div className="border-b border-border p-1.5 md:hidden">
+              <Link
+                role="menuitem"
+                href="/search"
+                onClick={() => setOpen(false)}
+                className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-ink transition hover:bg-surface-subtle"
+              >
+                <Icon name="search" className="h-4 w-4 shrink-0 text-ink-muted" />
+                <span>Search</span>
+              </Link>
+              <Link
+                role="menuitem"
+                href="/notifications"
+                onClick={() => setOpen(false)}
+                className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-ink transition hover:bg-surface-subtle"
+              >
+                <Icon name="bell" className="h-4 w-4 shrink-0 text-ink-muted" />
+                <span className="flex-1">Notifications</span>
+                {unreadCount > 0 ? (
+                  <span className="inline-flex min-w-4 items-center justify-center rounded-full bg-brand px-1 py-px font-mono text-[10px] font-bold leading-4 text-white">
+                    {unreadLabel}
+                  </span>
+                ) : null}
+              </Link>
+              <ThemeToggle variant="menu" />
             </div>
             <div className="p-1.5">
               {ACCOUNT_LINKS.map((item) => (

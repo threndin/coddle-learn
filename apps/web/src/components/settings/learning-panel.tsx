@@ -6,6 +6,7 @@ import {
   isValidDailyGoal,
   normalizePracticeDays,
   roadmapBySlug,
+  SETTINGS_PROFILE_HREF,
   type PracticeDay,
 } from "@coddle/shared";
 import { useToast } from "@/components/app/toast";
@@ -100,7 +101,7 @@ export function LearningPanel() {
 
       <p className="mt-6 text-sm leading-relaxed text-ink-muted">
         Bio, skills, experience level, and what visitors can see are on your{" "}
-        <Link href="/profile" className="font-semibold text-brand hover:text-brand-deep">
+        <Link href={SETTINGS_PROFILE_HREF} className="font-semibold text-brand hover:text-brand-deep">
           profile
         </Link>
         .

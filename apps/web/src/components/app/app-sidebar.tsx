@@ -7,6 +7,7 @@ import { ProfileAvatar } from "@/components/onboarding/profile-avatar";
 import { navItemsForRole, NavIcon } from "@/components/app/nav-config";
 import { useAppUser } from "@/components/app/app-user-context";
 import { useUnreadNotifications } from "@/components/notifications/notifications-context";
+import { SETTINGS_PROFILE_HREF } from "@coddle/shared";
 import { profilePath } from "@/lib/profiles";
 
 export function AppSidebar({
@@ -75,14 +76,12 @@ export function AppSidebar({
           <ul className="space-y-0.5">
             {navItemsForRole(user.role).map((item) => {
               const active =
-                item.href === "/profile"
-                  ? pathname === "/profile"
-                  : item.href === "/community"
-                    ? pathname === "/community" ||
-                      pathname.startsWith("/community/") ||
-                      pathname === "/leaderboard"
-                    : pathname === item.href ||
-                      (item.href !== "/dashboard" && pathname.startsWith(`${item.href}/`));
+                item.href === "/community"
+                  ? pathname === "/community" ||
+                    pathname.startsWith("/community/") ||
+                    pathname === "/leaderboard"
+                  : pathname === item.href ||
+                    (item.href !== "/dashboard" && pathname.startsWith(`${item.href}/`));
               return (
                 <li key={item.href}>
                   <Link
@@ -130,7 +129,7 @@ export function AppSidebar({
           ].join(" ")}
         >
           <Link
-            href={user.username ? profilePath(user.username) : "/profile"}
+            href={user.username ? profilePath(user.username) : SETTINGS_PROFILE_HREF}
             onClick={onNavigate}
             className={[
               "flex items-center gap-3 rounded-xl bg-surface-subtle px-3 py-2.5 transition hover:bg-brand-soft/50",

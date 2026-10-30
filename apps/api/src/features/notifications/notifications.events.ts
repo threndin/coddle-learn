@@ -3,6 +3,7 @@ import {
   achievementBySlug,
   isUserRole,
   profilePath,
+  SETTINGS_PROFILE_HREF,
   type AchievementSlug,
   type UserRole,
 } from "@coddle/shared";
@@ -52,7 +53,7 @@ export async function notifyProfileUpdated(userId: string, username: string | nu
     dedupeKey: `profile_updated:${utcDayKey()}`,
     title: "You updated your profile",
     body: "Your public profile now shows the latest bio, skills, and visibility settings.",
-    href: username ? profilePath(username) : "/profile",
+    href: username ? profilePath(username) : SETTINGS_PROFILE_HREF,
     refType: "user",
     refId: userId,
   });
