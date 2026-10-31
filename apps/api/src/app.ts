@@ -19,6 +19,7 @@ import { leaderboardRouter } from "./features/leaderboard/leaderboard.routes.js"
 import { mentorsRouter } from "./features/mentors/mentors.routes.js";
 import { notificationsRouter } from "./features/notifications/notifications.routes.js";
 import { onboardingRouter } from "./features/onboarding/onboarding.routes.js";
+import { pointsRouter } from "./features/points/points.routes.js";
 import { profilesRouter } from "./features/profiles/profiles.routes.js";
 import { projectsRouter } from "./features/projects/projects.routes.js";
 import { studioProjectsRouter } from "./features/projects/studio-projects.routes.js";
@@ -54,6 +55,7 @@ export function createApp(): Express {
   app.use(healthRouter);
   app.use("/auth", authRouter);
   app.use("/onboarding", onboardingRouter);
+  app.use("/points", pointsRouter);
   app.use("/roadmaps", roadmapsRouter);
   app.use("/courses", coursesRouter);
   app.use("/resources", resourcesRouter);

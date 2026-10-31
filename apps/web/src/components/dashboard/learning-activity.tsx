@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   formatMinutes,
@@ -9,23 +9,33 @@ import {
   weeklyPracticeLabel,
 } from "@coddle/shared";
 import type { PublicUser } from "@/lib/auth";
+import { fetchPointActivity } from "@/lib/points";
 import {
   ContributionGraph,
-  buildPointsWeeks,
+  buildWeeksFromDailyPoints,
   type DaySelection,
 } from "@/components/dashboard/contribution-graph";
 
 export function LearningActivity({ user }: { user: PublicUser }) {
   const [selected, setSelected] = useState<DaySelection | null>(null);
-  const activity = useMemo(
-    () =>
-      buildPointsWeeks({
-        seed: hashId(user.id),
-        points: user.points,
-        earnedAt: user.onboardingCompletedAt,
-      }),
-    [user.id, user.points, user.onboardingCompletedAt],
-  );
+  const [days, setDays] = useState<{ date: string; points: number }[]>([]);
+  const activity = useMemo(() => buildWeeksFromDailyPoints(days), [days]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const controller = new AbortController();
+    void fetchPointActivity(controller.signal)
+      .then((data) => {
+        if (!cancelled) setDays(data.days);
+      })
+      .catch(() => {
+        if (!cancelled) setDays([]);
+      });
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, []);
   const roadmap = user.startingRoadmapSlug
     ? roadmapBySlug(user.startingRoadmapSlug)
     : null;
@@ -172,8 +182,3 @@ function MiniStat({ label, value }: { label: string; value: string | number }) {
   );
 }
 
-function hashId(id: string) {
-  let h = 0;
-  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
-  return h;
-}
