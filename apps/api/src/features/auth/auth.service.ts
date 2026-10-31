@@ -43,6 +43,13 @@ export async function completeCoddleSignIn(code: string, state: string | undefin
 
   const profile = await exchangeCoddleSsoCode(code, finishUrl());
   const { user, created, previousRole } = await upsertFromCoddle(profile);
+  if (user.suspendedAt) {
+    throw new AppError(
+      403,
+      "account_suspended",
+      "This Learn account has been suspended.",
+    );
+  }
   const tokens = await createSession({
     sub: user.id,
     email: user.email,
@@ -71,6 +78,9 @@ export async function getCurrentUser(req: AuthedRequest) {
   const user = await findUserById(req.session.sub);
   if (!user) {
     throw new AppError(401, "user_missing", "Account no longer exists. Sign in again.");
+  }
+  if (user.suspendedAt) {
+    throw new AppError(403, "account_suspended", "This Learn account has been suspended.");
   }
   return toPublicUser(await syncUserRole(user));
 }

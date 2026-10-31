@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { config } from "../../config.js";
-import { AppError } from "../../shared/errors.js";
+import { AppError, isAppError } from "../../shared/errors.js";
 import type { AuthedRequest } from "./auth.middleware.js";
 import {
   completeCoddleSignIn,
@@ -38,7 +38,11 @@ export async function finishCoddle(req: Request, res: Response) {
     res.redirect(302, `${config.webOrigin}${nextPath}`);
   } catch (error) {
     console.error("[auth/coddle/finish]", error);
-    res.redirect(302, `${config.webOrigin}/login?error=signin_failed`);
+    const code =
+      isAppError(error) && error.code === "account_suspended"
+        ? "account_suspended"
+        : "signin_failed";
+    res.redirect(302, `${config.webOrigin}/login?error=${code}`);
   }
 }
 

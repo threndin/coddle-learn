@@ -82,7 +82,10 @@ export function SkillsCatalog({ initial }: { initial: SkillGraph | null }) {
         <p className="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-brand">
           Skill graph
         </p>
-        <h1 className="mt-3 font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+        <h1
+          data-tour="page:skills"
+          className="mt-3 font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl"
+        >
           Skills connected by proof
         </h1>
         <p className="mt-2 text-base leading-relaxed text-ink-muted">

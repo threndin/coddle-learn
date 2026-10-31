@@ -19,3 +19,8 @@ export function parseUserRole(value: unknown): UserRole {
 export function canReviewContent(role: unknown): boolean {
   return role === "reviewer" || role === "admin";
 }
+
+/** Admins can open the /admin usage dashboard. */
+export function isAdminRole(role: unknown): boolean {
+  return role === "admin";
+}

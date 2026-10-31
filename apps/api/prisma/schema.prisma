@@ -39,6 +39,7 @@ model User {
   createdAt             DateTime                 @default(now()) @map("created_at")
   updatedAt             DateTime                 @updatedAt @map("updated_at")
   lastLoginAt           DateTime?                @map("last_login_at")
+  suspendedAt           DateTime?                @map("suspended_at")
   sessions              Session[]
   skills                UserSkill[]
   roadmaps              UserRoadmap[]
@@ -85,6 +86,7 @@ model User {
   assistantConversations     AssistantConversation[]
 
   @@index([role])
+  @@index([suspendedAt])
   @@map("users")
 }
 

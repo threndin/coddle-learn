@@ -37,6 +37,7 @@ export function AppSidebar({
       />
 
       <aside
+        data-tour="sidebar"
         className={[
           "fixed inset-y-0 left-0 z-50 flex flex-col border-r border-border bg-surface transition-[width,transform] duration-200 ease-out",
           "w-60 lg:translate-x-0",
@@ -87,6 +88,7 @@ export function AppSidebar({
                   <Link
                     href={item.href}
                     onClick={onNavigate}
+                    data-tour={`nav:${item.href}`}
                     title={collapsed ? item.label : undefined}
                     className={[
                       "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition",
@@ -131,6 +133,7 @@ export function AppSidebar({
           <Link
             href={user.username ? profilePath(user.username) : SETTINGS_PROFILE_HREF}
             onClick={onNavigate}
+            data-tour="nav:profile"
             className={[
               "flex items-center gap-3 rounded-xl bg-surface-subtle px-3 py-2.5 transition hover:bg-brand-soft/50",
               collapsed ? "lg:justify-center lg:px-2" : "",

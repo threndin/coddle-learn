@@ -1,6 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
 import type { NextFunction, Request, Response } from "express";
-import { canReviewContent } from "@coddle/shared";
+import { canReviewContent, isAdminRole } from "@coddle/shared";
 import { COOKIE } from "../../config.js";
 import { AppError, isAppError } from "../../shared/errors.js";
 import { findUserById, syncUserRole } from "../users/users.service.js";
@@ -90,5 +90,26 @@ export async function requireReviewer(req: AuthedRequest, _res: Response, next: 
     next();
   } catch (error) {
     next(isAppError(error) ? error : new AppError(403, "forbidden", "Reviewer access is required."));
+  }
+}
+
+/** Requires a signed-in admin. Use after `requireAuth`. */
+export async function requireAdmin(req: AuthedRequest, _res: Response, next: NextFunction) {
+  try {
+    const userId = req.session?.sub;
+    if (!userId) {
+      throw new AppError(401, "unauthenticated", "Sign in with your Coddle account to continue");
+    }
+    const user = await findUserById(userId);
+    if (!user) {
+      throw new AppError(401, "user_missing", "Account no longer exists. Sign in again.");
+    }
+    const synced = await syncUserRole(user);
+    if (!isAdminRole(synced.role)) {
+      throw new AppError(403, "forbidden", "Admin access is required for this page.");
+    }
+    next();
+  } catch (error) {
+    next(isAppError(error) ? error : new AppError(403, "forbidden", "Admin access is required."));
   }
 }

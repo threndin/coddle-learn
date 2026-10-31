@@ -29,6 +29,7 @@ export * from "./starter-tools.js";
 export * from "./mentors.js";
 export * from "./starter-mentors.js";
 export * from "./roles.js";
+export * from "./admin.js";
 export * from "./reviewers.js";
 export * from "./challenges.js";
 export * from "./leaderboard.js";

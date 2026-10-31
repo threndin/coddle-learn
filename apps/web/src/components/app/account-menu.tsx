@@ -8,14 +8,16 @@ import { ProfileAvatar } from "@/components/onboarding/profile-avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Icon, type IconName } from "@/components/ui/icon";
 import { useAppUser } from "@/components/app/app-user-context";
+import { useAppTour } from "@/components/onboarding/app-tour";
 import { useUnreadNotifications } from "@/components/notifications/notifications-context";
-import { SETTINGS_PROFILE_HREF } from "@coddle/shared";
+import { isAdminRole, SETTINGS_PROFILE_HREF } from "@coddle/shared";
 import { logout } from "@/lib/auth";
 import { profilePath } from "@/lib/profiles";
 
 export function AccountMenu() {
   const user = useAppUser();
   const router = useRouter();
+  const { startTour } = useAppTour();
   const { unreadCount } = useUnreadNotifications();
   const unreadLabel = unreadCount > 99 ? "99+" : String(unreadCount);
   const ACCOUNT_LINKS: { href: string; label: string; icon: IconName }[] = [
@@ -27,6 +29,9 @@ export function AccountMenu() {
     { href: SETTINGS_PROFILE_HREF, label: "Edit profile", icon: "pencil" },
     { href: "/achievements", label: "Achievements", icon: "star" },
     { href: "/studio", label: "Studio", icon: "layers" },
+    ...(isAdminRole(user.role)
+      ? ([{ href: "/admin", label: "Admin", icon: "checkCircle" }] as const)
+      : []),
     { href: "/settings", label: "Settings", icon: "settings" },
   ];
   const rootRef = useRef<HTMLDivElement>(null);
@@ -208,6 +213,18 @@ export function AccountMenu() {
                   <span>{item.label}</span>
                 </Link>
               ))}
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setOpen(false);
+                  startTour();
+                }}
+                className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-ink transition hover:bg-surface-subtle"
+              >
+                <Icon name="question" className="h-4 w-4 shrink-0 text-ink-muted" />
+                <span>Guide</span>
+              </button>
             </div>
             <div className="border-t border-border p-1.5">
               <button
