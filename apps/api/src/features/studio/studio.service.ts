@@ -27,6 +27,7 @@ import {
 import type { Prisma } from "@prisma/client";
 import { config, isR2Configured } from "../../config.js";
 import { AppError } from "../../shared/errors.js";
+import { assertR2UploadLimit } from "../../shared/rate-limit.js";
 import { imageExtension, storeGeneratedThumbnail, uploadToR2 } from "../../shared/r2.js";
 import { scheduleAchievementEvaluation } from "../achievements/achievements.service.js";
 import {
@@ -594,6 +595,7 @@ export async function uploadCourseThumbnail(
   const course = await loadOwnedCourse(userId, courseId);
   assertEditable(course);
   const image = readImage(contentType, body, COURSE_LIMITS.thumbnailBytesMax);
+  assertR2UploadLimit(userId);
   const { url } = await uploadToR2({
     path: `courses/${course.id}/cover-${Date.now().toString(36)}.${image.ext}`,
     body: image.buffer,
@@ -625,6 +627,7 @@ export async function uploadLessonAsset(
   const course = await loadOwnedCourse(userId, courseId);
   assertEditable(course);
   const image = readImage(contentType, body, COURSE_LIMITS.assetBytesMax);
+  assertR2UploadLimit(userId);
   const name = `${Date.now().toString(36)}-${randomBytes(4).toString("hex")}`;
   const { url } = await uploadToR2({
     path: `courses/${course.id}/assets/${name}.${image.ext}`,

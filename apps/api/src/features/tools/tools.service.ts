@@ -18,6 +18,7 @@ import {
 import type { Prisma } from "@prisma/client";
 import { config, isR2Configured } from "../../config.js";
 import { AppError } from "../../shared/errors.js";
+import { assertR2UploadLimit } from "../../shared/rate-limit.js";
 import { notifyToolSaved } from "../notifications/notifications.events.js";
 import { isReviewerUser } from "../users/users.service.js";
 import { imageExtension, uploadToR2 } from "../../shared/r2.js";
@@ -402,6 +403,7 @@ export async function uploadToolImage(
   body: unknown,
 ) {
   const image = readImage(contentType, body);
+  assertR2UploadLimit(userId);
   const name = `${Date.now().toString(36)}-${randomBytes(4).toString("hex")}`;
   const { url } = await uploadToR2({
     path: `tools/${userId}/${name}.${image.ext}`,
