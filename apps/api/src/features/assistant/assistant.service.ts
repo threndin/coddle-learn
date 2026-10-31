@@ -19,6 +19,7 @@ import {
 } from "@coddle/shared";
 import { config } from "../../config.js";
 import { AppError } from "../../shared/errors.js";
+import { assertUserRateLimit } from "../../shared/rate-limit.js";
 import { searchCatalog } from "../search/search.service.js";
 import {
   appendTurn,
@@ -457,6 +458,12 @@ export async function askAssistant(
   if (!message) {
     throw new AppError(400, "invalid_message", "Ask a question about what you want to learn.");
   }
+
+  assertUserRateLimit(userId, "assistant", {
+    max: 4,
+    windowMs: 60_000,
+    message: "Give the assistant a moment before sending another message.",
+  });
 
   const requestedId = firstString(body.conversationId);
   let conversationId: string | null = null;

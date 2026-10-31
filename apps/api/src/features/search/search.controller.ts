@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { AppError } from "../../shared/errors.js";
+import { assertUserRateLimit } from "../../shared/rate-limit.js";
 import type { AuthedRequest } from "../auth/auth.middleware.js";
 import { searchCatalog } from "./search.service.js";
 
@@ -12,7 +13,12 @@ function requireSession(req: Request) {
 }
 
 export async function searchHandler(req: Request, res: Response) {
-  requireSession(req);
+  const session = requireSession(req);
+  assertUserRateLimit(session.sub, "search", {
+    max: 40,
+    windowMs: 60_000,
+    message: "Too many searches. Try again in a minute.",
+  });
   const data = await searchCatalog(req.query as Record<string, unknown>);
   res.json({ data });
 }

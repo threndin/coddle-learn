@@ -30,6 +30,7 @@ import {
 } from "@coddle/shared";
 import type { Prisma } from "@prisma/client";
 import { isR2Configured } from "../../config.js";
+import { assertR2UploadLimit } from "../../shared/rate-limit.js";
 import { AppError } from "../../shared/errors.js";
 import { imageExtension, uploadToR2 } from "../../shared/r2.js";
 import { prisma } from "../../shared/db.js";
@@ -1014,6 +1015,7 @@ export async function createCommunityFeedPost(
 
 async function storeCommunityImage(userId: string, file: UploadedImage) {
   const image = readImage(file.mimetype, file.buffer);
+  assertR2UploadLimit(userId);
   const name = `${Date.now().toString(36)}-${randomBytes(4).toString("hex")}`;
   const { url } = await uploadToR2({
     path: `community/${userId}/${name}.${image.ext}`,
