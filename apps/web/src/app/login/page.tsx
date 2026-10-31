@@ -22,9 +22,11 @@ function LoginContent() {
   const searchParams = useSearchParams();
   const errorParam = searchParams.get("error");
   const error =
-    errorParam === "signin_failed"
-      ? "Could not complete sign-in. Please try again."
-      : errorParam;
+    errorParam === "account_suspended"
+      ? "This Learn account has been suspended. Contact an admin if you think that’s a mistake."
+      : errorParam === "signin_failed"
+        ? "Could not complete sign-in. Please try again."
+        : errorParam;
   const [pending, setPending] = useState(false);
 
   function onContinue() {

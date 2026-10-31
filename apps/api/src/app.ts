@@ -27,6 +27,7 @@ import { toolsRouter } from "./features/tools/tools.routes.js";
 import { roadmapsRouter } from "./features/roadmaps/roadmaps.routes.js";
 import { skillsRouter } from "./features/skills/skills.routes.js";
 import { reviewersRouter } from "./features/reviewers/reviewers.routes.js";
+import { adminRouter } from "./features/admin/admin.routes.js";
 import { searchRouter } from "./features/search/search.routes.js";
 import { assistantRouter } from "./features/assistant/assistant.routes.js";
 import { settingsRouter } from "./features/settings/settings.routes.js";
@@ -75,6 +76,7 @@ export function createApp(): Express {
   app.use("/studio/projects", studioProjectsRouter);
   app.use("/studio", studioRouter);
   app.use("/reviewers", reviewersRouter);
+  app.use("/admin", adminRouter);
 
   app.use(errorHandler);
 

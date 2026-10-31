@@ -62,7 +62,10 @@ export function LeaderboardView({
         <div className="relative mx-auto flex w-full max-w-7xl flex-col gap-4 px-5 py-5 sm:px-8 sm:py-6">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <h1 className="inline-flex items-center gap-2 font-display text-2xl font-bold tracking-tight text-white sm:text-3xl">
+              <h1
+                data-tour="page:leaderboard"
+                className="inline-flex items-center gap-2 font-display text-2xl font-bold tracking-tight text-white sm:text-3xl"
+              >
                 <Icon name="trophy" className="h-5 w-5 shrink-0 text-amber-300" />
                 Leaderboard
               </h1>

@@ -5,9 +5,11 @@ import { motion, useReducedMotion } from "framer-motion";
 import { roadmapBySlug } from "@coddle/shared";
 import type { PublicUser } from "@/lib/auth";
 import { BannerDeveloper } from "@/components/dashboard/banner-developer";
+import { useAppTour } from "@/components/onboarding/app-tour";
 
 export function DashboardBanner({ user }: { user: PublicUser }) {
   const reduceMotion = useReducedMotion();
+  const { active, startTour } = useAppTour();
   const firstName = user.name.trim().split(/\s+/)[0] || user.name;
   const roadmap = user.startingRoadmapSlug
     ? roadmapBySlug(user.startingRoadmapSlug)
@@ -29,6 +31,7 @@ export function DashboardBanner({ user }: { user: PublicUser }) {
 
       <div className="relative mx-auto grid max-w-7xl items-center gap-6 px-5 py-8 sm:px-8 sm:py-12 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-8 lg:py-6">
         <motion.div
+          data-tour="dashboard"
           initial={reduceMotion ? false : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, ease: "easeOut" }}
@@ -52,6 +55,15 @@ export function DashboardBanner({ user }: { user: PublicUser }) {
             >
               Continue learning
             </Link>
+            {!active ? (
+              <button
+                type="button"
+                onClick={startTour}
+                className="inline-flex items-center justify-center rounded-xl border border-white/30 bg-white/10 px-5 py-2.5 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/20"
+              >
+                Show me around
+              </button>
+            ) : null}
             <div className="inline-flex items-center gap-2 rounded-xl border border-white/25 bg-white/10 px-3.5 py-2 text-sm backdrop-blur-sm">
               <span className="font-mono font-semibold tabular-nums">
                 {user.points.toLocaleString()}

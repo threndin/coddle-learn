@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { canReviewContent, type UserRole } from "@coddle/shared";
+import { canReviewContent, isAdminRole, type UserRole } from "@coddle/shared";
 
 export type AppNavItem = {
   href: string;
@@ -8,6 +8,8 @@ export type AppNavItem = {
   icon: NavIconId;
   /** When set, only reviewers/admins see the item. */
   reviewerOnly?: boolean;
+  /** When set, only admins see the item. */
+  adminOnly?: boolean;
 };
 
 export type NavIconId =
@@ -30,6 +32,7 @@ export type NavIconId =
   | "profile"
   | "studio"
   | "reviewers"
+  | "admin"
   | "settings";
 
 export const APP_NAV: AppNavItem[] = [
@@ -124,6 +127,13 @@ export const APP_NAV: AppNavItem[] = [
     icon: "studio",
   },
   {
+    href: "/admin",
+    label: "Admin",
+    description: "Overview, users, and AI usage",
+    icon: "admin",
+    adminOnly: true,
+  },
+  {
     href: "/settings",
     label: "Settings",
     description: "Profile, goals, and account",
@@ -132,7 +142,11 @@ export const APP_NAV: AppNavItem[] = [
 ];
 
 export function navItemsForRole(role: UserRole | undefined): AppNavItem[] {
-  return APP_NAV.filter((item) => !item.reviewerOnly || canReviewContent(role));
+  return APP_NAV.filter((item) => {
+    if (item.adminOnly) return isAdminRole(role);
+    if (item.reviewerOnly) return canReviewContent(role);
+    return true;
+  });
 }
 
 export function navTitleForPath(pathname: string): string {
@@ -141,6 +155,7 @@ export function navTitleForPath(pathname: string): string {
   if (pathname === "/skills" || pathname.startsWith("/skills/")) return "Skills";
   if (pathname === "/mentors" || pathname.startsWith("/mentors/")) return "Mentors";
   if (pathname === "/reviewers" || pathname.startsWith("/reviewers/")) return "Reviewers";
+  if (pathname === "/admin" || pathname.startsWith("/admin/")) return "Admin";
   const exact = APP_NAV.find((item) => item.href === pathname);
   if (exact) return exact.label;
   const nested = APP_NAV.find(
@@ -312,6 +327,13 @@ export function NavIcon({
         <svg {...common}>
           <path d="M8 4.5h8a2 2 0 0 1 2 2v13l-3-1.8-3 1.8-3-1.8-3 1.8v-13a2 2 0 0 1 2-2Z" />
           <path d="m9 11.5 2 2 4-4" />
+        </svg>
+      );
+    case "admin":
+      return (
+        <svg {...common}>
+          <path d="M12 3.5 19 6.2v5.4c0 4.4-2.9 7.6-7 8.9-4.1-1.3-7-4.5-7-8.9V6.2L12 3.5Z" />
+          <path d="m9.2 12.2 1.9 1.9 3.7-3.8" />
         </svg>
       );
     case "settings":

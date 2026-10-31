@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { fetchMe, type PublicUser } from "@/lib/auth";
 import { AppUserProvider } from "@/components/app/app-user-context";
@@ -8,6 +8,7 @@ import { AppSidebar } from "@/components/app/app-sidebar";
 import { AppHeader } from "@/components/app/app-header";
 import { ToastProvider } from "@/components/app/toast";
 import { NotificationsProvider } from "@/components/notifications/notifications-context";
+import { AppTourProvider } from "@/components/onboarding/app-tour";
 import { PageLoader } from "@/components/page-loader";
 
 const COLLAPSE_KEY = "learn_sidebar_collapsed";
@@ -55,6 +56,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, [router]);
 
   useEffect(() => {
+    if (document.documentElement.dataset.appTour === "1") return;
     setMobileOpen(false);
   }, [pathname]);
 
@@ -71,6 +73,27 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       document.body.style.overflow = previous;
     };
   }, [mobileOpen]);
+
+  const collapsedRef = useRef(collapsed);
+  collapsedRef.current = collapsed;
+  const mobileOpenRef = useRef(mobileOpen);
+  mobileOpenRef.current = mobileOpen;
+
+  const ensureSidebarVisible = useCallback(() => {
+    const desktop = window.matchMedia("(min-width: 1024px)").matches;
+    if (desktop) {
+      const wasCollapsed = collapsedRef.current;
+      if (wasCollapsed) setCollapsed(false);
+      return () => {
+        if (wasCollapsed) setCollapsed(true);
+      };
+    }
+    const wasOpen = mobileOpenRef.current;
+    if (!wasOpen) setMobileOpen(true);
+    return () => {
+      if (!wasOpen) setMobileOpen(false);
+    };
+  }, []);
 
   function toggleSidebar() {
     if (typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches) {
@@ -96,22 +119,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <AppUserProvider user={user}>
       <NotificationsProvider>
         <ToastProvider>
-          <div className="min-h-svh bg-surface-subtle">
-            <AppSidebar
-              collapsed={collapsed}
-              mobileOpen={mobileOpen}
-              onNavigate={() => setMobileOpen(false)}
-            />
-            <div
-              className={[
-                "flex min-h-svh flex-col transition-[padding] duration-200 ease-out",
-                collapsed ? "lg:pl-[4.5rem]" : "lg:pl-60",
-              ].join(" ")}
-            >
-              <AppHeader collapsed={collapsed} onToggleSidebar={toggleSidebar} />
-              <main className="flex-1">{children}</main>
+          <AppTourProvider ensureSidebarVisible={ensureSidebarVisible}>
+            <div className="min-h-svh bg-surface-subtle">
+              <AppSidebar
+                collapsed={collapsed}
+                mobileOpen={mobileOpen}
+                onNavigate={() => setMobileOpen(false)}
+              />
+              <div
+                className={[
+                  "flex min-h-svh flex-col transition-[padding] duration-200 ease-out",
+                  collapsed ? "lg:pl-[4.5rem]" : "lg:pl-60",
+                ].join(" ")}
+              >
+                <AppHeader collapsed={collapsed} onToggleSidebar={toggleSidebar} />
+                <main className="flex-1">{children}</main>
+              </div>
             </div>
-          </div>
+          </AppTourProvider>
         </ToastProvider>
       </NotificationsProvider>
     </AppUserProvider>

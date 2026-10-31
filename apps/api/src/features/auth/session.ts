@@ -169,6 +169,10 @@ async function findSessionUserClaims(userId: string, jti: string): Promise<Sessi
     await deleteSessionByJti(jti);
     throw new AppError(401, "user_missing", "Account no longer exists. Sign in again.");
   }
+  if (user.suspendedAt) {
+    await deleteSessionsByUserId(userId);
+    throw new AppError(403, "account_suspended", "This Learn account has been suspended.");
+  }
   return {
     sub: user.id,
     email: user.email,
