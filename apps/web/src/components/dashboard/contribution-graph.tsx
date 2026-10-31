@@ -180,35 +180,21 @@ export function ContributionGraph({
   );
 }
 
-/**
- * Build a year of weeks with deterministic preview points so the graph looks alive
- * before full points history exists. Also pins real earned points on `earnedAt`.
- */
-export function buildPointsWeeks(input: {
-  seed?: number;
-  points?: number;
-  earnedAt?: string | null;
-}): {
+/** Build a year of Sunday-start weeks from real UTC daily point totals. */
+export function buildWeeksFromDailyPoints(
+  days: { date: string; points: number }[],
+): {
   weeks: ActivityWeek[];
   busiest: number;
   total: number;
   activeDays: number;
 } {
-  const seed = input.seed ?? 0;
+  const byDay = new Map(days.map((day) => [day.date, day.points]));
   const now = new Date();
   const end = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
   const start = end - 52 * 7 * 86400 * 1000;
   const startDate = new Date(start);
-  const day = startDate.getUTCDay();
-  const weekStart = start - day * 86400 * 1000;
-
-  const earnedDayStart = input.earnedAt
-    ? Date.UTC(
-        new Date(input.earnedAt).getUTCFullYear(),
-        new Date(input.earnedAt).getUTCMonth(),
-        new Date(input.earnedAt).getUTCDate(),
-      )
-    : null;
+  const weekStart = start - startDate.getUTCDay() * 86400 * 1000;
 
   const weeks: ActivityWeek[] = [];
   let busiest = 0;
@@ -217,36 +203,24 @@ export function buildPointsWeeks(input: {
 
   for (let w = 0; w < 53; w++) {
     const weekUnix = Math.floor(weekStart / 1000) + w * 7 * 86400;
-    const days: number[] = [];
+    const counts: number[] = [];
     let weekTotal = 0;
     for (let d = 0; d < 7; d++) {
-      const dayUnix = weekUnix + d * 86400;
-      const dayMs = dayUnix * 1000;
+      const dayMs = (weekUnix + d * 86400) * 1000;
       if (dayMs > end) {
-        days.push(0);
+        counts.push(0);
         continue;
       }
-
-      const n = pseudo(seed + dayUnix);
-      let count = n > 0.78 ? Math.floor(1 + n * 6) : n > 0.92 ? Math.floor(4 + n * 8) : 0;
-
-      if (earnedDayStart != null && dayMs === earnedDayStart && (input.points ?? 0) > 0) {
-        count = Math.max(count, input.points ?? 0);
-      }
-
-      days.push(count);
+      const key = new Date(dayMs).toISOString().slice(0, 10);
+      const count = Math.max(0, byDay.get(key) ?? 0);
+      counts.push(count);
       weekTotal += count;
       total += count;
       if (count > 0) activeDays += 1;
       if (count > busiest) busiest = count;
     }
-    weeks.push({ week: weekUnix, days, total: weekTotal });
+    weeks.push({ week: weekUnix, days: counts, total: weekTotal });
   }
 
   return { weeks, busiest, total, activeDays };
-}
-
-function pseudo(n: number) {
-  const x = Math.sin(n * 12.9898) * 43758.5453;
-  return x - Math.floor(x);
 }

@@ -67,3 +67,11 @@ export async function listPointEventKeys(reasons: string[]) {
     select: { reason: true, refType: true, refId: true },
   });
 }
+
+export function listUserPointEventsSince(userId: string, since: Date) {
+  return prisma.userPointEvent.findMany({
+    where: { userId, createdAt: { gte: since } },
+    select: { amount: true, createdAt: true },
+    orderBy: { createdAt: "asc" },
+  });
+}
