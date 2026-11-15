@@ -9,7 +9,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { PageLoader } from "@/components/page-loader";
 import { startCoddleLogin } from "@/lib/auth";
 
-const coddleAppUrl = process.env.NEXT_PUBLIC_CODDLE_APP_URL ?? "https://www.coddle.dev";
+const coddleAppUrl = process.env.NEXT_PUBLIC_CODDLE_APP_URL ?? "https://workspace.usecoddle.com";
 
 const points = [
   "Follow one roadmap from the first step to a project",
