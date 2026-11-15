@@ -13,6 +13,7 @@ import {
 import { config } from "../../config.js";
 import { AppError } from "../../shared/errors.js";
 import { scheduleAchievementEvaluation } from "../achievements/achievements.service.js";
+import { broadcastApprovedItem } from "../email/email.service.js";
 import {
   createProject,
   deleteProject,
@@ -544,6 +545,18 @@ export async function submitStudioProject(userId: string, projectId: string) {
       publishedAt: project.publishedAt ?? now,
     });
     scheduleAchievementEvaluation(userId);
+    broadcastApprovedItem({
+      kind: "project",
+      title: updated.title,
+      summary: updated.summary,
+      imageUrl: updated.exampleImageUrl,
+      href: `/projects/${updated.slug}`,
+      metadata: {
+        level: updated.level,
+        estimatedHours: updated.estimatedHours,
+        skills: updated.skills.map((s) => s.skill.name),
+      },
+    });
     return { project: studioPayload(updated) };
   }
 

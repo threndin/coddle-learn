@@ -30,6 +30,7 @@ import { skillsRouter } from "./features/skills/skills.routes.js";
 import { reviewersRouter } from "./features/reviewers/reviewers.routes.js";
 import { adminRouter } from "./features/admin/admin.routes.js";
 import { searchRouter } from "./features/search/search.routes.js";
+import { sitemapRouter } from "./features/sitemap/sitemap.routes.js";
 import { assistantRouter } from "./features/assistant/assistant.routes.js";
 import { settingsRouter } from "./features/settings/settings.routes.js";
 import { studioRouter } from "./features/studio/studio.routes.js";
@@ -73,6 +74,7 @@ export function createApp(): Express {
   app.use("/profiles", profilesRouter);
   app.use("/settings", settingsRouter);
   app.use("/search", searchRouter);
+  app.use("/sitemap", sitemapRouter);
   app.use("/assistant", assistantRouter);
   app.use("/verify", verifyRouter);
   app.use("/studio/projects", studioProjectsRouter);

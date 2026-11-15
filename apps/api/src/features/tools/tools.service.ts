@@ -19,6 +19,7 @@ import type { Prisma } from "@prisma/client";
 import { config, isR2Configured } from "../../config.js";
 import { AppError } from "../../shared/errors.js";
 import { assertR2UploadLimit } from "../../shared/rate-limit.js";
+import { broadcastApprovedItem } from "../email/email.service.js";
 import { notifyToolSaved } from "../notifications/notifications.events.js";
 import { isReviewerUser } from "../users/users.service.js";
 import { imageExtension, uploadToR2 } from "../../shared/r2.js";
@@ -316,6 +317,21 @@ export async function submitTool(userId: string, input: unknown) {
     submittedByUserId: userId,
     skillIds: skills.map((skill) => skill.id),
   });
+
+  if (autoPublish) {
+    broadcastApprovedItem({
+      kind: "tool",
+      title: created.title,
+      summary: created.summary,
+      imageUrl: created.imageUrl,
+      href: `/tools/${created.slug}`,
+      externalUrl: created.url,
+      metadata: {
+        category: created.category,
+        skills: skills.map((s) => s.slug),
+      },
+    });
+  }
 
   return { tool: toItem(created, userId, new Set()) };
 }

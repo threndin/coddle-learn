@@ -5,6 +5,7 @@ const personSelect = {
   id: true,
   username: true,
   name: true,
+  email: true,
   avatarUrl: true,
 } satisfies Prisma.UserSelect;
 

@@ -14,6 +14,7 @@ import type { Prisma } from "@prisma/client";
 import { config } from "../../config.js";
 import { AppError } from "../../shared/errors.js";
 import { scheduleAchievementEvaluation } from "../achievements/achievements.service.js";
+import { broadcastApprovedItem } from "../email/email.service.js";
 import { notifyResourceSaved } from "../notifications/notifications.events.js";
 import {
   countResources,
@@ -287,6 +288,19 @@ export async function submitResource(userId: string, input: unknown) {
 
   if (autoPublish) {
     scheduleAchievementEvaluation(userId);
+    broadcastApprovedItem({
+      kind: "resource",
+      title: created.title,
+      summary: created.description,
+      imageUrl: null,
+      href: "/resources",
+      externalUrl: created.url,
+      metadata: {
+        level: created.level,
+        type: created.type,
+        skills: skills.map((s) => s.slug),
+      },
+    });
   }
 
   return { resource: toItem(created, userId, new Set()) };

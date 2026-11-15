@@ -79,6 +79,17 @@ export const config = {
     /** All Learn objects live under this prefix in the shared bucket. */
     keyPrefix: "coddle-learn",
   },
+  email: {
+    from: process.env.EMAIL_FROM ?? "Coddle Learn <no-reply@usecoddle.com>",
+    logoUrl: process.env.EMAIL_LOGO_URL ?? "",
+    smtp: {
+      host: process.env.SMTP_HOST ?? "",
+      port: Number(process.env.SMTP_PORT ?? 587),
+      secure: process.env.SMTP_SECURE === "true",
+      user: process.env.SMTP_USER ?? "",
+      pass: process.env.SMTP_PASS ?? "",
+    },
+  },
 } as const;
 
 export function isR2Configured(): boolean {
