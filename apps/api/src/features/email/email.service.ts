@@ -60,7 +60,9 @@ export async function sendEmail(options: SendEmailOptions): Promise<boolean> {
   }
 
   const transporter = getTransporter();
-  const hasSmtp = Boolean(config.email.smtp.host && config.email.smtp.host.trim());
+  const hasSmtp = Boolean(
+    config.email.smtp.host && config.email.smtp.host.trim(),
+  );
 
   try {
     const info = await transporter.sendMail({
@@ -80,12 +82,18 @@ export async function sendEmail(options: SendEmailOptions): Promise<boolean> {
     }
     return true;
   } catch (error) {
-    console.error(`[email] Failed to send email to "${to}" with subject "${subject}":`, error);
+    console.error(
+      `[email] Failed to send email to "${to}" with subject "${subject}":`,
+      error,
+    );
     return false;
   }
 }
 
-export type ReviewDecisionEmailPayload = Omit<ReviewDecisionEmailInput, "recipientName"> & {
+export type ReviewDecisionEmailPayload = Omit<
+  ReviewDecisionEmailInput,
+  "recipientName"
+> & {
   recipientEmail: string;
   recipientName?: string | null;
 };
@@ -114,10 +122,10 @@ export async function sendReviewDecisionEmail(
   });
 }
 
-export type BroadcastApprovedItemPayload = Omit<BroadcastApprovedItemInput, "recipientName">;
-
-const BROADCAST_BATCH_SIZE = 15;
-const BROADCAST_BATCH_DELAY_MS = 100;
+export type BroadcastApprovedItemPayload = Omit<
+  BroadcastApprovedItemInput,
+  "recipientName"
+>;
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -125,9 +133,12 @@ function sleep(ms: number) {
 
 /**
  * Asynchronously broadcast an email to all active users that a newly approved item is available.
+ * Sends sequentially with throttling to comply with Zoho Mail / SMTP burst rate limits.
  * Runs in the background without blocking caller HTTP response.
  */
-export function broadcastApprovedItem(payload: BroadcastApprovedItemPayload): void {
+export function broadcastApprovedItem(
+  payload: BroadcastApprovedItemPayload,
+): void {
   // Fire and forget in the background
   setImmediate(async () => {
     try {
@@ -146,47 +157,57 @@ export function broadcastApprovedItem(payload: BroadcastApprovedItemPayload): vo
       });
 
       if (users.length === 0) {
-        console.log(`[email:broadcast] No active users to notify for new ${payload.kind}.`);
+        console.log(
+          `[email:broadcast] No active users to notify for new ${payload.kind}.`,
+        );
         return;
       }
 
+      const delayMs = config.email.rateDelayMs || 1000;
       console.log(
-        `[email:broadcast] Starting broadcast of new ${payload.kind} "${payload.title}" to ${users.length} users...`,
+        `[email:broadcast] Starting broadcast of new ${payload.kind} "${payload.title}" to ${users.length} users (throttled at ${delayMs}ms delay between emails)...`,
       );
 
       let sentCount = 0;
       let errorCount = 0;
 
-      // Send in batches to avoid overwhelming the SMTP transport or event loop
-      for (let i = 0; i < users.length; i += BROADCAST_BATCH_SIZE) {
-        const batch = users.slice(i, i + BROADCAST_BATCH_SIZE);
-        await Promise.all(
-          batch.map(async (user) => {
-            try {
-              const { subject, html, text } = buildNewContentBroadcastEmail({
-                recipientName: user.name,
-                ...payload,
-              });
-              const ok = await sendEmail({
-                to: user.email,
-                subject,
-                html,
-                text,
-              });
-              if (ok) sentCount++;
-              else errorCount++;
-            } catch (err) {
-              errorCount++;
-              console.error(
-                `[email:broadcast] Error sending to user ${user.id} (${user.email}):`,
-                err,
-              );
-            }
-          }),
-        );
+      // Send sequentially with throttling to prevent Zoho 550 5.4.6 Unusual sending activity detected
+      for (let i = 0; i < users.length; i++) {
+        const user = users[i]!;
+        try {
+          const { subject, html, text } = buildNewContentBroadcastEmail({
+            recipientName: user.name,
+            ...payload,
+          });
 
-        if (i + BROADCAST_BATCH_SIZE < users.length) {
-          await sleep(BROADCAST_BATCH_DELAY_MS);
+          const ok = await sendEmail({
+            to: user.email,
+            subject,
+            html,
+            text,
+          });
+
+          if (ok) {
+            sentCount++;
+            console.log(
+              `[email:broadcast] [${i + 1}/${users.length}] Sent to ${user.email} ✓`,
+            );
+          } else {
+            errorCount++;
+            console.error(
+              `[email:broadcast] [${i + 1}/${users.length}] Failed to send to ${user.email}`,
+            );
+          }
+        } catch (err) {
+          errorCount++;
+          console.error(
+            `[email:broadcast] [${i + 1}/${users.length}] Error sending to ${user.email}:`,
+            err,
+          );
+        }
+
+        if (i < users.length - 1 && delayMs > 0) {
+          await sleep(delayMs);
         }
       }
 

@@ -89,6 +89,7 @@ export const config = {
       user: process.env.SMTP_USER ?? "",
       pass: process.env.SMTP_PASS ?? "",
     },
+    rateDelayMs: Number(process.env.EMAIL_RATE_DELAY_MS ?? 1000),
   },
 } as const;
 
