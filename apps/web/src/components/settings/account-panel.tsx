@@ -15,7 +15,7 @@ import {
   type ThemePreference,
 } from "@/lib/theme";
 
-const coddleAppUrl = `${process.env.NEXT_PUBLIC_CODDLE_APP_URL ?? "https://www.coddle.dev"}/settings`;
+const coddleAppUrl = `${process.env.NEXT_PUBLIC_CODDLE_APP_URL ?? "https://workspace.usecoddle.com"}/settings`;
 
 function formatDate(iso: string | null): string {
   if (!iso) return "—";

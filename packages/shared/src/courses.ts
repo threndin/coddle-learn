@@ -17,7 +17,10 @@ export const COURSE_COMPLETE_POINTS = 30;
 export const LESSON_COMPLETE_POINT_REASON = "lesson_complete" as const;
 export const COURSE_COMPLETE_POINT_REASON = "course_complete" as const;
 
-export function courseProgressPercent(doneCount: number, totalCount: number): number {
+export function courseProgressPercent(
+  doneCount: number,
+  totalCount: number,
+): number {
   if (totalCount <= 0) return 0;
   return Math.min(100, Math.round((doneCount / totalCount) * 100));
 }
@@ -71,12 +74,14 @@ export const STARTER_COURSES: readonly StarterCourse[] = [
       module({
         slug: "html-basics",
         title: "HTML basics",
-        summary: "Documents, elements, links, images, and lists you can read and maintain.",
+        summary:
+          "Documents, elements, links, images, and lists you can read and maintain.",
         lessons: [
           lesson({
             slug: "documents",
             title: "Documents and the DOM shape",
-            summary: "What an HTML document is and how browsers turn markup into a tree.",
+            summary:
+              "What an HTML document is and how browsers turn markup into a tree.",
             estimatedMinutes: 40,
             content: `# Documents and the DOM shape
 
@@ -161,7 +166,8 @@ Open the file locally and check the heading outline in your browser's accessibil
           lesson({
             slug: "text-and-lists",
             title: "Text, lists, and emphasis",
-            summary: "Write readable content with headings, paragraphs, and lists.",
+            summary:
+              "Write readable content with headings, paragraphs, and lists.",
             estimatedMinutes: 35,
             content: `# Text, lists, and emphasis
 
@@ -271,7 +277,7 @@ Rules of thumb:
 - \`target="_blank"\` should include \`rel="noreferrer noopener"\` when you use it.
 
 \`\`\`html
-<a href="https://www.coddle.dev" target="_blank" rel="noreferrer noopener">
+<a href="https://workspace.usecoddle.com" target="_blank" rel="noreferrer noopener">
   Coddle
 </a>
 \`\`\`
@@ -322,7 +328,8 @@ On your profile page:
           lesson({
             slug: "semantic-html",
             title: "Semantic HTML",
-            summary: "Choose elements that communicate meaning to browsers and assistive tech.",
+            summary:
+              "Choose elements that communicate meaning to browsers and assistive tech.",
             estimatedMinutes: 45,
             content: `# Semantic HTML
 
@@ -415,7 +422,8 @@ Better:
           lesson({
             slug: "forms-basics",
             title: "Forms and labels",
-            summary: "Build forms that people and browsers can both understand.",
+            summary:
+              "Build forms that people and browsers can both understand.",
             estimatedMinutes: 45,
             content: `# Forms and labels
 
@@ -538,7 +546,8 @@ Page chrome (header, sidebar, footer) belongs in landmarks and CSS layout, not i
       module({
         slug: "css-fundamentals",
         title: "CSS fundamentals",
-        summary: "Selectors, the cascade, colors, typography, and the box model.",
+        summary:
+          "Selectors, the cascade, colors, typography, and the box model.",
         lessons: [
           lesson({
             slug: "css-selectors",
@@ -622,7 +631,8 @@ Create \`styles.css\` and:
           lesson({
             slug: "color-and-type",
             title: "Color and typography",
-            summary: "Set a simple visual system with color, type, and spacing.",
+            summary:
+              "Set a simple visual system with color, type, and spacing.",
             estimatedMinutes: 40,
             content: `# Color and typography
 
@@ -692,7 +702,8 @@ Prefer a small scale: \`0.5rem\`, \`1rem\`, \`1.5rem\`, \`2rem\`. Consistent gap
           lesson({
             slug: "box-model",
             title: "The box model",
-            summary: "Margin, border, padding, and content sizing without surprises.",
+            summary:
+              "Margin, border, padding, and content sizing without surprises.",
             estimatedMinutes: 45,
             content: `# The box model
 
@@ -909,7 +920,8 @@ Keep this in \`<head>\` or phones will scale incorrectly:
           lesson({
             slug: "profile-page-project",
             title: "Project: profile page",
-            summary: "Ship a small personal page that uses everything from this course.",
+            summary:
+              "Ship a small personal page that uses everything from this course.",
             estimatedMinutes: 60,
             content: `# Project: profile page
 
