@@ -47,7 +47,7 @@ export function baseEmailLayout({
   const logoUrl = getEmailLogoUrl();
   const year = new Date().getFullYear();
   const dashboardUrl = `${config.webOrigin}/dashboard`;
-  const settingsUrl = `${config.webOrigin}/settings/profile`;
+  const settingsUrl = `${config.webOrigin}/settings?tab=profile`;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -513,7 +513,7 @@ export function buildLoginNotificationEmail(
   const firstName = input.recipientName?.trim().split(/\s+/)[0] || "there";
   const dateStr = (input.signedInAt ?? new Date()).toUTCString();
   const dashboardUrl = `${config.webOrigin}/dashboard`;
-  const securityUrl = `${config.webOrigin}/settings/profile`;
+  const securityUrl = `${config.webOrigin}/settings?tab=profile`;
 
   const isNew = Boolean(input.isNewUser);
   const subject = isNew
