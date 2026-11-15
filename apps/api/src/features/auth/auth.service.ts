@@ -1,5 +1,6 @@
 import { config } from "../../config.js";
 import { AppError } from "../../shared/errors.js";
+import { sendLoginNotificationEmail } from "../email/email.service.js";
 import {
   notifyLogin,
   notifyRoleGranted,
@@ -35,7 +36,11 @@ export async function startCoddleSignIn(): Promise<string> {
   return `${config.coddleAppUrl}/login?redirect=${encodeURIComponent(ssoPath)}`;
 }
 
-export async function completeCoddleSignIn(code: string, state: string | undefined) {
+export async function completeCoddleSignIn(
+  code: string,
+  state: string | undefined,
+  meta?: { ip?: string | null; userAgent?: string | null },
+) {
   if (!state) {
     throw new AppError(400, "invalid_state", "Missing OAuth state. Start sign-in again.");
   }
@@ -66,6 +71,18 @@ export async function completeCoddleSignIn(code: string, state: string | undefin
     (user.role === "reviewer" || user.role === "admin")
   ) {
     await notifyRoleGranted(user.id, user.role);
+  }
+
+  // Send email notification upon sign-in
+  if (user.email && user.notifyAccount !== false) {
+    sendLoginNotificationEmail({
+      recipientEmail: user.email,
+      recipientName: user.name,
+      signedInAt: new Date(),
+      ip: meta?.ip,
+      userAgent: meta?.userAgent,
+      isNewUser: created,
+    }).catch((err) => console.error("[email] Failed to send login email:", err));
   }
 
   return { user: toPublicUser(user), tokens };

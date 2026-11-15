@@ -80,8 +80,21 @@ export const config = {
     keyPrefix: "coddle-learn",
   },
   email: {
+    provider: (process.env.EMAIL_PROVIDER?.toLowerCase() === "zepto"
+      ? "zepto"
+      : process.env.EMAIL_PROVIDER?.toLowerCase() === "zoho" ||
+          process.env.EMAIL_PROVIDER?.toLowerCase() === "smtp"
+        ? "zoho"
+        : process.env.ZEPTOMAIL_TOKEN
+          ? "zepto"
+          : "zoho") as "zepto" | "zoho",
     from: process.env.EMAIL_FROM ?? "Coddle Learn <no-reply@usecoddle.com>",
     logoUrl: process.env.EMAIL_LOGO_URL ?? "",
+    zepto: {
+      url:
+        process.env.ZEPTOMAIL_URL ?? "https://api.zeptomail.com/v1.1/email",
+      token: process.env.ZEPTOMAIL_TOKEN ?? "",
+    },
     smtp: {
       host: process.env.SMTP_HOST ?? "",
       port: Number(process.env.SMTP_PORT ?? 587),

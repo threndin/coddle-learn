@@ -31,7 +31,16 @@ export async function finishCoddle(req: Request, res: Response) {
       throw new AppError(400, "missing_code", "Missing SSO code");
     }
 
-    const { user, tokens } = await completeCoddleSignIn(code, state);
+    const ip =
+      (typeof req.headers["x-forwarded-for"] === "string"
+        ? req.headers["x-forwarded-for"].split(",")[0]?.trim()
+        : null) || req.ip || null;
+    const userAgent = req.headers["user-agent"] || null;
+
+    const { user, tokens } = await completeCoddleSignIn(code, state, {
+      ip,
+      userAgent,
+    });
     setAuthCookies(res, tokens);
     setCsrfCookie(res);
     const nextPath = user.onboardingCompletedAt ? "/dashboard" : "/onboarding";

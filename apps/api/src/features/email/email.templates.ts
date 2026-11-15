@@ -193,9 +193,13 @@ export function buildReviewDecisionEmail(input: ReviewDecisionEmailInput): {
   const badgeBg = isApproved ? "#dcfce7" : "#fef3c7";
   const badgeColor = isApproved ? "#15803d" : "#b45309";
   const badgeBorder = isApproved ? "#bbf7d0" : "#fde68a";
-  const badgeText = isApproved ? "✓ APPROVED &amp; PUBLISHED" : "✎ CHANGES REQUESTED";
+  const badgeText = isApproved
+    ? "✓ APPROVED &amp; PUBLISHED"
+    : "✎ CHANGES REQUESTED";
 
-  const ctaText = isApproved ? `View Live ${kindLabel}` : `Update &amp; Resubmit ${kindLabel}`;
+  const ctaText = isApproved
+    ? `View Live ${kindLabel}`
+    : `Update &amp; Resubmit ${kindLabel}`;
 
   const bodyContent = `
     <!-- Status Badge -->
@@ -299,7 +303,8 @@ export function buildReviewDecisionEmail(input: ReviewDecisionEmailInput): {
     bodyContent,
   });
 
-  const text = `${subject}\n\n` +
+  const text =
+    `${subject}\n\n` +
     `Hi ${firstName},\n\n` +
     (isApproved
       ? `Great news! Your ${kindLabel.toLowerCase()} "${input.title}" has been approved and published on Coddle Learn.\n\n`
@@ -330,7 +335,9 @@ export type BroadcastApprovedItemInput = {
   };
 };
 
-export function buildNewContentBroadcastEmail(input: BroadcastApprovedItemInput): {
+export function buildNewContentBroadcastEmail(
+  input: BroadcastApprovedItemInput,
+): {
   subject: string;
   html: string;
   text: string;
@@ -348,12 +355,14 @@ export function buildNewContentBroadcastEmail(input: BroadcastApprovedItemInput)
   const targetUrl = resolveAbsoluteUrl(input.href) ?? config.webOrigin;
   const firstName = input.recipientName?.trim().split(/\s+/)[0] || "Developer";
 
-  const subject = `✨ New ${kindLabel}: ${input.title}`;
+  const subject = `New ${kindLabel}: ${input.title}`;
   const previewText = `Explore the newly published ${kindLabel.toLowerCase()} "${input.title}" now available on Coddle Learn.`;
 
   const metaChips: string[] = [];
   if (input.metadata?.level) {
-    metaChips.push(`Level: ${input.metadata.level.charAt(0).toUpperCase() + input.metadata.level.slice(1)}`);
+    metaChips.push(
+      `Level: ${input.metadata.level.charAt(0).toUpperCase() + input.metadata.level.slice(1)}`,
+    );
   }
   if (input.metadata?.category) {
     metaChips.push(`Category: ${input.metadata.category}`);
@@ -408,7 +417,7 @@ export function buildNewContentBroadcastEmail(input: BroadcastApprovedItemInput)
       Hi ${escapeHtml(firstName)},
     </p>
     <p style="margin: 0 0 24px 0; font-size: 15px; line-height: 24px; color: #334155;">
-      A brand new ${kindLabel.toLowerCase()} was just approved and published on Coddle Learn to help you level up your engineering skills:
+      A new ${kindLabel.toLowerCase()} was just published on Coddle Learn to help you level up your tech skills:
     </p>
 
     <!-- Showcase Card -->
@@ -460,18 +469,6 @@ export function buildNewContentBroadcastEmail(input: BroadcastApprovedItemInput)
         ${ctaButtonLabel} &rarr;
       </a>
     </div>
-
-    ${
-      input.externalUrl
-        ? `<p style="margin: 16px 0 0 0; font-size: 13px; text-align: center; color: #64748b;">
-            External Link: <a href="${escapeHtml(
-              input.externalUrl,
-            )}" target="_blank" style="color: #004cc8; word-break: break-all;">${escapeHtml(
-              input.externalUrl,
-            )}</a>
-          </p>`
-        : ""
-    }
   `;
 
   const html = baseEmailLayout({
@@ -480,16 +477,155 @@ export function buildNewContentBroadcastEmail(input: BroadcastApprovedItemInput)
     bodyContent,
   });
 
-  const text = `${subject}\n\n` +
+  const text =
+    `${subject}\n\n` +
     `Hi ${firstName},\n\n` +
     `A new ${kindLabel.toLowerCase()} is now available on Coddle Learn:\n\n` +
     `Title: ${input.title}\n` +
     (input.summary ? `Summary: ${input.summary}\n` : "") +
-    (input.metadata?.authorName ? `Contributed by: ${input.metadata.authorName}\n` : "") +
+    (input.metadata?.authorName
+      ? `Contributed by: ${input.metadata.authorName}\n`
+      : "") +
     (metaChips.length > 0 ? `Details: ${metaChips.join(" • ")}\n` : "") +
     `\nLink: ${targetUrl}\n` +
     (input.externalUrl ? `Direct URL: ${input.externalUrl}\n` : "") +
     `\n— The Coddle Learn Team\n${config.webOrigin}`;
+
+  return { subject, html, text };
+}
+
+export type LoginNotificationEmailInput = {
+  recipientName: string;
+  email: string;
+  signedInAt?: Date;
+  ip?: string | null;
+  userAgent?: string | null;
+  isNewUser?: boolean;
+};
+
+export function buildLoginNotificationEmail(
+  input: LoginNotificationEmailInput,
+): {
+  subject: string;
+  html: string;
+  text: string;
+} {
+  const firstName = input.recipientName?.trim().split(/\s+/)[0] || "there";
+  const dateStr = (input.signedInAt ?? new Date()).toUTCString();
+  const dashboardUrl = `${config.webOrigin}/dashboard`;
+  const securityUrl = `${config.webOrigin}/settings/profile`;
+
+  const isNew = Boolean(input.isNewUser);
+  const subject = isNew
+    ? "Welcome to Coddle Learn! Sign-in confirmation"
+    : "Successful sign-in to Coddle Learn";
+
+  const previewText = isNew
+    ? "Welcome to Coddle Learn. Your developer account is ready."
+    : `We detected a successful sign-in to your account on ${dateStr}.`;
+
+  const bodyContent = `
+    <!-- Top Badge -->
+    <div style="margin-bottom: 20px;">
+      <span style="display: inline-block; background-color: #eff6ff; color: #004cc8; border: 1px solid #bfdbfe; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; padding: 4px 12px; border-radius: 9999px;">
+        ${isNew ? "WELCOME TO CODDLE LEARN" : "ACCOUNT SECURITY"}
+      </span>
+    </div>
+
+    <!-- Heading -->
+    <h1 style="margin: 0 0 14px 0; font-size: 22px; font-weight: 700; color: #0f172a; line-height: 1.3;">
+      ${isNew ? "Welcome to Coddle Learn!" : "New sign-in to your account"}
+    </h1>
+
+    <p style="margin: 0 0 18px 0; font-size: 15px; line-height: 24px; color: #334155;">
+      Hi ${escapeHtml(firstName)},
+    </p>
+    <p style="margin: 0 0 24px 0; font-size: 15px; line-height: 24px; color: #334155;">
+      ${
+        isNew
+          ? `Welcome to Coddle Learn! Your account has been created and you're all set to start discovering developer roadmaps, courses, tools, and hands-on projects.`
+          : `We detected a successful sign-in to your Coddle Learn account. Here are the sign-in details:`
+      }
+    </p>
+
+    <!-- Details Card -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 24px; padding: 18px 20px;">
+      <tr>
+        <td style="padding: 6px 0; font-size: 14px; color: #64748b; width: 120px;">
+          Account:
+        </td>
+        <td style="padding: 6px 0; font-size: 14px; font-weight: 600; color: #0f172a;">
+          ${escapeHtml(input.email)}
+        </td>
+      </tr>
+      <tr>
+        <td style="padding: 6px 0; font-size: 14px; color: #64748b;">
+          Time (UTC):
+        </td>
+        <td style="padding: 6px 0; font-size: 14px; font-weight: 600; color: #0f172a;">
+          ${escapeHtml(dateStr)}
+        </td>
+      </tr>
+      ${
+        input.ip
+          ? `<tr>
+              <td style="padding: 6px 0; font-size: 14px; color: #64748b;">
+                IP Address:
+              </td>
+              <td style="padding: 6px 0; font-size: 14px; font-weight: 600; color: #0f172a;">
+                ${escapeHtml(input.ip)}
+              </td>
+            </tr>`
+          : ""
+      }
+      ${
+        input.userAgent
+          ? `<tr>
+              <td style="padding: 6px 0; font-size: 14px; color: #64748b;">
+                Device / App:
+              </td>
+              <td style="padding: 6px 0; font-size: 13px; color: #334155;">
+                ${escapeHtml(input.userAgent.slice(0, 100))}
+              </td>
+            </tr>`
+          : ""
+      }
+    </table>
+
+    <!-- CTA Button -->
+    <div style="text-align: center; margin: 28px 0 20px 0;">
+      <a href="${dashboardUrl}" target="_blank" class="btn" style="display: inline-block; background-color: #004cc8; color: #ffffff; font-size: 15px; font-weight: 600; text-decoration: none; padding: 13px 34px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 76, 200, 0.2);">
+        Go to Dashboard &rarr;
+      </a>
+    </div>
+
+    <!-- Security notice -->
+    <div style="background-color: #f1f5f9; border-radius: 8px; padding: 14px 16px; margin-top: 24px;">
+      <p style="margin: 0; font-size: 13px; line-height: 20px; color: #475569;">
+        <strong>Didn't sign in?</strong> If you did not make this request, someone else may be trying to access your account. Please check your <a href="${securityUrl}" style="color: #004cc8; text-decoration: underline;">account settings</a> immediately.
+      </p>
+    </div>
+  `;
+
+  const html = baseEmailLayout({
+    title: subject,
+    previewText,
+    bodyContent,
+  });
+
+  const text =
+    `${subject}\n\n` +
+    `Hi ${firstName},\n\n` +
+    (isNew
+      ? `Welcome to Coddle Learn! Your account has been created.\n\n`
+      : `We detected a successful sign-in to your Coddle Learn account.\n\n`) +
+    `Account: ${input.email}\n` +
+    `Time: ${dateStr}\n` +
+    (input.ip ? `IP Address: ${input.ip}\n` : "") +
+    (input.userAgent ? `Device: ${input.userAgent}\n` : "") +
+    `\nGo to your dashboard: ${dashboardUrl}\n\n` +
+    `If you did not sign in recently, please secure your account immediately.\n\n` +
+    `— The Coddle Learn Team\n${config.webOrigin}`;
 
   return { subject, html, text };
 }
