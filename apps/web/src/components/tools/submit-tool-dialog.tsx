@@ -215,7 +215,7 @@ export function SubmitToolDialog({
               value={url}
               maxLength={TOOL_LIMITS.urlMax}
               onChange={(event) => setUrl(event.target.value)}
-              placeholder="https://coddle.dev"
+              placeholder="https://usecoddle.com"
               className={inputClass}
             />
             {url.trim() ? (
