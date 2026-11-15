@@ -30,6 +30,7 @@ import { AppError } from "../../shared/errors.js";
 import { assertR2UploadLimit } from "../../shared/rate-limit.js";
 import { imageExtension, storeGeneratedThumbnail, uploadToR2 } from "../../shared/r2.js";
 import { scheduleAchievementEvaluation } from "../achievements/achievements.service.js";
+import { broadcastApprovedItem } from "../email/email.service.js";
 import {
   findAssessmentByCourseId,
   replaceQuestions,
@@ -511,6 +512,18 @@ export async function submitStudioCourse(userId: string, courseId: string) {
       publishedAt: course.publishedAt ?? now,
     });
     scheduleAchievementEvaluation(userId);
+    broadcastApprovedItem({
+      kind: "course",
+      title: course.title,
+      summary: course.summary,
+      imageUrl: course.thumbnailUrl,
+      href: `/courses/${course.slug}`,
+      metadata: {
+        level: course.level,
+        estimatedHours: course.estimatedHours,
+        skills: course.skills.map((s) => s.skill.name),
+      },
+    });
   } else {
     await updateCourse(course.id, { status: "in_review", submittedAt: now });
   }

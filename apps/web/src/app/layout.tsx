@@ -23,7 +23,7 @@ const description =
   "Open-source interactive learning for developers. Roadmaps, projects, credentials, and community, connected in one place.";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://learn.coddle.dev"),
+  metadataBase: new URL("https://learn.usecoddle.com"),
   title: `${APP_NAME} · ${APP_TAGLINE}`,
   description,
   icons: {

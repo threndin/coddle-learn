@@ -105,7 +105,7 @@ export function SettingsPane({
               </p>
             ) : !course.publishedAt ? (
               <p className="mt-1.5 font-mono text-[11px] text-ink-muted">
-                learn.coddle.dev/courses/{course.slug}
+                learn.usecoddle.com/courses/{course.slug}
               </p>
             ) : null}
 

@@ -15,8 +15,8 @@ export type StarterTool = {
 /** Curated catalog. Upserted by URL; community submissions are left alone. */
 export const STARTER_TOOLS: readonly StarterTool[] = [
   {
-    slug: "coddle",
-    url: "https://coddle.dev/",
+    slug: "usecoddle",
+    url: "https://workspace.usecoddle.com/",
     title: "Coddle",
     summary:
       "An AI workspace for building products faster. Plan, write PRDs, run sprints, and ship with your team and agents in one place.",

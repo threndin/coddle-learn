@@ -6,6 +6,7 @@ import {
   REVIEW_LIMITS,
   type ReviewCounts,
   type ReviewKind,
+  type ReviewPerson,
   type ReviewQueue,
   type ReviewQueueItem,
   type ReviewTab,
@@ -14,6 +15,7 @@ import type { Prisma } from "@prisma/client";
 import { config } from "../../config.js";
 import { AppError } from "../../shared/errors.js";
 import { scheduleAchievementEvaluation } from "../achievements/achievements.service.js";
+import { broadcastApprovedItem, sendReviewDecisionEmail } from "../email/email.service.js";
 import { notifyReviewDecision } from "../notifications/notifications.events.js";
 import {
   countReviewCourses,
@@ -122,6 +124,18 @@ function skillsOf(rows: { skill: { slug: string; name: string } }[]) {
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
+function toReviewPerson(
+  person: { id: string; username: string; name: string; avatarUrl: string | null } | null,
+): ReviewPerson | null {
+  if (!person) return null;
+  return {
+    id: person.id,
+    username: person.username,
+    name: person.name,
+    avatarUrl: person.avatarUrl,
+  };
+}
+
 function courseItem(course: ReviewCourse): ReviewQueueItem {
   return {
     kind: "course",
@@ -139,7 +153,7 @@ function courseItem(course: ReviewCourse): ReviewQueueItem {
     submittedAt: course.submittedAt?.toISOString() ?? null,
     reviewedAt: course.reviewedAt?.toISOString() ?? null,
     createdAt: course.createdAt.toISOString(),
-    submittedBy: course.createdBy,
+    submittedBy: toReviewPerson(course.createdBy),
     skills: skillsOf(course.skills),
     meta: { level: course.level, estimatedHours: course.estimatedHours },
   };
@@ -162,7 +176,7 @@ function projectItem(project: ReviewProject): ReviewQueueItem {
     submittedAt: project.submittedAt?.toISOString() ?? null,
     reviewedAt: project.reviewedAt?.toISOString() ?? null,
     createdAt: project.createdAt.toISOString(),
-    submittedBy: project.createdBy,
+    submittedBy: toReviewPerson(project.createdBy),
     skills: skillsOf(project.skills),
     meta: { level: project.level, estimatedHours: project.estimatedHours },
   };
@@ -185,7 +199,7 @@ function resourceItem(resource: ReviewResource): ReviewQueueItem {
     submittedAt: resource.createdAt.toISOString(),
     reviewedAt: resource.reviewedAt?.toISOString() ?? null,
     createdAt: resource.createdAt.toISOString(),
-    submittedBy: resource.submittedBy,
+    submittedBy: toReviewPerson(resource.submittedBy),
     skills: skillsOf(resource.skills),
     meta: { level: resource.level, type: resource.type },
   };
@@ -208,7 +222,7 @@ function toolItem(tool: ReviewTool): ReviewQueueItem {
     submittedAt: tool.createdAt.toISOString(),
     reviewedAt: tool.reviewedAt?.toISOString() ?? null,
     createdAt: tool.createdAt.toISOString(),
-    submittedBy: tool.submittedBy,
+    submittedBy: toReviewPerson(tool.submittedBy),
     skills: skillsOf(tool.skills),
     meta: { category: tool.category },
   };
@@ -394,6 +408,33 @@ async function decideCourse(
       itemId: course.id,
       note,
     });
+    if (course.createdBy.email) {
+      sendReviewDecisionEmail({
+        recipientEmail: course.createdBy.email,
+        recipientName: course.createdBy.name,
+        action: "approve",
+        kind: "course",
+        title: course.title,
+        summary: course.summary,
+        imageUrl: course.thumbnailUrl,
+        href: `/courses/${course.slug}`,
+        note,
+        metadata: { level: course.level, estimatedHours: course.estimatedHours },
+      }).catch((err) => console.error("[email] Error sending course approve email:", err));
+    }
+    broadcastApprovedItem({
+      kind: "course",
+      title: course.title,
+      summary: course.summary,
+      imageUrl: course.thumbnailUrl,
+      href: `/courses/${course.slug}`,
+      metadata: {
+        level: course.level,
+        estimatedHours: course.estimatedHours,
+        authorName: course.createdBy.name,
+        skills: course.skills.map((s) => s.skill.name),
+      },
+    });
     return courseItem(updated);
   }
 
@@ -419,6 +460,20 @@ async function decideCourse(
       itemId: course.id,
       note,
     });
+    if (course.createdBy.email) {
+      sendReviewDecisionEmail({
+        recipientEmail: course.createdBy.email,
+        recipientName: course.createdBy.name,
+        action: "decline",
+        kind: "course",
+        title: course.title,
+        summary: course.summary,
+        imageUrl: course.thumbnailUrl,
+        href: `/studio/courses/${course.id}`,
+        note,
+        metadata: { level: course.level, estimatedHours: course.estimatedHours },
+      }).catch((err) => console.error("[email] Error sending course decline email:", err));
+    }
     return courseItem(updated);
   }
 
@@ -473,6 +528,33 @@ async function decideProject(
       itemId: project.id,
       note,
     });
+    if (project.createdBy.email) {
+      sendReviewDecisionEmail({
+        recipientEmail: project.createdBy.email,
+        recipientName: project.createdBy.name,
+        action: "approve",
+        kind: "project",
+        title: project.title,
+        summary: project.summary,
+        imageUrl: project.exampleImageUrl,
+        href: `/projects/${project.slug}`,
+        note,
+        metadata: { level: project.level, estimatedHours: project.estimatedHours },
+      }).catch((err) => console.error("[email] Error sending project approve email:", err));
+    }
+    broadcastApprovedItem({
+      kind: "project",
+      title: project.title,
+      summary: project.summary,
+      imageUrl: project.exampleImageUrl,
+      href: `/projects/${project.slug}`,
+      metadata: {
+        level: project.level,
+        estimatedHours: project.estimatedHours,
+        authorName: project.createdBy.name,
+        skills: project.skills.map((s) => s.skill.name),
+      },
+    });
     return projectItem(updated);
   }
 
@@ -498,6 +580,20 @@ async function decideProject(
       itemId: project.id,
       note,
     });
+    if (project.createdBy.email) {
+      sendReviewDecisionEmail({
+        recipientEmail: project.createdBy.email,
+        recipientName: project.createdBy.name,
+        action: "decline",
+        kind: "project",
+        title: project.title,
+        summary: project.summary,
+        imageUrl: project.exampleImageUrl,
+        href: `/studio/projects/${project.id}`,
+        note,
+        metadata: { level: project.level, estimatedHours: project.estimatedHours },
+      }).catch((err) => console.error("[email] Error sending project decline email:", err));
+    }
     return projectItem(updated);
   }
 
@@ -552,7 +648,35 @@ async function decideResource(
         itemId: resource.id,
         note,
       });
+      if (resource.submittedBy.email) {
+        sendReviewDecisionEmail({
+          recipientEmail: resource.submittedBy.email,
+          recipientName: resource.submittedBy.name,
+          action: "approve",
+          kind: "resource",
+          title: resource.title,
+          summary: resource.description,
+          imageUrl: null,
+          href: "/resources",
+          note,
+          metadata: { level: resource.level, type: resource.type },
+        }).catch((err) => console.error("[email] Error sending resource approve email:", err));
+      }
     }
+    broadcastApprovedItem({
+      kind: "resource",
+      title: resource.title,
+      summary: resource.description,
+      imageUrl: null,
+      href: "/resources",
+      externalUrl: resource.url,
+      metadata: {
+        level: resource.level,
+        type: resource.type,
+        authorName: resource.submittedBy?.name,
+        skills: resource.skills.map((s) => s.skill.name),
+      },
+    });
     return resourceItem(updated);
   }
 
@@ -580,6 +704,20 @@ async function decideResource(
         itemId: resource.id,
         note,
       });
+      if (resource.submittedBy.email) {
+        sendReviewDecisionEmail({
+          recipientEmail: resource.submittedBy.email,
+          recipientName: resource.submittedBy.name,
+          action: "decline",
+          kind: "resource",
+          title: resource.title,
+          summary: resource.description,
+          imageUrl: null,
+          href: "/resources",
+          note,
+          metadata: { level: resource.level, type: resource.type },
+        }).catch((err) => console.error("[email] Error sending resource decline email:", err));
+      }
     }
     return resourceItem(updated);
   }
@@ -637,7 +775,34 @@ async function decideTool(
         itemId: tool.id,
         note,
       });
+      if (tool.submittedBy.email) {
+        sendReviewDecisionEmail({
+          recipientEmail: tool.submittedBy.email,
+          recipientName: tool.submittedBy.name,
+          action: "approve",
+          kind: "tool",
+          title: tool.title,
+          summary: tool.summary,
+          imageUrl: tool.imageUrl,
+          href: `/tools/${tool.slug}`,
+          note,
+          metadata: { category: tool.category, pricing: tool.pricing },
+        }).catch((err) => console.error("[email] Error sending tool approve email:", err));
+      }
     }
+    broadcastApprovedItem({
+      kind: "tool",
+      title: tool.title,
+      summary: tool.summary,
+      imageUrl: tool.imageUrl,
+      href: `/tools/${tool.slug}`,
+      externalUrl: tool.url,
+      metadata: {
+        category: tool.category,
+        authorName: tool.submittedBy?.name,
+        skills: tool.skills.map((s) => s.skill.name),
+      },
+    });
     return toolItem(updated);
   }
 
@@ -665,6 +830,20 @@ async function decideTool(
         itemId: tool.id,
         note,
       });
+      if (tool.submittedBy.email) {
+        sendReviewDecisionEmail({
+          recipientEmail: tool.submittedBy.email,
+          recipientName: tool.submittedBy.name,
+          action: "decline",
+          kind: "tool",
+          title: tool.title,
+          summary: tool.summary,
+          imageUrl: tool.imageUrl,
+          href: "/tools",
+          note,
+          metadata: { category: tool.category, pricing: tool.pricing },
+        }).catch((err) => console.error("[email] Error sending tool decline email:", err));
+      }
     }
     return toolItem(updated);
   }
