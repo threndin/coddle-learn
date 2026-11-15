@@ -16,6 +16,7 @@
     "achievements:backfill": "tsx src/jobs/achievements-backfill.ts",
     "skills:backfill": "tsx src/jobs/skills-backfill.ts",
     "points:backfill": "tsx src/jobs/points-backfill.ts",
+    "reset:pending": "tsx src/jobs/reset-to-pending.ts",
     "clean": "rm -rf dist"
   },
   "prisma": {
