@@ -2,12 +2,12 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 import { useReducedMotion, motion } from "framer-motion";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { PageLoader } from "@/components/page-loader";
-import { startCoddleLogin } from "@/lib/auth";
+import { fetchMe, startCoddleLogin } from "@/lib/auth";
 
 
 const points = [
@@ -17,6 +17,7 @@ const points = [
 ];
 
 function LoginContent() {
+  const router = useRouter();
   const reduceMotion = useReducedMotion();
   const searchParams = useSearchParams();
   const errorParam = searchParams.get("error");
@@ -27,6 +28,23 @@ function LoginContent() {
         ? "Could not complete sign-in. Please try again."
         : errorParam;
   const [pending, setPending] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const me = await fetchMe();
+        if (!cancelled && me) {
+          router.replace("/dashboard");
+        }
+      } catch {
+        // Not authenticated
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
 
   function onContinue() {
     setPending(true);

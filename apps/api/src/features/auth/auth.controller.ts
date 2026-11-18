@@ -22,10 +22,32 @@ export async function startCoddle(req: Request, res: Response) {
   res.redirect(302, loginUrl);
 }
 
+export function extractSsoParams(req: {
+  query?: Record<string, unknown>;
+  body?: Record<string, unknown>;
+}) {
+  const rawCode =
+    typeof req.query?.code === "string"
+      ? req.query.code
+      : typeof req.body?.code === "string"
+        ? req.body.code
+        : "";
+  const rawState =
+    typeof req.query?.state === "string"
+      ? req.query.state
+      : typeof req.body?.state === "string"
+        ? req.body.state
+        : undefined;
+
+  return {
+    code: rawCode.trim(),
+    state: rawState,
+  };
+}
+
 export async function finishCoddle(req: Request, res: Response) {
   try {
-    const code = typeof req.body?.code === "string" ? req.body.code.trim() : "";
-    const state = typeof req.body?.state === "string" ? req.body.state : undefined;
+    const { code, state } = extractSsoParams(req);
 
     if (!code) {
       throw new AppError(400, "missing_code", "Missing SSO code");

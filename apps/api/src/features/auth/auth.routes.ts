@@ -6,6 +6,7 @@ import { optionalAuth, requireAuth, requireCsrf } from "./auth.middleware.js";
 export const authRouter: Router = Router();
 
 authRouter.get("/coddle/start", asyncHandler(startCoddle));
+authRouter.get("/coddle/finish", asyncHandler(finishCoddle));
 authRouter.post("/coddle/finish", asyncHandler(finishCoddle));
 authRouter.get("/me", requireAuth, asyncHandler(me));
 authRouter.post("/refresh", requireCsrf, asyncHandler(refresh));
