@@ -9,7 +9,6 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { PageLoader } from "@/components/page-loader";
 import { startCoddleLogin } from "@/lib/auth";
 
-const coddleAppUrl = process.env.NEXT_PUBLIC_CODDLE_APP_URL ?? "https://workspace.usecoddle.com";
 
 const points = [
   "Follow one roadmap from the first step to a project",
@@ -121,7 +120,7 @@ function LoginContent() {
             <p className="mt-6 text-sm text-ink-muted">
               No account yet?{" "}
               <a
-                href={`${coddleAppUrl}/signup`}
+                href="/api/auth/coddle/start?screen=signup"
                 className="font-semibold text-brand underline-offset-2 hover:underline"
               >
                 Create one on Coddle
