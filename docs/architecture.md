@@ -139,11 +139,11 @@ Access JWT is short-lived (`JWT_ACCESS_EXPIRY_MINUTES`, default 15m). The refres
 | `JWT_ACCESS_EXPIRY_MINUTES` | `apps/api` | Access JWT lifetime (default 15) |
 | `JWT_REFRESH_EXPIRY_DAYS` | `apps/api` | Sliding refresh-token lifetime (default 30) |
 | `LEARN_SSO_CLIENT_ID` / `LEARN_SSO_CLIENT_SECRET` | `apps/api` | Server-to-server SSO exchange with Coddle |
-| `CODDLE_APP_URL` | `apps/api` | Coddle web (login + SSO bridge) |
+| `CODDLE_AUTH_URL` | `apps/api` | Central Coddle Auth (`https://auth.usecoddle.com`; local port `3004`) |
 | `CODDLE_API_URL` | `apps/api` | Coddle API including `/api/v1` |
 | `WEB_ORIGIN` | `apps/api` | Learn web origin (cookies + redirects) |
 | `API_URL` | `apps/web` | Express base for Next rewrites |
-| `NEXT_PUBLIC_CODDLE_APP_URL` | `apps/web` | Signup link on login page |
+| `NEXT_PUBLIC_CODDLE_APP_URL` | `apps/web` | Workspace account settings link; signup uses the central Auth handoff |
 | `R2_*` | `apps/api` | Cloudflare R2 credentials + `cdn.coddle.dev` public URL |
 | `SEED_COURSE_CREATOR_EMAIL` | `apps/api` | Learn user email used as course creator in seed |
 
@@ -155,7 +155,7 @@ Access JWT is short-lived (`JWT_ACCESS_EXPIRY_MINUTES`, default 15m). The refres
 | `LEARN_SSO_REDIRECT_URIS` | Allowlisted Learn finish URLs |
 | `NEXT_PUBLIC_LEARN_SSO_RETURN_URIS` | Frontend allowlist for the SSO bridge |
 
-Locally, Learn web defaults to port `3002` so Coddle can stay on `3000`. Point `CODDLE_APP_URL` / `NEXT_PUBLIC_CODDLE_APP_URL` at Coddle.
+Locally, Learn web defaults to port `3002` so Coddle can stay on `3000`. Set `CODDLE_AUTH_URL=http://localhost:3004` on the Learn API. Sign-in and signup go directly to central `/sso/learn`, preserving state and Learn’s POST callback. Existing `CODDLE_APP_URL` is no longer used for sign-in. Keep the existing Learn SSO client ID/secret and callback allowlist on the Coddle backend; configure matching custom values on Auth if necessary.
 
 ## Current scope
 

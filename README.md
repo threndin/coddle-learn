@@ -48,7 +48,7 @@ pnpm dev
 | Health | http://localhost:4000/health |
 | Login | http://localhost:3002/login |
 
-Sign-in uses a **Coddle account**. Run the Coddle app (see `docs/architecture.md`) and set `CODDLE_APP_URL` / `CODDLE_API_URL` in `apps/api/.env`.
+Sign-in uses a **Coddle account**. Run central Coddle Auth (see `docs/architecture.md`) and set `CODDLE_AUTH_URL` / `CODDLE_API_URL` in `apps/api/.env`. Production uses `CODDLE_AUTH_URL=https://auth.usecoddle.com`; local Auth uses port `3004`.
 ## Scripts
 
 | Command | Description |

@@ -34,7 +34,7 @@ export const config = {
   ),
   /** Sliding refresh-token lifetime (days). */
   jwtRefreshExpiryDays: Number(process.env.JWT_REFRESH_EXPIRY_DAYS ?? 30),
-  coddleAppUrl: (process.env.CODDLE_APP_URL ?? "http://localhost:3000").replace(
+  coddleAuthUrl: (process.env.CODDLE_AUTH_URL ?? (isProd ? "https://auth.usecoddle.com" : "http://localhost:3004")).replace(
     /\/$/,
     "",
   ),

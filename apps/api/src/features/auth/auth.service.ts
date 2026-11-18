@@ -1,3 +1,4 @@
+import { buildLearnSignInUrl } from "./coddle-redirect.js";
 import { config } from "../../config.js";
 import { AppError } from "../../shared/errors.js";
 import { sendLoginNotificationEmail } from "../email/email.service.js";
@@ -29,11 +30,10 @@ export function finishUrl() {
   return `${config.webOrigin}/api/auth/coddle/finish`;
 }
 
-export async function startCoddleSignIn(): Promise<string> {
+export async function startCoddleSignIn(screen: "login" | "signup" = "login"): Promise<string> {
   const state = await createOAuthState();
   const returnTo = finishUrl();
-  const ssoPath = `/sso/learn?state=${encodeURIComponent(state)}&return=${encodeURIComponent(returnTo)}`;
-  return `${config.coddleAppUrl}/login?redirect=${encodeURIComponent(ssoPath)}`;
+  return buildLearnSignInUrl(config.coddleAuthUrl, state, returnTo, screen);
 }
 
 export async function completeCoddleSignIn(

@@ -17,8 +17,8 @@ import {
   setCsrfCookie,
 } from "./cookies.js";
 
-export async function startCoddle(_req: Request, res: Response) {
-  const loginUrl = await startCoddleSignIn();
+export async function startCoddle(req: Request, res: Response) {
+  const loginUrl = await startCoddleSignIn(req.query.screen === "signup" ? "signup" : "login");
   res.redirect(302, loginUrl);
 }
 
