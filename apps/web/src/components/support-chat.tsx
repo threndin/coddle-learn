@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import Script from "next/script";
 
+/*
+// Old ChatATP support widget - kept for later use
 const ORIGIN = "https://chatatp-agent-builder-backend.onrender.com";
 
 const WIDGET_ATTRS: Record<string, string> = {
@@ -75,13 +77,14 @@ function loadWidget() {
   }
   return widgetPromise;
 }
+*/
 
 export function SupportChat() {
-  useEffect(() => {
-    loadWidget().catch(() => {
-      // The page stays usable if the support host is unreachable.
-    });
-  }, []);
-
-  return null;
+  return (
+    <Script
+      src="https://app.pingback.live/pingback.js"
+      data-widget-id="wdg_9fff308ecc5e"
+      strategy="afterInteractive"
+    />
+  );
 }
